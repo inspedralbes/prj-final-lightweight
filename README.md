@@ -3,6 +3,12 @@ Esquema mínim de carpetes pels projectes transversals
 
 És obligatori seguir aquesta estructura tot i que la podeu ampliar.
 
+
+# Iniciar la bases de dades
+Fer el docker compose up y en el 
+docker exec hacer:
+npx prisma generate
+
 ## Atenció
 Un cop comenceu heu de canviar aquesta explicació amb la corresponent al vostre projecte (utilitzant markdown)
 
