@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
 }
 
 datasource db {
@@ -17,16 +17,18 @@ model Users {
   id Int @id @default(autoincrement())
   username String @unique
   passwordHash String
-  role Role @default(USER)
+  role Role @default(CLIENT)
   createdAt DateTime @default(now())
   // Foreing Keys
-  routines Routine[] @relation("UserRoutines") 
+  routines Routine[] @relation("UserRoutines")
+  coachSessions LiveSessions[] @relation("UserCoach") 
+  dietPlans DietPlans[] @relation("UserDietPlans")
 }
 
-model ExeciseCatalog {
+model ExerciseCatalog {
   id Int @id @default(autoincrement())
   name String
-  decription String?
+  description String?
   category String?
   createdAt DateTime @default(now())
   // Foreign Keys
@@ -42,6 +44,7 @@ model Routine {
   // Foreign Keys
   coach Users @relation("UserRoutines", fields: [coachId], references: [id])
   routineExercises RoutineExercises[] @relation("RoutineExercises")
+  liveSessions LiveSessions[] @relation("RoutineSessions")
 }
 
 model RoutineExercises {
@@ -55,7 +58,7 @@ model RoutineExercises {
   order Int
   // Foreign Keys
   routine Routine @relation("RoutineExercises", fields: [routineId], references: [id])
-  exercise ExeciseCatalog @relation("ExerciseInRoutine", fields: [exerciseId], references: [id])  
+  exercise ExerciseCatalog @relation("ExerciseInRoutine", fields: [exerciseId], references: [id])  
 }
 
 model LiveSessions {
@@ -67,11 +70,93 @@ model LiveSessions {
   createdAt DateTime @default(now())
   completedAt DateTime?
   // Foreign Keys
-  // coach Users @relation("UserCoach", fields: [coachId], references: [])
+  coach Users @relation("UserCoach", fields: [coachId], references: [id])
+  routine Routine @relation("RoutineSessions", fields: [routineId], references: [id])
+
+  participants LiveParticipants[] @relation("SessionParticipants")
+  events WorkoutEvents[] @relation("SessionEvents")
+  messages ChatMessages[] @relation("SessionMessages")
+}
+
+model LiveParticipants {
+  id Int @id @default(autoincrement())
+  sessionId Int
+  participantId String
+  role Role @default(CLIENT)
+  joinedAt DateTime @default(now())
+  leftAt DateTime?
+  // Foreign Keys
+  session LiveSessions @relation("SessionParticipants", fields: [sessionId], references: [id])
+}
+
+model WorkoutEvents {
+  id Int @id @default(autoincrement())
+  sessionId Int
+  eventType String
+  data Json
+  timestamp DateTime @default(now())
+  // Foreign Keys
+  session LiveSessions @relation("SessionEvents", fields: [sessionId], references: [id])
+}
+
+model ChatMessages {
+  id Int @id @default(autoincrement())
+  sessionId Int
+  sender String
+  message String
+  timestamp DateTime @default(now())
+  // Foreign Keys
+  session LiveSessions @relation("SessionMessages", fields: [sessionId], references: [id])
+}
+
+model FoodCatalog {
+  id Int @id @default(autoincrement())
+  name String
+  calories Float
+  protein Float
+  carbs Float
+  fats Float
+  unit String
+  createdAt DateTime @default(now())
+
+  foodInMeals DietMealItems[] 
+}
+
+model DietPlans {
+  id Int @id @default(autoincrement())
+  coachId Int
+  name String
+  createdAt DateTime @default(now())
+  // Foreign Keys
+  coach Users @relation("UserDietPlans", fields: [coachId], references: [id])
+  
+  dietMeals DietMeals[]
+}
+
+model DietMeals {
+  id Int @id @default(autoincrement())
+  dietPlanId Int
+  name String
+  mealType String
+  order Int
+  // Foreign Keys
+  dietPlan DietPlans @relation(fields: [dietPlanId], references: [id])
+
+  items DietMealItems[] 
+}
+
+model DietMealItems {
+  id Int @id @default(autoincrement())
+  dietMealId Int
+  foodId Int
+  quantity Float
+  // Foreign Keys
+  dietMeal DietMeals @relation(fields: [dietMealId], references: [id])
+  food FoodCatalog @relation(fields: [foodId], references: [id])
 }
 
 enum Role{
-  USER
+  CLIENT
   COACH
 }
 
