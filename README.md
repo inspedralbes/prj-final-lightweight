@@ -5,9 +5,26 @@ Esquema mínim de carpetes pels projectes transversals
 
 
 # Iniciar la bases de dades
-Fer el docker compose up y en el 
-docker exec hacer:
+Con Docker Desktop
+Fer el docker compose up y en el docker exec hacer:
 npx prisma generate
+
+Sin Docker Desktop:
+docker compose up
+
+docker exec -it lw-backend sh
+
+npx prisma generate
+
+# Verificar el prisma amb la creació de les taules al Adminer
+
+docker exec -it lw-backend sh
+
+Validar la conexió del prisma 
+npx prisma validate 
+
+Crear les taules al adminer
+npx prisma migrate dev --name init
 
 ## Atenció
 Un cop comenceu heu de canviar aquesta explicació amb la corresponent al vostre projecte (utilitzant markdown)
