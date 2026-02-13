@@ -12,3 +12,71 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Users {
+  id Int @id @default(autoincrement())
+  username String @unique
+  passwordHash String
+  role Role @default(USER)
+  createdAt DateTime @default(now())
+  // Foreing Keys
+  routines Routine[] @relation("UserRoutines") 
+}
+
+model ExeciseCatalog {
+  id Int @id @default(autoincrement())
+  name String
+  decription String?
+  category String?
+  createdAt DateTime @default(now())
+  // Foreign Keys
+  routineExercises RoutineExercises[] @relation("ExerciseInRoutine")
+}
+
+model Routine {
+  id Int @id @default(autoincrement())
+  coachId Int
+  name String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // Foreign Keys
+  coach Users @relation("UserRoutines", fields: [coachId], references: [id])
+  routineExercises RoutineExercises[] @relation("RoutineExercises")
+}
+
+model RoutineExercises {
+  id Int @id @default(autoincrement())
+  routineId Int 
+  exerciseId Int
+  sets Int
+  reps Int
+  rest Int 
+  notes String?
+  order Int
+  // Foreign Keys
+  routine Routine @relation("RoutineExercises", fields: [routineId], references: [id])
+  exercise ExeciseCatalog @relation("ExerciseInRoutine", fields: [exerciseId], references: [id])  
+}
+
+model LiveSessions {
+  id Int @id @default(autoincrement())
+  coachId Int
+  routineId Int
+  sessionCode String @unique
+  status STATUS 
+  createdAt DateTime @default(now())
+  completedAt DateTime?
+  // Foreign Keys
+  // coach Users @relation("UserCoach", fields: [coachId], references: [])
+}
+
+enum Role{
+  USER
+  COACH
+}
+
+enum STATUS{
+  PENDING
+  ACTIVE
+  COMPLETED
+} 
