@@ -39,7 +39,7 @@ function App() {
 
       <p className="mt-8 text-gray-400">
         Mira la terminal de tu Backend para ver el mensaje de conexión.
-      </p>
+      </p> 
     </div>
   );
 }
