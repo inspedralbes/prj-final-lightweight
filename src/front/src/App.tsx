@@ -1,35 +1,47 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
+
+// Conectamos al backend en el puerto 3000
+const socket = io('http://localhost:3000');
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [isConnected, setIsConnected] = useState(socket.connected);
+
+  useEffect(() => {
+    // 1. Escuchar evento de conexión
+    socket.on('connect', () => {
+      console.log('✅ Conectado al servidor con ID:', socket.id);
+      setIsConnected(true);
+    });
+
+    // 2. Escuchar evento de desconexión
+    socket.on('disconnect', () => {
+      console.log('❌ Desconectado del servidor');
+      setIsConnected(false);
+    });
+
+    // Limpieza al cerrar
+    return () => {
+      socket.off('connect');
+      socket.off('disconnect');
+    };
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white font-sans">
+      <h1 className="text-4xl font-bold mb-8">Test de WebSockets 🔌</h1>
+      
+      <div className={`p-6 rounded-xl text-2xl font-semibold transition-colors duration-500 ${
+        isConnected ? 'bg-green-600 shadow-[0_0_20px_rgba(22,163,74,0.5)]' : 'bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)]'
+      }`}>
+        {isConnected ? 'ESTADO: CONECTADO 🟢' : 'ESTADO: DESCONECTADO 🔴'}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+
+      <p className="mt-8 text-gray-400">
+        Mira la terminal de tu Backend para ver el mensaje de conexión.
+      </p> 
+    </div>
+  );
 }
 
-export default App
+export default App;
