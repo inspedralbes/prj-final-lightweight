@@ -1,19 +1,23 @@
-import { 
-  WebSocketGateway, 
-  WebSocketServer, 
-  OnGatewayInit, 
-  OnGatewayConnection, 
-  OnGatewayDisconnect 
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  OnGatewayInit,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // IMPORTANTE: Permite que el Frontend se conecte desde otro puerto
+    origin: [process.env.FRONTEND_URL], // IMPORTANTE: Permite que el Frontend se conecte desde otro puerto
   },
 })
-export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-  
+export class EventsGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -26,6 +30,6 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Mq Cliente desconectado: ${client.id}`);
+    console.log(`❌ Cliente desconectado: ${client.id}`);
   }
 }
