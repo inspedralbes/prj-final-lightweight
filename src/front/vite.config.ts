@@ -8,10 +8,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
 
   server: {
-  //   proxy: {
-  //     "/api": "http://localhost:3000",
-  //   },
-    
+    //   proxy: {
+    //     "/api": "http://localhost:3000",
+    //   },
+
     host: true,
     watch: {
       usePolling: true,
