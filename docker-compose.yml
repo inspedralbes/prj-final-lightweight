@@ -1,4 +1,3 @@
-
 services:
   # --- BASE DE DATOS (Tu configuración original) ---
   lw-postgres:
@@ -6,9 +5,9 @@ services:
     image: postgres:17-alpine
     restart: always
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: lightweight_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_db:/var/lib/postgresql/data
     ports:
@@ -29,7 +28,7 @@ services:
   # --- BACKEND (NestJS) ---
   backend:
     container_name: lw-backend
-    build: 
+    build:
       context: ./src/back
       dockerfile: Dockerfile
     ports:
@@ -37,8 +36,9 @@ services:
     environment:
       # IMPORTANTE: Aquí sobreescribimos la URL para que funcione dentro de Docker
       # Usamos el nombre del servicio "lw-postgres" como host y tus credenciales "root"
-      DATABASE_URL: "postgresql://root:root@lw-postgres:5432/lightweight_db?schema=public"
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@lw-postgres:5432/${POSTGRES_DB}?schema=public"
       PORT: 3000
+      FRONTEND_URL: ${FRONTEND_URL}
     volumes:
       - ./src/back:/app
       - /app/node_modules
@@ -48,7 +48,7 @@ services:
   # --- FRONTEND (React + Vite) ---
   frontend:
     container_name: lw-frontend
-    build: 
+    build:
       context: ./src/front
       dockerfile: Dockerfile
     ports:
@@ -59,6 +59,7 @@ services:
     # Habilitamos el polling para que el hot-reload funcione bien en Linux/Docker
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - VITE_BACK_URL=${VITE_BACK_URL}
 
 volumes:
   postgres_db:

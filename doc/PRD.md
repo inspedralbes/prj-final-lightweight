@@ -1,4 +1,34 @@
-a
+# PRD — Plataforma de Fitness & Coaching en Temps Real (Web)
+
+---
+
+# 1. Visió del Producte
+
+Construir una **plataforma web de fitness i coaching** que permeti:
+
+- Planificar entrenaments
+- Crear i gestionar rutines
+- Compartir una rutina mitjançant un enllaç únic
+- Executar la rutina de forma **sincronitzada en temps real**
+- Permetre comunicació directa **coach–client** mitjançant **WebRTC (xat o videotrucada)**
+
+La plataforma està orientada a:
+
+> planificació + execució guiada + seguiment en viu
+
+Tota l’experiència es realitza en **entorn web**.
+
+---
+
+# 2. Objectius del Producte
+
+## Objectius principals
+
+- Permetre a un coach crear i gestionar rutines d’entrenament
+- Permetre compartir rutines mitjançant enllaç únic
+- Sincronitzar l’execució de la rutina en temps real
+- Permetre acompanyament remot mitjançant WebRTC
+- Demostrar ús de:
   - WebSockets
   - WebRTC
   - Arquitectura moderna front–back
