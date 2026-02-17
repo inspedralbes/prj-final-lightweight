@@ -7,8 +7,11 @@ export default function Login() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login intentado con:', { username, password });
+    // try {
+    //   const res = 
+  
   };
+
 
   return (
     // CAMBIO AQUÍ: w-full y h-screen para ocupar todo
