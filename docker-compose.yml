@@ -59,6 +59,7 @@ services:
     # Habilitamos el polling para que el hot-reload funcione bien en Linux/Docker
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - VITE_BACK_URL=${VITE_BACK_URL}
 
 volumes:
   postgres_db:
