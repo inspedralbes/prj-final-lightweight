@@ -1,3 +1,4 @@
+
 services:
   # --- BASE DE DATOS (Tu configuración original) ---
   lw-postgres:
