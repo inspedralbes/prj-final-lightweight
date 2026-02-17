@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 
 // Conectamos al backend en el puerto 3000
 const socket = io(import.meta.env.VITE_BACK_URL);
@@ -27,7 +31,7 @@ function App() {
     };
   }, []);
 
-  return (
+  const WebsocketTest = (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white font-sans">
       <h1 className="text-4xl font-bold mb-8">Test de WebSockets 🔌</h1>
 
@@ -46,6 +50,20 @@ function App() {
       </p>
     </div>
   );
+
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/ws" element={WebsocketTest} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;
+
