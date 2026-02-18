@@ -16,7 +16,7 @@ RUN npm install
 COPY . .
 
 # Generamos el cliente de Prisma (IMPORTANTE para que funcione la DB)
-# RUN npx prisma generate
+RUN npx prisma generate
 
 # Exponemos el puerto de NestJS
 EXPOSE 3000
