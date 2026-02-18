@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
+import Home from "./pages/Home";
 
 // Conectamos al backend en el puerto 3000
 const socket = io(import.meta.env.VITE_BACK_URL);
@@ -59,6 +60,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/ws" element={WebsocketTest} />
       </Routes>
     </BrowserRouter>
