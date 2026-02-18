@@ -23,4 +23,4 @@ import { AuthModule } from './auth/auth.module';
     EventsGateway, // <--- 2. Lo registramos aquí para que NestJS lo encienda
   ],
 })
-export class AppModule { }
+export class AppModule {}
