@@ -5,21 +5,41 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // try {
-    //   const res = 
-  
+    setError('');
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACK_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error en el inicio de sesión');
+      }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      window.location.href = '/ws'; // Redirect to workspace or dashboard
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
 
 
   return (
     // CAMBIO AQUÍ: w-full y h-screen para ocupar todo
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-900 text-white">
-      
+
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold mb-6 text-center text-blue-400">Iniciar Sesión</h2>
-        
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block mb-1 text-sm font-medium">Usuario</label>
@@ -31,7 +51,7 @@ export default function Login() {
               placeholder="Tu usuario"
             />
           </div>
-          
+
           <div>
             <label className="block mb-1 text-sm font-medium">Contraseña</label>
             <input

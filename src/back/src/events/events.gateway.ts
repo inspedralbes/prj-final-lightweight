@@ -12,12 +12,11 @@ dotenv.config();
 
 @WebSocketGateway({
   cors: {
-    origin: [process.env.FRONTEND_URL], // IMPORTANTE: Permite que el Frontend se conecte desde otro puerto
+    origin: '*',
   },
 })
 export class EventsGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 

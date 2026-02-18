@@ -7,7 +7,7 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Copiamos los archivos de dependencias
-COPY package*.json ./
+COPY package.json ./
 
 # Instalamos las dependencias
 RUN npm install
@@ -15,8 +15,11 @@ RUN npm install
 # Copiamos el resto del código
 COPY . .
 
+# Definimos una variable de entorno dummy para el build (prisma generate la necesita)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+
 # Generamos el cliente de Prisma (IMPORTANTE para que funcione la DB)
-# RUN npx prisma generate
+RUN npx prisma generate
 
 # Exponemos el puerto de NestJS
 EXPOSE 3000

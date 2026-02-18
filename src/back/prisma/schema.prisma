@@ -1,10 +1,12 @@
 // 1. Configuración del generador y la fuente de datos
 generator client {
   provider = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // --------------------------------------
