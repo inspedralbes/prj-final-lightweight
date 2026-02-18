@@ -1,13 +1,34 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../utils/api';
+import axios from 'axios';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login intentado con:', { username, password });
+    try {
+      const res = await api.post('/auth/login', { username, password });
+      const token = res.data?.access_token;
+      if (token) {
+        localStorage.setItem('token', token);
+        window.alert('Inicio de sesión correcto. Redirigiendo...');
+        navigate('/home');
+      } else {
+        window.alert('Respuesta inesperada del servidor.');
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        window.alert('Credenciales incorrectas. Verifique usuario y contraseña.');
+        return;
+      }
+      console.error('Error durante login:', error);
+      window.alert('Ocurrió un error al iniciar sesión. Intente nuevamente.');
+    }
   };
 
   return (

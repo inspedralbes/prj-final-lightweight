@@ -1,13 +1,28 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../utils/api';
+import axios from 'axios';
 
 export default function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Registro intentado con:', { username, password });
+    try {
+      await api.post('/auth/register', { username, password });
+      window.alert('Registro exitoso. Redirigiendo a login.');
+      navigate('/');
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        window.alert('El usuario ya existe. Elija otro nombre de usuario.');
+        return;
+      }
+      console.error('Error durante registro:', error);
+      window.alert('Ocurrió un error al registrar. Intente nuevamente.');
+    }
   };
 
   return (
