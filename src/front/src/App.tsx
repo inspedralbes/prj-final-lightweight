@@ -5,6 +5,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
+import Session from "./pages/Session";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Conectamos al backend en el puerto 3000
 const socket = io(import.meta.env.VITE_BACK_URL);
@@ -60,7 +62,17 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/home" element={<Home />} />
+        {/* Ruta pública para sesiones */}
+        <Route path="/session/:code" element={<Session />} />
+        {/* Rutas protegidas */}
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute requiredRole="COACH">
+              <Home />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/ws" element={WebsocketTest} />
       </Routes>
     </BrowserRouter>
