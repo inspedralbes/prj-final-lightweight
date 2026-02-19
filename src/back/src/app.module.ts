@@ -6,6 +6,7 @@ import { EventsGateway } from './events/events.gateway'; // <--- 1. Importamos e
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { RoutineModule } from './routine/routine.module';
+import { SessionModule } from './session/session.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RoutineModule } from './routine/routine.module';
     PrismaModule,
     AuthModule,
     RoutineModule,
+    SessionModule,
   ],
   controllers: [AppController],
   providers: [

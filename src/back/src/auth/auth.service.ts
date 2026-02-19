@@ -70,6 +70,11 @@ export class AuthService {
     return {
       // El token JWT se genera utilizando el servicio JwtService, que firma el payload con la clave secreta configurada en la aplicación.
       access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+      },
     };
   }
 }

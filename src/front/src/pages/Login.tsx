@@ -14,8 +14,16 @@ export default function Login() {
     try {
       const res = await api.post('/auth/login', { username, password });
       const token = res.data?.access_token;
+      const user = res.data?.user;
       if (token) {
         localStorage.setItem('token', token);
+        if (user) {
+          localStorage.setItem('username', user.username);
+          localStorage.setItem('userRole', user.role);
+          localStorage.setItem('userId', user.id);
+        }
+        // Configurar el token en los headers por defecto
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         window.alert('Inicio de sesión correcto. Redirigiendo...');
         navigate('/home');
       } else {
