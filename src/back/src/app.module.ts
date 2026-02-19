@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { EventsGateway } from './events/events.gateway'; // <--- 1. Importamos el archivo que acabas de crear
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { RoutineModule } from './routine/routine.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AuthModule } from './auth/auth.module';
     }),
     PrismaModule,
     AuthModule,
+    RoutineModule,
   ],
   controllers: [AppController],
   providers: [
