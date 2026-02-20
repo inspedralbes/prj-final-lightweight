@@ -6,13 +6,14 @@ import axios from 'axios';
 export default function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'COACH' | 'CLIENT'>('COACH');
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/auth/register', { username, password });
+      await api.post('/auth/register', { username, password, role });
       window.alert('Registro exitoso. Redirigiendo a login.');
       navigate('/');
     } catch (error) {
@@ -29,8 +30,34 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold mb-6 text-center text-green-400">Crear Cuenta</h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block mb-2 text-sm font-medium">Tipo de Cuenta</label>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setRole("COACH")}
+                className={`flex-1 py-2 px-4 rounded transition-all border ${role === "COACH"
+                  ? "bg-green-600 border-green-500 text-white font-bold"
+                  : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                  }`}
+              >
+                Coach
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("CLIENT")}
+                className={`flex-1 py-2 px-4 rounded transition-all border ${role === "CLIENT"
+                  ? "bg-green-600 border-green-500 text-white font-bold"
+                  : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                  }`}
+              >
+                Cliente
+              </button>
+            </div>
+          </div>
+
           <div>
             <label className="block mb-1 text-sm font-medium">Elige un Usuario</label>
             <input
@@ -40,7 +67,7 @@ export default function Register() {
               onChange={(e) => setUsername(e.target.value)}
             />
           </div>
-          
+
           <div>
             <label className="block mb-1 text-sm font-medium">Contraseña</label>
             <input

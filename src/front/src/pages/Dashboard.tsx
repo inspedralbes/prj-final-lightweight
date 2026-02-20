@@ -15,6 +15,9 @@ const Dashboard = () => {
     const [currentRoutine, setCurrentRoutine] = useState<{ id?: number; name: string } | null>(null);
     const [formName, setFormName] = useState("");
 
+    const [clients, setClients] = useState<{ id: number; username: string }[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<number | "">("");
+
     const fetchRoutines = async () => {
         try {
             setLoading(true);
@@ -27,13 +30,24 @@ const Dashboard = () => {
         }
     };
 
+    const fetchClients = async () => {
+        try {
+            const data = await routineService.getClients();
+            setClients(data);
+        } catch (error) {
+            console.error("Failed to fetch clients", error);
+        }
+    };
+
     useEffect(() => {
         fetchRoutines();
+        fetchClients();
     }, []);
 
     const handleCreateClick = () => {
         setCurrentRoutine(null);
         setFormName("");
+        setSelectedClientId("");
         setIsModalOpen(true);
     };
 
@@ -42,6 +56,13 @@ const Dashboard = () => {
         if (routine) {
             setCurrentRoutine({ id: routine.id, name: routine.name });
             setFormName(routine.name);
+            // Assuming routine has clientId property via extended interface or any cast if not strict
+            // routineService.getAll currently returns Routine[], we might need to cast or update interface
+            // For now, let's assume it might be there or we won't pre-fill it correctly without updating the routine object
+            // Let's check routine object properties. Routine interface in frontend service:
+            // interface Routine { id, coachId, name, ... } - it doesn't have clientId yet.
+            // We should update the frontend Routine interface too, but for now let's leave pre-fill empty or handle it if we update getAll.
+            setSelectedClientId("");
             setIsModalOpen(true);
         }
     };
@@ -50,7 +71,6 @@ const Dashboard = () => {
         if (window.confirm("Are you sure you want to delete this routine?")) {
             try {
                 await routineService.delete(id);
-                // Optimistic update or refetch
                 setRoutines((prev) => prev.filter((r) => r.id !== id));
             } catch (error) {
                 console.error("Failed to delete routine", error);
@@ -64,16 +84,21 @@ const Dashboard = () => {
         if (!formName.trim()) return;
 
         try {
+            const payload = {
+                name: formName,
+                clientId: selectedClientId !== "" ? Number(selectedClientId) : undefined
+            };
+
             if (currentRoutine?.id) {
-                // Update
-                const updated = await routineService.update(currentRoutine.id, { name: formName });
+                const updated = await routineService.update(currentRoutine.id, payload);
                 setRoutines((prev) =>
                     prev.map((r) => (r.id === updated.id ? updated : r))
                 );
             } else {
-                // Create
-                // Note: Coach ID is hardcoded for now as per Context, assumed User is Coach with ID 1
-                const created = await routineService.create({ coachId: MOCK_COACH_ID, name: formName });
+                const created = await routineService.create({
+                    coachId: MOCK_COACH_ID,
+                    ...payload
+                });
                 setRoutines((prev) => [created, ...prev]);
             }
             setIsModalOpen(false);
@@ -106,9 +131,6 @@ const Dashboard = () => {
                     </button>
                 </div>
 
-                {/* Filters/Search placeholder if needed */}
-                {/* Could go here */}
-
                 {/* Content */}
                 {loading ? (
                     <div className="text-center py-20 text-gray-500">Loading routines...</div>
@@ -131,7 +153,7 @@ const Dashboard = () => {
                                 id={routine.id}
                                 name={routine.name}
                                 exerciseCount={routine.exercises?.length || 0}
-                                createdAt={routine.createdAt || new Date().toISOString()} // Fallback if API lacks it
+                                createdAt={routine.createdAt || new Date().toISOString()}
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
                             />
@@ -157,18 +179,43 @@ const Dashboard = () => {
                         </div>
 
                         <form onSubmit={handleSubmit} className="p-6">
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium text-gray-400 mb-2">
-                                    Routine Name
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formName}
-                                    onChange={(e) => setFormName(e.target.value)}
-                                    placeholder="e.g. Hypertrophy Block A"
-                                    className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-700"
-                                    autoFocus
-                                />
+                            <div className="mb-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">
+                                        Routine Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formName}
+                                        onChange={(e) => setFormName(e.target.value)}
+                                        placeholder="e.g. Hypertrophy Block A"
+                                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-700"
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">
+                                        Assign to Client (Optional)
+                                    </label>
+                                    <select
+                                        value={selectedClientId}
+                                        onChange={(e) => setSelectedClientId(e.target.value ? Number(e.target.value) : "")}
+                                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all appearance-none"
+                                    >
+                                        <option value="">-- No Client Assigned --</option>
+                                        {clients.map((client) => (
+                                            <option key={client.id} value={client.id}>
+                                                {client.username}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {clients.length === 0 && (
+                                        <p className="text-xs text-yellow-500 mt-1">
+                                            No clients available. Register a client account to assign routines.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="flex justify-end gap-3">

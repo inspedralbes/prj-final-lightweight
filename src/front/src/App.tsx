@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
+import ClientHome from "./pages/ClientHome";
 import Session from "./pages/Session";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -62,6 +63,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/client-home" element={<ClientHome />} />
         {/* Ruta pública para sesiones */}
         <Route path="/session/:code" element={<Session />} />
         {/* Rutas protegidas */}

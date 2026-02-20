@@ -15,7 +15,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   // Función para hashear la contraseña del usuario utilizando bcrypt.
   async hashPassword(password: string): Promise<string> {
@@ -33,7 +33,7 @@ export class AuthService {
 
   // Función para registrar un nuevo usuario. Verifica si el nombre de usuario ya existe, hashea la contraseña y crea un nuevo registro en la base de datos.
   async register(registerDto: RegisterDto) {
-    const { username, password } = registerDto;
+    const { username, password, role = 'COACH' } = registerDto;
     const existingUser = await this.prisma.user.findUnique({
       where: { username },
     });
@@ -45,6 +45,7 @@ export class AuthService {
       data: {
         username,
         passwordHash,
+        role,
       },
     });
     return { message: `User ${username} registered successfully` };

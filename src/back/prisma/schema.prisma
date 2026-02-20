@@ -39,7 +39,8 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
 
   // Relaciones
-  routines     Routine[]
+  routinesCreated Routine[] @relation("CoachRoutines")
+  routinesAssigned Routine[] @relation("ClientRoutines")
   liveSessions LiveSession[]
   dietPlans    DietPlan[] // Expansión futura
 
@@ -67,7 +68,9 @@ model Routine {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relaciones
-  coach        User              @relation(fields: [coachId], references: [id])
+  coach        User              @relation("CoachRoutines", fields: [coachId], references: [id])
+  clientId     Int?              @map("client_id")
+  client       User?             @relation("ClientRoutines", fields: [clientId], references: [id])
   exercises    RoutineExercise[]
   liveSessions LiveSession[]
 

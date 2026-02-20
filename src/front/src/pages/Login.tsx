@@ -25,7 +25,11 @@ export default function Login() {
         // Configurar el token en los headers por defecto
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         window.alert('Inicio de sesión correcto. Redirigiendo...');
-        navigate('/dashboard');
+        if (user.role === 'COACH') {
+          navigate('/dashboard');
+        } else {
+          navigate('/client-home');
+        }
       } else {
         window.alert('Respuesta inesperada del servidor.');
       }

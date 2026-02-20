@@ -12,18 +12,27 @@ import { Routine } from './routine.model';
 
 @Controller('/routines')
 export class RoutineController {
-  constructor(private readonly routineService: RoutineService) {}
+  constructor(private readonly routineService: RoutineService) { }
 
   @Get()
   async getAllRoutines(): Promise<Routine[]> {
     return this.routineService.getAllRoutines();
   }
 
+  @Get('clients-options')
+  async getClientsOptions() {
+    return this.routineService.getClients();
+  }
+
   @Post()
   async postRoutine(
-    @Body() body: { coachId: number; name: string },
+    @Body() body: { coachId: number; name: string; clientId?: number },
   ): Promise<Routine> {
-    return this.routineService.createRoutine(body.coachId, body.name);
+    return this.routineService.createRoutine(
+      body.coachId,
+      body.name,
+      body.clientId,
+    );
   }
 
   @Get(':id')
@@ -39,8 +48,8 @@ export class RoutineController {
   @Put(':id')
   async updateRoutine(
     @Param('id') id: number,
-    @Body() body: { name: string },
+    @Body() body: { name: string; clientId?: number },
   ): Promise<Routine> {
-    return this.routineService.updateRoutine(id, body.name);
+    return this.routineService.updateRoutine(id, body.name, body.clientId);
   }
 }
