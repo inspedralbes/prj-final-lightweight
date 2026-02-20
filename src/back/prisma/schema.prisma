@@ -1,0 +1,213 @@
+// 1. Configuración del generador y la fuente de datos
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --------------------------------------
+// ENUMS
+// --------------------------------------
+
+enum UserRole {
+  COACH
+  CLIENT // Para uso futuro o participantes sin cuenta completa
+}
+
+enum SessionStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+}
+
+enum ParticipantRole {
+  COACH
+  CLIENT
+}
+
+// --------------------------------------
+// MODELOS CORE (MVP)
+// --------------------------------------
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(COACH)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  routines     Routine[]
+  liveSessions LiveSession[]
+  dietPlans    DietPlan[] // Expansión futura
+
+  @@map("users")
+}
+
+model ExerciseCatalog {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  category    String? // Ej: "upper body", "cardio"
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  routineExercises RoutineExercise[]
+
+  @@map("exercise_catalog")
+}
+
+model Routine {
+  id        Int      @id @default(autoincrement())
+  coachId   Int      @map("coach_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relaciones
+  coach        User              @relation(fields: [coachId], references: [id])
+  exercises    RoutineExercise[]
+  liveSessions LiveSession[]
+
+  @@map("routines")
+}
+
+model RoutineExercise {
+  id         Int     @id @default(autoincrement())
+  routineId  Int     @map("routine_id")
+  exerciseId Int     @map("exercise_id")
+  sets       Int
+  reps       Int
+  rest       Int // en segundos
+  notes      String?
+  order      Int // para ordenar dentro de la rutina
+
+  // Relaciones
+  routine  Routine         @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  exercise ExerciseCatalog @relation(fields: [exerciseId], references: [id])
+
+  @@map("routine_exercises")
+}
+
+model LiveSession {
+  id          Int           @id @default(autoincrement())
+  coachId     Int           @map("coach_id")
+  routineId   Int           @map("routine_id")
+  sessionCode String        @unique @map("session_code")
+  status      SessionStatus @default(PENDING)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  completedAt DateTime?     @map("completed_at")
+
+  // Relaciones
+  coach        User              @relation(fields: [coachId], references: [id])
+  routine      Routine           @relation(fields: [routineId], references: [id])
+  participants LiveParticipant[]
+  events       WorkoutEvent[]
+  messages     ChatMessage[]
+
+  @@map("live_sessions")
+}
+
+model LiveParticipant {
+  id            Int             @id @default(autoincrement())
+  sessionId     Int             @map("session_id")
+  participantId String          @map("participant_id") // UUID temporal o ID de usuario
+  role          ParticipantRole
+  joinedAt      DateTime        @default(now()) @map("joined_at")
+  leftAt        DateTime?       @map("left_at")
+
+  // Relaciones
+  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("live_participants")
+}
+
+model WorkoutEvent {
+  id        Int      @id @default(autoincrement())
+  sessionId Int      @map("session_id")
+  eventType String   @map("event_type") // Ej: "exercise:start"
+  data      Json // Detalles del evento
+  timestamp DateTime @default(now())
+
+  // Relaciones
+  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("workout_events")
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  sessionId Int      @map("session_id")
+  sender    String // "COACH" o Identificador del cliente
+  message   String
+  timestamp DateTime @default(now())
+
+  // Relaciones
+  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+// --------------------------------------
+// MODELOS EXPANSIÓN (Post-MVP)
+// --------------------------------------
+// Incluidos para cumplir con el diagrama completo
+
+model FoodCatalog {
+  id        Int      @id @default(autoincrement())
+  name      String
+  calories  Float
+  protein   Float
+  carbs     Float
+  fat       Float
+  unit      String // Ej: "g", "ml"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  dietMealItems DietMealItem[]
+
+  @@map("food_catalog")
+}
+
+model DietPlan {
+  id        Int      @id @default(autoincrement())
+  coachId   Int      @map("coach_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  coach User       @relation(fields: [coachId], references: [id])
+  meals DietMeal[]
+
+  @@map("diet_plans")
+}
+
+model DietMeal {
+  id         Int    @id @default(autoincrement())
+  dietPlanId Int    @map("diet_plan_id")
+  name       String
+  mealType   String @map("meal_type") // Ej: "breakfast"
+  order      Int
+
+  // Relaciones
+  dietPlan  DietPlan       @relation(fields: [dietPlanId], references: [id], onDelete: Cascade)
+  mealItems DietMealItem[]
+
+  @@map("diet_meals")
+}
+
+model DietMealItem {
+  id         Int    @id @default(autoincrement())
+  dietMealId Int    @map("diet_meal_id")
+  foodId     Int    @map("food_id")
+  quantity   Float
+  unit       String
+
+  // Relaciones
+  dietMeal DietMeal    @relation(fields: [dietMealId], references: [id], onDelete: Cascade)
+  food     FoodCatalog @relation(fields: [foodId], references: [id])
+
+  @@map("diet_meal_items")
+}
