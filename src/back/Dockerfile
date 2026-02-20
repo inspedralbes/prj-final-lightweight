@@ -15,11 +15,8 @@ RUN npm install
 # Copiamos el resto del código
 COPY . .
 
-# Generamos el cliente de Prisma (IMPORTANTE para que funcione la DB)
-RUN npx prisma generate
-
 # Exponemos el puerto de NestJS
 EXPOSE 3000
 
 # Comando para iniciar en modo desarrollo (hot-reload)
-CMD ["npm", "run", "start:dev"]
+CMD ["sh", "-c", "npx prisma generate && npm run start:dev"]

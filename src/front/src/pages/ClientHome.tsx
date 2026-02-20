@@ -23,13 +23,6 @@ const ClientHome = () => {
     useEffect(() => {
         const fetchClientRoutines = async () => {
             try {
-                // In a real app, you would have a specific endpoint for fetching assigned routines.
-                // For this MVP, we might need to filter or update the backend to support fetching "my routines".
-                // Assuming routineService.getAll() returns all routines for now, functionality to fetch *assigned* routines
-                // should be implemented in the backend service (e.g. GET /routines/me or GET /routines?clientId=...).
-                // Reusing getAll() as a placeholder if no specific endpoint exists yet, but likely needs backend update.
-
-                // Ideally: const data = await clientService.getMyRoutines();
                 const data = await routineService.getAll();
                 setRoutines(data);
             } catch (error) {
@@ -51,7 +44,7 @@ const ClientHome = () => {
                         <Dumbbell className="w-6 h-6 text-orange-500" />
                     </div>
                     <span className="text-xl font-bold text-white tracking-tight">
-                        COACH<span className="text-orange-500">PRO</span> <span className="text-gray-500 text-sm font-normal ml-2">Client Portal</span>
+                        Light<span className="text-orange-500">Weight</span> <span className="text-gray-500 text-sm font-normal ml-2">Client Portal</span>
                     </span>
                 </div>
 

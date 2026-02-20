@@ -13,7 +13,22 @@ export interface Routine {
 
 export const routineService = {
     getAll: async (): Promise<Routine[]> => {
-        const response = await axios.get(`${API_URL}/routines`);
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_URL}/routines`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response.data;
+    },
+
+    getMyRoutines: async (): Promise<Routine[]> => {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_URL}/routines/my-routines/all`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     },
 
