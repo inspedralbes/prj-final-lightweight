@@ -1,9 +1,0 @@
-# Environment variables
-.env
-.env.*
-!.env.example
-
-# Node
-node_modules/
-dist/
-.vite/
