@@ -44,23 +44,37 @@ export class RoutinesService {
     return this.getRoutineById(routine.id);
   }
 
-  async updateRoutine(routineId: number, coachId: number, name: string, exercises: any[]) {
+  async updateRoutine(
+    routineId: number,
+    coachId: number,
+    name: string,
+    exercises: any[],
+  ) {
     // Verify ownership
-    const routine = await this.prisma.routine.findUnique({ where: { id: routineId } });
+    const routine = await this.prisma.routine.findUnique({
+      where: { id: routineId },
+    });
     if (!routine || routine.coachId !== coachId) {
       throw new Error('Unauthorized');
     }
 
-    await this.prisma.routine.update({ where: { id: routineId }, data: { name } });
+    await this.prisma.routine.update({
+      where: { id: routineId },
+      data: { name },
+    });
 
     // Delete existing routine exercises and recreate (simpler)
     await this.prisma.routineExercise.deleteMany({ where: { routineId } });
 
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
-      let exercise = await this.prisma.exerciseCatalog.findFirst({ where: { name: ex.name } });
+      let exercise = await this.prisma.exerciseCatalog.findFirst({
+        where: { name: ex.name },
+      });
       if (!exercise) {
-        exercise = await this.prisma.exerciseCatalog.create({ data: { name: ex.name, description: ex.notes ?? null } });
+        exercise = await this.prisma.exerciseCatalog.create({
+          data: { name: ex.name, description: ex.notes ?? null },
+        });
       }
 
       await this.prisma.routineExercise.create({
@@ -87,6 +101,23 @@ export class RoutinesService {
   }
 
   async getCoachRoutines(coachId: number) {
-    return this.prisma.routine.findMany({ where: { coachId }, include: { exercises: { include: { exercise: true } } } });
+    return this.prisma.routine.findMany({
+      where: { coachId },
+      include: { exercises: { include: { exercise: true } } },
+    });
+  }
+
+  async deleteRoutine(routineId: number, coachId: number) {
+    const routine = await this.prisma.routine.findUnique({
+      where: { id: routineId },
+    });
+    if (!routine || routine.coachId !== coachId) {
+      throw new Error('Unauthorized');
+    }
+
+    // Delete related exercises first
+    await this.prisma.routineExercise.deleteMany({ where: { routineId } });
+
+    return this.prisma.routine.delete({ where: { id: routineId } });
   }
 }

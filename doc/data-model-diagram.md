@@ -1,6 +1,6 @@
-# Data Model Diagram
+# Diagrama del Modelo de Datos
 
-**Actualizado**: 2026-02-11 — Modelo completo solicitado por usuario, incluyendo tablas para expansiones futuras (dietas, catálogo de ejercicios, etc.). Tablas en negrita son core para MVP PRD. Tablas en cursiva son para expansiones post-MVP.
+**Actualizado**: 2026-02-19 — Modelo actualizado basado en PRD, incluyendo tabla Session para Friend Sessions y campos para códigos de cliente. Tablas en negrita son core para MVP. Tablas en cursiva son para expansiones post-MVP.
 
 ## Tablas y Campos
 
@@ -9,7 +9,9 @@
 - id (Int, PK)
 - username (String, unique)
 - passwordHash (String)
-- role (Enum: COACH) — Solo coaches tienen auth en MVP
+- role (Enum: COACH, CLIENT)
+- coachId (Int?, FK to users.id) — Para clientes asignados
+- invitationCode (String?, unique) — Código para asignar cliente
 - createdAt (DateTime)
 
 ### _exercise_catalog_
@@ -39,15 +41,15 @@
 - notes (String?)
 - order (Int) — para orden en rutina
 
-### **live_sessions**
+### **sessions**
 
 - id (Int, PK)
-- coachId (Int, FK to users.id)
-- routineId (Int, FK to routines.id)
-- sessionCode (String, unique) — Código único para enlace compartido
-- status (Enum: PENDING, ACTIVE, COMPLETED)
+- hostId (Int, FK to users.id)
+- guestId (Int?, FK to users.id)
+- code (String, unique) — Código para Friend Session
+- status (Enum: ACTIVE, COMPLETED)
 - createdAt (DateTime)
-- completedAt (DateTime?) — Nullable
+- timeout (DateTime)
 
 ### **live_participants**
 
