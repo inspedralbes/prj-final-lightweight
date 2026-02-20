@@ -6,6 +6,8 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Session from "./pages/Session";
+import RoutineCreate from "./pages/RoutineCreate";
+import RoutineEdit from "./pages/RoutineEdit";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Conectamos al backend en el puerto 3000
@@ -70,6 +72,22 @@ function App() {
           element={
             <ProtectedRoute requiredRole="COACH">
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/routines/create"
+          element={
+            <ProtectedRoute requiredRole="COACH">
+              <RoutineCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/routines/:id/edit"
+          element={
+            <ProtectedRoute requiredRole="COACH">
+              <RoutineEdit />
             </ProtectedRoute>
           }
         />
