@@ -76,7 +76,7 @@ function App() {
           }
         />
         <Route
-          path="/routines/create"
+          path="/routine/create"
           element={
             <ProtectedRoute requiredRole="COACH">
               <RoutineCreate />
@@ -84,7 +84,7 @@ function App() {
           }
         />
         <Route
-          path="/routines/:id/edit"
+          path="/routine/:id/edit"
           element={
             <ProtectedRoute requiredRole="COACH">
               <RoutineEdit />
