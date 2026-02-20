@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
 import Session from "./pages/Session";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -39,11 +40,10 @@ function App() {
       <h1 className="text-4xl font-bold mb-8">Test de WebSockets 🔌</h1>
 
       <div
-        className={`p-6 rounded-xl text-2xl font-semibold transition-colors duration-500 ${
-          isConnected
-            ? "bg-green-600 shadow-[0_0_20px_rgba(22,163,74,0.5)]"
-            : "bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)]"
-        }`}
+        className={`p-6 rounded-xl text-2xl font-semibold transition-colors duration-500 ${isConnected
+          ? "bg-green-600 shadow-[0_0_20px_rgba(22,163,74,0.5)]"
+          : "bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)]"
+          }`}
       >
         {isConnected ? "ESTADO: CONECTADO 🟢" : "ESTADO: DESCONECTADO 🔴"}
       </div>
@@ -70,6 +70,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole="COACH">
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute requiredRole="COACH">
+              <Dashboard />
             </ProtectedRoute>
           }
         />

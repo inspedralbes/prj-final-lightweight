@@ -25,7 +25,7 @@ export default function Login() {
         // Configurar el token en los headers por defecto
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         window.alert('Inicio de sesión correcto. Redirigiendo...');
-        navigate('/home');
+        navigate('/dashboard');
       } else {
         window.alert('Respuesta inesperada del servidor.');
       }
@@ -42,10 +42,10 @@ export default function Login() {
   return (
     // CAMBIO AQUÍ: w-full y h-screen para ocupar todo
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-900 text-white">
-      
+
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold mb-6 text-center text-blue-400">Iniciar Sesión</h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block mb-1 text-sm font-medium">Usuario</label>
@@ -57,7 +57,7 @@ export default function Login() {
               placeholder="Tu usuario"
             />
           </div>
-          
+
           <div>
             <label className="block mb-1 text-sm font-medium">Contraseña</label>
             <input
