@@ -1,96 +1,204 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { User, Lock, Eye, EyeOff, ArrowRight } from '../components/Icons';
 import api from '../utils/api';
 import axios from 'axios';
 
 export default function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'COACH' | 'CLIENT'>('COACH');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [role, setRole] = useState<'CLIENT' | 'COACH'>('CLIENT');
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      window.alert('Les contrasenyes no coincideixen.');
+      return;
+    }
+    
+    if (!acceptTerms) {
+      window.alert('Has d\'acceptar els termes i condicions per continuar.');
+      return;
+    }
+    
+    setIsLoading(true);
     try {
       await api.post('/auth/register', { username, password, role });
-      window.alert('Registro exitoso. Redirigiendo a login.');
-      navigate('/');
+      window.alert('Registre exitós. Redirigint a inici de sessió.');
+      navigate('/login');
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 409) {
-        window.alert('El usuario ya existe. Elija otro nombre de usuario.');
+        window.alert('L\'usuari ja existeix. Tria un altre nom d\'usuari.');
         return;
       }
-      console.error('Error durante registro:', error);
-      window.alert('Ocurrió un error al registrar. Intente nuevamente.');
+      console.error('Error durant registre:', error);
+      window.alert('Va ocórrer un error al registrar. Prova de nou.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-3xl font-bold mb-6 text-center text-green-400">Crear Cuenta</h2>
+    <div className="min-h-screen w-full flex bg-zinc-950 text-white">
+      {/* Columna Izquierda - Decorativa */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col items-center justify-center">
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-orange-900/40 via-black/60 to-black/80 z-10"
+          style={{
+            backgroundImage:
+              'url(\'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"%3E%3Crect fill="%23000" width="1200" height="800"/%3E%3Cg fill="%23111" opacity="0.3"%3E%3Ccircle cx="400" cy="300" r="150"/%3E%3Ccircle cx="800" cy="500" r="200"/%3E%3C/g%3E%3C/svg%3E\')',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+        <div className="relative z-20 text-center px-8">
+          <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-400 to-orange-600 mb-4">
+            SUPERA<br />ELS TEUS<br />LÍMITS
+          </h1>
+          <p className="text-gray-300 text-lg mt-6 max-w-sm">
+            Uneix-te a LightWeight i comença la teva transformació física.
+          </p>
+        </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-2 text-sm font-medium">Tipo de Cuenta</label>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => setRole("COACH")}
-                className={`flex-1 py-2 px-4 rounded transition-all border ${role === "COACH"
-                  ? "bg-green-600 border-green-500 text-white font-bold"
-                  : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                  }`}
-              >
-                Coach
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole("CLIENT")}
-                className={`flex-1 py-2 px-4 rounded transition-all border ${role === "CLIENT"
-                  ? "bg-green-600 border-green-500 text-white font-bold"
-                  : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                  }`}
-              >
-                Cliente
-              </button>
+      {/* Columna Derecha - Formulario */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-black">
+        <div className="w-full max-w-md">
+          {/* Títulos */}
+          <div className="mb-8">
+            <h2 className="text-4xl font-bold mb-2">Crea la teva Conta</h2>
+            <p className="text-gray-400">Uneix-te a LightWeight i comença el teu viatge de fitness.</p>
+          </div>
+
+          {/* Selector de Rol */}
+          <div className="mb-8 flex gap-3">
+            <button
+              onClick={() => setRole('CLIENT')}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
+                role === 'CLIENT'
+                  ? 'bg-orange-500 text-black'
+                  : 'bg-zinc-900 text-gray-300 hover:bg-zinc-800 border border-zinc-800'
+              }`}
+            >
+              Client
+            </button>
+            <button
+              onClick={() => setRole('COACH')}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
+                role === 'COACH'
+                  ? 'bg-orange-500 text-black'
+                  : 'bg-zinc-900 text-gray-300 hover:bg-zinc-800 border border-zinc-800'
+              }`}
+            >
+              Entrenador
+            </button>
+          </div>
+
+          {/* Formulario */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Input - Nom d'usuari */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">NOM D&apos;USUARI</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Tria un nom d'usuari"
+                  className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block mb-1 text-sm font-medium">Elige un Usuario</label>
-            <input
-              type="text"
-              className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-green-500"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
+            {/* Input - Contrasenya */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">CONTRASENYA</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Crea una contrasenya segura"
+                  className="w-full pl-10 pr-10 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
 
-          <div>
-            <label className="block mb-1 text-sm font-medium">Contraseña</label>
-            <input
-              type="password"
-              className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-green-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+            {/* Input - Confirmar Contrasenya */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">CONFIRMAR CONTRASENYA</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirma la contrasenya"
+                  className="w-full pl-10 pr-10 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
 
-          <button
-            type="submit"
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-200"
-          >
-            Registrarse
-          </button>
-        </form>
+            {/* Checkbox - Accepto els Termes */}
+            <div className="flex items-start">
+              <input
+                type="checkbox"
+                id="acceptTerms"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="w-4 h-4 bg-zinc-900 border border-zinc-800 rounded cursor-pointer accent-orange-500 mt-1"
+              />
+              <label htmlFor="acceptTerms" className="ml-2 text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition-colors">
+                Accepto els{' '}
+                <a href="#" className="text-orange-500 hover:text-orange-400 font-semibold">
+                  Termes i Condicions
+                </a>
+              </label>
+            </div>
 
-        <div className="mt-6 text-center text-sm">
-          <p className="text-gray-400">
-            ¿Ya tienes cuenta?{' '}
-            <Link to="/" className="text-green-400 hover:underline">
-              Inicia sesión
+            {/* Botón Principal */}
+            <button
+              type="submit"
+              disabled={isLoading || !acceptTerms}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-700 text-black font-bold rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Carregant...' : 'CREAR COMPTE'}
+              {!isLoading && <ArrowRight className="w-5 h-5" />}
+            </button>
+          </form>
+
+          {/* Pie del formulario */}
+          <p className="mt-6 text-center text-gray-400 text-sm">
+            Ja tens compte?{' '}
+            <Link to="/login" className="text-orange-500 hover:text-orange-400 font-semibold transition-colors">
+              Inicia sessió
             </Link>
           </p>
         </div>
