@@ -67,7 +67,7 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const payload = { userId: user.id };
+    const payload = { userId: user.id, role: user.role };
     return {
       // El token JWT se genera utilizando el servicio JwtService, que firma el payload con la clave secreta configurada en la aplicación.
       access_token: this.jwtService.sign(payload),

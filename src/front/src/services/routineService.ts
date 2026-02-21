@@ -1,53 +1,62 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_BACK_URL || 'http://localhost:3000';
+import api from '../utils/api';
 
 export interface Routine {
     id: number;
     coachId: number;
+    clientId?: number | null;
     name: string;
     createdAt?: string;
     updatedAt?: string;
-    exercises?: any[]; // Adjust based on actual response if nested
+    exercises?: any[];
 }
 
 export const routineService = {
+
+    /** Lista todas las rutinas del coach autenticado */
     getAll: async (): Promise<Routine[]> => {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/routines`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        return response.data;
+        const res = await api.get('/routines');
+        return res.data;
     },
 
-    getMyRoutines: async (): Promise<Routine[]> => {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/routines/my-routines/all`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    },
-
+    /** Lista clientes (rol CLIENT) para el Dropdown de asignación */
     getClients: async (): Promise<{ id: number; username: string }[]> => {
-        const response = await axios.get(`${API_URL}/routines/clients-options`);
-        return response.data;
+        const res = await api.get('/routines/clients-options');
+        return res.data;
     },
 
-    create: async (payload: { coachId: number; name: string; clientId?: number }): Promise<Routine> => {
-        const response = await axios.post(`${API_URL}/routines`, payload);
-        return response.data;
+    /** Rutinas asignadas al cliente autenticado */
+    getMyRoutines: async (): Promise<Routine[]> => {
+        const res = await api.get('/routines/my-routines');
+        return res.data;
     },
 
-    update: async (id: number, payload: { name: string; clientId?: number }): Promise<Routine> => {
-        const response = await axios.put(`${API_URL}/routines/${id}`, payload);
-        return response.data;
+    /** Crea una nueva rutina */
+    create: async (payload: {
+        name: string;
+        exercises?: any[];
+        clientId?: number;
+    }): Promise<Routine> => {
+        const res = await api.post('/routines/create', payload);
+        return res.data;
     },
 
+    /** Actualiza una rutina existente */
+    update: async (
+        id: number,
+        payload: { name: string; exercises?: any[]; clientId?: number },
+    ): Promise<Routine> => {
+        const res = await api.put(`/routines/${id}/edit`, payload);
+        return res.data;
+    },
+
+    /** Obtiene una rutina por ID */
+    getById: async (id: number): Promise<Routine> => {
+        const res = await api.get(`/routines/${id}`);
+        return res.data;
+    },
+
+    /** Elimina una rutina */
     delete: async (id: number): Promise<void> => {
-        await axios.delete(`${API_URL}/routines/${id}`);
+        await api.delete(`/routines/${id}`);
     },
 };

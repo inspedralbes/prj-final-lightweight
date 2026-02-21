@@ -1,24 +1,54 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class RoutinesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
-  async createRoutine(coachId: number, name: string, exercises: any[]) {
-    // First create routine
+  // ─── CLIENTES ────────────────────────────────────────────────────────────────
+
+  /**
+   * Devuelve la lista de usuarios con rol CLIENT para usarlos en un Dropdown.
+   */
+  async getClientsOptions() {
+    try {
+      const clients = await this.prisma.user.findMany({
+        where: { role: UserRole.CLIENT },
+        select: {
+          id: true,
+          username: true,
+        },
+        orderBy: { username: 'asc' },
+      });
+      return clients;
+    } catch (error) {
+      console.error('ERROR EXACTO EN PRISMA AL BUSCAR CLIENTES:', error);
+      throw new InternalServerErrorException(
+        'Error al obtener la lista de clientes',
+      );
+    }
+  }
+
+  // ─── CREA RUTINA ─────────────────────────────────────────────────────────────
+
+  async createRoutine(coachId: number, name: string, exercises: any[], clientId?: number) {
     const routine = await this.prisma.routine.create({
       data: {
         coachId,
         name,
+        clientId,
       },
     });
 
-    // For each exercise, ensure exercise_catalog entry exists, then create RoutineExercise
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
 
-      // Find or create exercise catalog
       let exercise = await this.prisma.exerciseCatalog.findFirst({
         where: { name: ex.name },
       });
@@ -44,26 +74,27 @@ export class RoutinesService {
     return this.getRoutineById(routine.id);
   }
 
+  // ─── ACTUALIZA RUTINA ─────────────────────────────────────────────────────────
+
   async updateRoutine(
     routineId: number,
     coachId: number,
     name: string,
     exercises: any[],
+    clientId?: number,
   ) {
-    // Verify ownership
     const routine = await this.prisma.routine.findUnique({
       where: { id: routineId },
     });
-    if (!routine || routine.coachId !== coachId) {
-      throw new Error('Unauthorized');
-    }
+    if (!routine) throw new NotFoundException('Rutina no encontrada');
+    if (routine.coachId !== coachId)
+      throw new ForbiddenException('No tienes permiso para editar esta rutina');
 
     await this.prisma.routine.update({
       where: { id: routineId },
-      data: { name },
+      data: { name, clientId },
     });
 
-    // Delete existing routine exercises and recreate (simpler)
     await this.prisma.routineExercise.deleteMany({ where: { routineId } });
 
     for (let i = 0; i < exercises.length; i++) {
@@ -93,12 +124,16 @@ export class RoutinesService {
     return this.getRoutineById(routineId);
   }
 
+  // ─── GET POR ID ───────────────────────────────────────────────────────────────
+
   async getRoutineById(id: number) {
     return this.prisma.routine.findUnique({
       where: { id },
       include: { exercises: { include: { exercise: true } } },
     });
   }
+
+  // ─── GET POR COACH ────────────────────────────────────────────────────────────
 
   async getCoachRoutines(coachId: number) {
     return this.prisma.routine.findMany({
@@ -107,17 +142,26 @@ export class RoutinesService {
     });
   }
 
+  async getClientRoutines(clientId: number) {
+    return this.prisma.routine.findMany({
+      where: { clientId },
+      include: { exercises: { include: { exercise: true } } },
+    });
+  }
+
+  // ─── ELIMINA RUTINA ───────────────────────────────────────────────────────────
+
   async deleteRoutine(routineId: number, coachId: number) {
     const routine = await this.prisma.routine.findUnique({
       where: { id: routineId },
     });
-    if (!routine || routine.coachId !== coachId) {
-      throw new Error('Unauthorized');
-    }
+    if (!routine) throw new NotFoundException('Rutina no encontrada');
+    if (routine.coachId !== coachId)
+      throw new ForbiddenException(
+        'No tienes permiso para eliminar esta rutina',
+      );
 
-    // Delete related exercises first
     await this.prisma.routineExercise.deleteMany({ where: { routineId } });
-
     return this.prisma.routine.delete({ where: { id: routineId } });
   }
 }

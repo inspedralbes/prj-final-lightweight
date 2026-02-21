@@ -16,6 +16,7 @@ export class CoachGuard extends AuthGuard('jwt') {
 
     // Verificar que el usuario tenga el rol COACH
     if (user.role !== 'COACH') {
+      console.log(`[CoachGuard] Acceso denegado. Usuario: ${user.username}, Rol: ${user.role}`);
       throw new ForbiddenException('Only coaches can access this resource');
     }
 

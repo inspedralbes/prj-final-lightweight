@@ -5,8 +5,7 @@ import { Plus, X } from "../components/Icons";
 import { routineService, type Routine } from "../services/routineService";
 import axios from "axios";
 
-// Mock user for MVP - In real app get from Auth Context
-const MOCK_COACH_ID = 1;
+// Mock user for MVP - coachId lo extrae el backend del token JWT
 
 const Dashboard = () => {
     const [routines, setRoutines] = useState<Routine[]>([]);
@@ -56,13 +55,7 @@ const Dashboard = () => {
         if (routine) {
             setCurrentRoutine({ id: routine.id, name: routine.name });
             setFormName(routine.name);
-            // Assuming routine has clientId property via extended interface or any cast if not strict
-            // routineService.getAll currently returns Routine[], we might need to cast or update interface
-            // For now, let's assume it might be there or we won't pre-fill it correctly without updating the routine object
-            // Let's check routine object properties. Routine interface in frontend service:
-            // interface Routine { id, coachId, name, ... } - it doesn't have clientId yet.
-            // We should update the frontend Routine interface too, but for now let's leave pre-fill empty or handle it if we update getAll.
-            setSelectedClientId("");
+            setSelectedClientId(routine.clientId || "");
             setIsModalOpen(true);
         }
     };
@@ -95,10 +88,7 @@ const Dashboard = () => {
                     prev.map((r) => (r.id === updated.id ? updated : r))
                 );
             } else {
-                const created = await routineService.create({
-                    coachId: MOCK_COACH_ID,
-                    ...payload
-                });
+                const created = await routineService.create(payload);
                 setRoutines((prev) => [created, ...prev]);
             }
             setIsModalOpen(false);

@@ -21,13 +21,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { userId: number }) {
+  async validate(payload: { userId: number; role: string }) {
+    // Verificamos que el usuario sigue existiendo en la BD
     const user = await this.prisma.user.findUnique({
       where: { id: payload.userId },
     });
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('User not found');
     }
+    // Devolvemos el role de la BD (fuente de verdad), no el del token
     return { userId: user.id, username: user.username, role: user.role };
   }
 }

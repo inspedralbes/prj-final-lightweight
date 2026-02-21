@@ -16,19 +16,41 @@ import { CreateRoutineDto } from './dto/create-routine.dto';
 
 @Controller('routines')
 export class RoutinesController {
-  constructor(private routinesService: RoutinesService) {}
+  constructor(private routinesService: RoutinesService) { }
 
-  @Post('create')
+  // ⚠️ IMPORTANTE: Las rutas estáticas SIEMPRE antes que las dinámicas (:id)
+  // Si 'clients-options' estuviera DESPUÉS de ':id', NestJS lo trataría como un ID.
+
+  @Get('clients-options')
   @UseGuards(CoachGuard)
-  async create(@Request() req: any, @Body() body: CreateRoutineDto) {
-    const coachId = req.user.userId;
-    const { name, exercises } = body;
-    return this.routinesService.createRoutine(coachId, name, exercises || []);
+  async getClientsOptions() {
+    return this.routinesService.getClientsOptions();
+  }
+
+  // Endpoint para CLIENTES: devuelve las rutinas asignadas al usuario autenticado
+  @Get('my-routines')
+  @UseGuards(JwtAuthGuard)
+  async getMyRoutines(@Request() req: any) {
+    return this.routinesService.getClientRoutines(req.user.userId);
+  }
+
+  @Get()
+  @UseGuards(CoachGuard)
+  async listCoachRoutines(@Request() req: any) {
+    return this.routinesService.getCoachRoutines(req.user.userId);
   }
 
   @Get(':id')
   async getById(@Param('id') id: string) {
     return this.routinesService.getRoutineById(Number(id));
+  }
+
+  @Post('create')
+  @UseGuards(CoachGuard)
+  async create(@Request() req: any, @Body() body: CreateRoutineDto) {
+    const coachId = req.user.userId;
+    const { name, exercises, clientId } = body;
+    return this.routinesService.createRoutine(coachId, name, exercises || [], clientId);
   }
 
   @Put(':id/edit')
@@ -39,19 +61,14 @@ export class RoutinesController {
     @Body() body: CreateRoutineDto,
   ) {
     const coachId = req.user.userId;
-    const { name, exercises } = body;
+    const { name, exercises, clientId } = body;
     return this.routinesService.updateRoutine(
       Number(id),
       coachId,
       name,
       exercises || [],
+      clientId,
     );
-  }
-
-  @Get()
-  @UseGuards(CoachGuard)
-  async listCoachRoutines(@Request() req: any) {
-    return this.routinesService.getCoachRoutines(req.user.userId);
   }
 
   @Delete(':id')

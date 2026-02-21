@@ -3,37 +3,35 @@ import { Link, useNavigate } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, ArrowRight } from '../components/Icons';
 import api from '../utils/api';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [role, setRole] = useState<'CLIENT' | 'COACH'>('CLIENT');
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await api.post('/auth/login', { username, password, role });
+      const res = await api.post('/auth/login', { username, password });
       const token = res.data?.access_token;
       const user = res.data?.user;
-      if (token) {
-        localStorage.setItem('token', token);
-        if (user) {
-          localStorage.setItem('username', user.username);
-          localStorage.setItem('userRole', user.role);
-          localStorage.setItem('userId', user.id);
-        }
+
+      if (token && user) {
+        // Guarda en el contexto global (también persiste en localStorage)
+        login({ id: user.id, username: user.username, role: user.role, token });
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         if (rememberMe) {
           localStorage.setItem('rememberedUsername', username);
         }
-        
+
         if (user.role === 'COACH') {
           navigate('/dashboard');
         } else {
@@ -44,7 +42,7 @@ export default function Login() {
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        window.alert('Credencials invàlides. Verifica l\'usuari i la contrasenya.');
+        window.alert("Credencials invàlides. Verifica l'usuari i la contrasenya.");
         return;
       }
       console.error('Error durant inici de sessió:', error);
@@ -84,30 +82,6 @@ export default function Login() {
           <div className="mb-8">
             <h2 className="text-4xl font-bold mb-2">Inicia Sessió</h2>
             <p className="text-gray-400">Accedeix a LightWeight i comença el teu entrenament.</p>
-          </div>
-
-          {/* Selector de Rol */}
-          <div className="mb-8 flex gap-3">
-            <button
-              onClick={() => setRole('CLIENT')}
-              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
-                role === 'CLIENT'
-                  ? 'bg-orange-500 text-black'
-                  : 'bg-zinc-900 text-gray-300 hover:bg-zinc-800 border border-zinc-800'
-              }`}
-            >
-              Client
-            </button>
-            <button
-              onClick={() => setRole('COACH')}
-              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
-                role === 'COACH'
-                  ? 'bg-orange-500 text-black'
-                  : 'bg-zinc-900 text-gray-300 hover:bg-zinc-800 border border-zinc-800'
-              }`}
-            >
-              Entrenador
-            </button>
           </div>
 
           {/* Formulario */}
