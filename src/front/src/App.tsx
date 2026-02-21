@@ -5,68 +5,58 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import ClientHome from "./pages/ClientHome";
 import Session from "./pages/Session";
 import RoutineCreate from "./pages/RoutineCreate";
 import RoutineEdit from "./pages/RoutineEdit";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
 
-// Conectamos al backend en el puerto 3000
 const socket = io(import.meta.env.VITE_BACK_URL);
+
+// Ruta raíz inteligente: redirige según rol o a /login
+const RootRedirect = () => {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === "COACH") return <Navigate to="/dashboard" replace />;
+  return <Navigate to="/client-home" replace />;
+};
 
 function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);
 
   useEffect(() => {
-    // 1. Escuchar evento de conexión
-    socket.on("connect", () => {
-      console.log("✅ Conectado al servidor con ID:", socket.id);
-      setIsConnected(true);
-    });
-
-    // 2. Escuchar evento de desconexión
-    socket.on("disconnect", () => {
-      console.log("❌ Desconectado del servidor");
-      setIsConnected(false);
-    });
-
-    // Limpieza al cerrar
+    socket.on("connect", () => setIsConnected(true));
+    socket.on("disconnect", () => setIsConnected(false));
     return () => {
       socket.off("connect");
       socket.off("disconnect");
     };
   }, []);
 
-  const WebsocketTest = (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white font-sans">
-      <h1 className="text-4xl font-bold mb-8">Test de WebSockets 🔌</h1>
-
-      <div
-        className={`p-6 rounded-xl text-2xl font-semibold transition-colors duration-500 ${
-          isConnected
-            ? "bg-green-600 shadow-[0_0_20px_rgba(22,163,74,0.5)]"
-            : "bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)]"
-        }`}
-      >
-        {isConnected ? "ESTADO: CONECTADO 🟢" : "ESTADO: DESCONECTADO 🔴"}
-      </div>
-
-      <p className="mt-8 text-gray-400">
-        Mira la terminal de tu Backend para ver el mensaje de conexión.
-      </p>
-    </div>
-  );
-
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* Ruta raíz con redirección inteligente por rol */}
+        <Route path="/" element={<RootRedirect />} />
+
+        {/* Rutas públicas */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        {/* Ruta pública para sesiones */}
         <Route path="/session/:code" element={<Session />} />
-        {/* Rutas protegidas */}
+
+        {/* Rutas protegidas para COACH */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute requiredRole="COACH">
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/home"
           element={
@@ -91,11 +81,32 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/ws" element={WebsocketTest} />
+
+        {/* Rutas protegidas para CLIENT */}
+        <Route
+          path="/client-home"
+          element={
+            <ProtectedRoute requiredRole="CLIENT">
+              <ClientHome />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Ruta de debug WebSocket */}
+        <Route
+          path="/ws"
+          element={
+            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white">
+              <h1 className="text-4xl font-bold mb-8">Test de WebSockets 🔌</h1>
+              <div className={`p-6 rounded-xl text-2xl font-semibold ${isConnected ? "bg-green-600" : "bg-red-600"}`}>
+                {isConnected ? "ESTADO: CONECTADO 🟢" : "ESTADO: DESCONECTADO 🔴"}
+              </div>
+            </div>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
 }
 
 export default App;
-
