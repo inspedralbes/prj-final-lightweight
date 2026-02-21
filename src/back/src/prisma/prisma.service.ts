@@ -7,9 +7,6 @@ import { Pool } from 'pg';
 export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy {
-  routine: any;
-  user: any;
-  $disconnect: any;
   constructor() {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
@@ -23,9 +20,6 @@ export class PrismaService
   async onModuleInit() {
     await this.$connect();
     console.log('Connected to the database');
-  }
-  $connect() {
-    throw new Error('Method not implemented.');
   }
 
   async onModuleDestroy() {
