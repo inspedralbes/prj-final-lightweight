@@ -8,6 +8,8 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import ClientHome from "./pages/ClientHome";
 import Session from "./pages/Session";
+import RoutineCreate from "./pages/RoutineCreate";
+import RoutineEdit from "./pages/RoutineEdit";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Conectamos al backend en el puerto 3000
@@ -80,6 +82,22 @@ function App() {
           element={
             <ProtectedRoute requiredRole="COACH">
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/routine/create"
+          element={
+            <ProtectedRoute requiredRole="COACH">
+              <RoutineCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/routine/:id/edit"
+          element={
+            <ProtectedRoute requiredRole="COACH">
+              <RoutineEdit />
             </ProtectedRoute>
           }
         />
