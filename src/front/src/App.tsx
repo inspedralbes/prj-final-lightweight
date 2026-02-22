@@ -8,8 +8,7 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import ClientHome from "./pages/ClientHome";
 import Session from "./pages/Session";
-import RoutineCreate from "./pages/RoutineCreate";
-import RoutineEdit from "./pages/RoutineEdit";
+import ExercisesEdit from "./pages/ExercisesEdit";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
@@ -66,18 +65,10 @@ function App() {
           }
         />
         <Route
-          path="/routine/create"
-          element={
-            <ProtectedRoute requiredRole="COACH">
-              <RoutineCreate />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/routine/:id/edit"
           element={
             <ProtectedRoute requiredRole="COACH">
-              <RoutineEdit />
+              <ExercisesEdit />
             </ProtectedRoute>
           }
         />
@@ -98,8 +89,12 @@ function App() {
           element={
             <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white">
               <h1 className="text-4xl font-bold mb-8">Test de WebSockets 🔌</h1>
-              <div className={`p-6 rounded-xl text-2xl font-semibold ${isConnected ? "bg-green-600" : "bg-red-600"}`}>
-                {isConnected ? "ESTADO: CONECTADO 🟢" : "ESTADO: DESCONECTADO 🔴"}
+              <div
+                className={`p-6 rounded-xl text-2xl font-semibold ${isConnected ? "bg-green-600" : "bg-red-600"}`}
+              >
+                {isConnected
+                  ? "ESTADO: CONECTADO 🟢"
+                  : "ESTADO: DESCONECTADO 🔴"}
               </div>
             </div>
           }
