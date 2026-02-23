@@ -23,4 +23,4 @@ EXPOSE 3000
 
 # Comando para iniciar en modo desarrollo (hot-reload)
 # Se incluye prisma db push para sincronizar la BD con el schema
-CMD ["sh", "-c", "npx prisma db push --skip-generate && npm run start:dev"]
+CMD ["sh", "-c", "npx prisma db push && npm run start:dev"]
