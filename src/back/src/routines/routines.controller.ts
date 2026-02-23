@@ -16,7 +16,7 @@ import { CreateRoutineDto } from './dto/create-routine.dto';
 
 @Controller('routines')
 export class RoutinesController {
-  constructor(private routinesService: RoutinesService) { }
+  constructor(private routinesService: RoutinesService) {}
 
   // ⚠️ IMPORTANTE: Las rutas estáticas SIEMPRE antes que las dinámicas (:id)
   // Si 'clients-options' estuviera DESPUÉS de ':id', NestJS lo trataría como un ID.
@@ -50,7 +50,12 @@ export class RoutinesController {
   async create(@Request() req: any, @Body() body: CreateRoutineDto) {
     const coachId = req.user.userId;
     const { name, exercises, clientId } = body;
-    return this.routinesService.createRoutine(coachId, name, exercises || [], clientId);
+    return this.routinesService.createRoutine(
+      coachId,
+      name,
+      exercises || [],
+      clientId,
+    );
   }
 
   @Put(':id/edit')

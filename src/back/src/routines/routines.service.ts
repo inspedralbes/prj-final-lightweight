@@ -9,7 +9,7 @@ import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class RoutinesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   // ─── CLIENTES ────────────────────────────────────────────────────────────────
 
@@ -37,7 +37,12 @@ export class RoutinesService {
 
   // ─── CREA RUTINA ─────────────────────────────────────────────────────────────
 
-  async createRoutine(coachId: number, name: string, exercises: any[], clientId?: number) {
+  async createRoutine(
+    coachId: number,
+    name: string,
+    exercises: any[],
+    clientId?: number,
+  ) {
     const routine = await this.prisma.routine.create({
       data: {
         coachId,
