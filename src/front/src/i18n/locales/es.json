@@ -1,0 +1,91 @@
+{
+  "common": {
+    "logout": "Cerrar sesión",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "back": "Atrás"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "register": "Registro",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "passwordConfirm": "Confirmar contraseña",
+    "name": "Nombre",
+    "loginButton": "Iniciar sesión",
+    "registerButton": "Crear cuenta",
+    "noAccount": "¿No tienes cuenta?",
+    "haveAccount": "¿Ya tienes cuenta?",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "resetPassword": "Restablecer contraseña",
+    "sendReset": "Enviar enlace",
+    "invalidCredentials": "Email o contraseña inválidos"
+  },
+  "sidebar": {
+    "dashboard": "Panel de control",
+    "routines": "Rutinas",
+    "sessions": "Sesiones",
+    "profile": "Perfil",
+    "documentation": "Documentación"
+  },
+  "routines": {
+    "title": "Mis rutinas",
+    "createNew": "Nueva rutina",
+    "name": "Nombre",
+    "description": "Descripción",
+    "exercises": "Ejercicios",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "save": "Guardar rutina",
+    "createRoutine": "Crear rutina",
+    "editRoutine": "Editar rutina",
+    "noRoutines": "Aún no tienes rutinas",
+    "addExercise": "Agregar ejercicio",
+    "exerciseName": "Nombre del ejercicio",
+    "series": "Series",
+    "reps": "Repeticiones",
+    "weight": "Peso (kg)",
+    "rest": "Descanso (seg)"
+  },
+  "sessions": {
+    "title": "Sesiones",
+    "start": "Iniciar sesión",
+    "active": "Activa",
+    "completed": "Completada",
+    "noSessions": "No hay sesiones disponibles",
+    "joinSession": "Unirse a sesión",
+    "sessionCode": "Código de sesión",
+    "enterCode": "Ingresa el código de sesión",
+    "selectRoutine": "Selecciona una rutina"
+  },
+  "home": {
+    "welcome": "Bienvenido",
+    "startTraining": "Comenzar entrenamiento",
+    "viewRoutines": "Ver rutinas",
+    "activeSession": "Sesión activa"
+  },
+  "messages": {
+    "loginSuccess": "Sesión iniciada correctamente",
+    "registerSuccess": "Cuenta creada correctamente",
+    "routineSaved": "Rutina guardada",
+    "routineDeleted": "Rutina eliminada",
+    "exerciseAdded": "Ejercicio agregado",
+    "sessionStarted": "Sesión iniciada",
+    "sessionJoined": "Sesión unida",
+    "copySuccess": "Copiado al portapapeles",
+    "errorOccurred": "Ocurrió un error",
+    "invalidInput": "Entrada inválida"
+  },
+  "language": {
+    "selectLanguage": "Seleccionar idioma",
+    "english": "English",
+    "spanish": "Español",
+    "catalan": "Català"
+  }
+}
