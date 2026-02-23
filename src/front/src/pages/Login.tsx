@@ -4,16 +4,22 @@ import { User, Lock, Eye, EyeOff, ArrowRight } from '../components/Icons';
 import api from '../utils/api';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '../hooks/useToast';
+import { LoadingScreen } from '../components/LoadingScreen';
+import { AuthPageHeader } from '../components/AuthPageHeader';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(false);
 
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useTranslation();
+  const toast = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,35 +30,39 @@ export default function Login() {
       const user = res.data?.user;
 
       if (token && user) {
-        // Guarda en el contexto global (también persiste en localStorage)
         login({ id: user.id, username: user.username, role: user.role, token });
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-        if (rememberMe) {
-          localStorage.setItem('rememberedUsername', username);
-        }
+        toast.success(t('messages.loginSuccess'));
 
-        if (user.role === 'COACH') {
-          navigate('/dashboard');
-        } else {
-          navigate('/client-home');
-        }
+        // Mostrar loading screen por 5 segundos
+        setShowLoadingScreen(true);
+        
+        setTimeout(() => {
+          if (user.role === 'COACH') {
+            navigate('/dashboard');
+          } else {
+            navigate('/client-home');
+          }
+        }, 5000);
       } else {
-        window.alert('Resposta inesperada del servidor.');
+        toast.error(t('messages.errorOccurred'), t('messages.invalidInput'));
+        setIsLoading(false);
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        window.alert("Credencials invàlides. Verifica l'usuari i la contrasenya.");
-        return;
+        toast.error(t('auth.invalidCredentials'));
+      } else {
+        console.error('Error during login:', error);
+        toast.error(t('messages.errorOccurred'));
       }
-      console.error('Error durant inici de sessió:', error);
-      window.alert('Va ocórrer un error al iniciar sessió. Prova de nou.');
-    } finally {
       setIsLoading(false);
     }
   };
 
   return (
+    <>
+      <LoadingScreen isVisible={showLoadingScreen} message={t('common.loading')} />
     <div className="min-h-screen w-full flex bg-zinc-950 text-white">
       {/* Columna Izquierda - Decorativa */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col items-center justify-center">
@@ -72,6 +82,9 @@ export default function Login() {
           <p className="text-gray-300 text-lg mt-6 max-w-sm">
             Entrena amb els millors coaches i assoleix els teus objectius de fitness.
           </p>
+          <div className="mt-8">
+            <AuthPageHeader />
+          </div>
         </div>
       </div>
 
@@ -80,22 +93,22 @@ export default function Login() {
         <div className="w-full max-w-md">
           {/* Títulos */}
           <div className="mb-8">
-            <h2 className="text-4xl font-bold mb-2">Inicia Sessió</h2>
-            <p className="text-gray-400">Accedeix a LightWeight i comença el teu entrenament.</p>
+            <h2 className="text-4xl font-bold mb-2 text-white">{t('auth.login')}</h2>
+            <p className="text-gray-400">{t('auth.loginButton')} a LightWeight</p>
           </div>
 
           {/* Formulario */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Input - Nom d'usuari */}
             <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">NOM D&apos;USUARI</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('common.save').toUpperCase()}</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Introdueix el teu nom d'usuari"
+                  placeholder={t('auth.email')}
                   className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                   required
                 />
@@ -105,9 +118,9 @@ export default function Login() {
             {/* Input - Contrasenya */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-semibold text-gray-300">CONTRASENYA</label>
+                <label className="text-sm font-semibold text-gray-300">{t('auth.password')}</label>
                 <Link to="/forgot-password" className="text-xs text-orange-500 hover:text-orange-400 transition-colors">
-                  Has oblidat la contrasenya?
+                  {t('auth.forgotPassword')}
                 </Link>
               </div>
               <div className="relative">
@@ -116,7 +129,7 @@ export default function Login() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Introdueix la teva contrasenya"
+                  placeholder={t('auth.password')}
                   className="w-full pl-10 pr-10 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                   required
                 />
@@ -130,40 +143,27 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Checkbox - Recorda'm */}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="rememberMe"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 bg-zinc-900 border border-zinc-800 rounded cursor-pointer accent-orange-500"
-              />
-              <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition-colors">
-                Recorda'm
-              </label>
-            </div>
-
             {/* Botón Principal */}
             <button
               type="submit"
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-700 text-black font-bold rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Carregant...' : 'INICIAR SESSIÓ'}
+              {isLoading ? t('common.loading') : t('auth.loginButton')}
               {!isLoading && <ArrowRight className="w-5 h-5" />}
             </button>
           </form>
 
           {/* Pie del formulario */}
           <p className="mt-6 text-center text-gray-400 text-sm">
-            No tens compte?{' '}
+            {t('auth.noAccount')}{' '}
             <Link to="/register" className="text-orange-500 hover:text-orange-400 font-semibold transition-colors">
-              Registra't
+              {t('auth.registerButton')}
             </Link>
           </p>
         </div>
       </div>
     </div>
+    </>
   );
 }

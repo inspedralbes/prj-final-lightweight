@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, ArrowRight } from '../components/Icons';
 import api from '../utils/api';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '../hooks/useToast';
+import { AuthPageHeader } from '../components/AuthPageHeader';
 
 export default function Register() {
   const [username, setUsername] = useState('');
@@ -15,32 +18,34 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const toast = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      window.alert('Les contrasenyes no coincideixen.');
+      toast.error(t('messages.errorOccurred'), 'Passwords do not match');
       return;
     }
     
     if (!acceptTerms) {
-      window.alert('Has d\'acceptar els termes i condicions per continuar.');
+      toast.error(t('messages.errorOccurred'), 'Accept terms to continue');
       return;
     }
     
     setIsLoading(true);
     try {
       await api.post('/auth/register', { username, password, role });
-      window.alert('Registre exitós. Redirigint a inici de sessió.');
+      toast.success(t('messages.registerSuccess'));
       navigate('/login');
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 409) {
-        window.alert('L\'usuari ja existeix. Tria un altre nom d\'usuari.');
+        toast.error(t('messages.errorOccurred'), 'User already exists');
         return;
       }
-      console.error('Error durant registre:', error);
-      window.alert('Va ocórrer un error al registrar. Prova de nou.');
+      console.error('Error during registration:', error);
+      toast.error(t('messages.errorOccurred'));
     } finally {
       setIsLoading(false);
     }
@@ -66,6 +71,9 @@ export default function Register() {
           <p className="text-gray-300 text-lg mt-6 max-w-sm">
             Uneix-te a LightWeight i comença la teva transformació física.
           </p>
+          <div className="mt-8">
+            <AuthPageHeader />
+          </div>
         </div>
       </div>
 
@@ -74,7 +82,7 @@ export default function Register() {
         <div className="w-full max-w-md">
           {/* Títulos */}
           <div className="mb-8">
-            <h2 className="text-4xl font-bold mb-2">Crea la teva Conta</h2>
+            <h2 className="text-4xl font-bold mb-2 text-white">Crea la teva Conta</h2>
             <p className="text-gray-400">Uneix-te a LightWeight i comença el teu viatge de fitness.</p>
           </div>
 

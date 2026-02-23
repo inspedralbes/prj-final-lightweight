@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Trash2, ChevronUp, ChevronDown } from "./Icons";
+import { useTranslation } from "react-i18next";
 
 export type ExerciseItem = {
   name: string;
@@ -20,7 +21,7 @@ type FormErrors = {
 };
 
 const inputClass =
-  "w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-700";
+  "w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-3 md:px-4 py-2 md:py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-700 text-sm md:text-base";
 
 const labelClass =
   "block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider";
@@ -36,13 +37,14 @@ export const ExercisesForm = ({
       : [{ name: "", sets: 3, reps: 10, rest: 60, notes: "" }],
   );
   const [errors, setErrors] = useState<FormErrors>({});
+  const { t } = useTranslation();
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
     if (exercises.length === 0) {
-      newErrors.exercises = "Add at least 1 exercise";
+      newErrors.exercises = t('routines.addExercise');
     } else if (exercises.some((ex) => !ex.name.trim())) {
-      newErrors.exercises = "All exercises must have a name";
+      newErrors.exercises = t('messages.invalidInput');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -86,11 +88,11 @@ export const ExercisesForm = ({
 
   return (
     <form onSubmit={submit} className="space-y-6">
-      {/* ── Exercises ── */}
+      {/* Exercises */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-white">Exercises</h3>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+          <div className="flex-1">
+            <h3 className="text-lg md:text-xl font-semibold text-white">{t('routines.exercises')}</h3>
             {errors.exercises && (
               <p className="text-red-400 text-sm mt-0.5">{errors.exercises}</p>
             )}
@@ -98,10 +100,10 @@ export const ExercisesForm = ({
           <button
             type="button"
             onClick={addExercise}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors shadow-lg shadow-orange-500/20"
+            className="w-full md:w-auto bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center justify-center md:justify-start gap-2 text-sm font-medium transition-colors shadow-lg shadow-orange-500/20"
           >
             <Plus className="w-4 h-4" />
-            Add Exercise
+            {t('routines.addExercise')}
           </button>
         </div>
 
@@ -109,7 +111,7 @@ export const ExercisesForm = ({
           {exercises.map((ex, idx) => (
             <div
               key={idx}
-              className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-5 hover:border-[#333] transition-colors"
+              className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4 md:p-5 hover:border-[#333] transition-colors"
             >
               {/* Card header */}
               <div className="flex justify-between items-center mb-5">
@@ -121,7 +123,7 @@ export const ExercisesForm = ({
                     type="button"
                     onClick={() => moveUp(idx)}
                     disabled={idx === 0}
-                    title="Move exercise up"
+                    title={t('common.back')}
                     className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-[#2a2a2a] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronUp className="w-4 h-4" />
@@ -130,7 +132,7 @@ export const ExercisesForm = ({
                     type="button"
                     onClick={() => moveDown(idx)}
                     disabled={idx === exercises.length - 1}
-                    title="Move exercise down"
+                    title={t('common.save')}
                     className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-[#2a2a2a] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronDown className="w-4 h-4" />
@@ -138,7 +140,7 @@ export const ExercisesForm = ({
                   <button
                     type="button"
                     onClick={() => removeExercise(idx)}
-                    title="Remove exercise from routine"
+                    title={t('routines.delete')}
                     className="p-1.5 rounded-md text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors ml-1"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -148,7 +150,7 @@ export const ExercisesForm = ({
 
               {/* Exercise name */}
               <div className="mb-4">
-                <label className={labelClass}>Exercise Name</label>
+                <label className={labelClass}>{t('routines.exerciseName')}</label>
                 <input
                   placeholder="e.g. Bench Press"
                   value={ex.name}
@@ -159,10 +161,10 @@ export const ExercisesForm = ({
                 />
               </div>
 
-              {/* Sets / Reps / Rest */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              {/* Sets / Reps / Rest - Responsive Grid */}
+              <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4">
                 <div>
-                  <label className={labelClass}>Sets</label>
+                  <label className={labelClass}>{t('routines.series')}</label>
                   <input
                     type="number"
                     min={1}
@@ -174,7 +176,7 @@ export const ExercisesForm = ({
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Reps</label>
+                  <label className={labelClass}>{t('routines.reps')}</label>
                   <input
                     type="number"
                     min={1}
@@ -186,7 +188,7 @@ export const ExercisesForm = ({
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Rest (s)</label>
+                  <label className={labelClass}>{t('routines.rest')}</label>
                   <input
                     type="number"
                     min={0}
@@ -219,30 +221,30 @@ export const ExercisesForm = ({
           ))}
 
           {exercises.length === 0 && (
-            <div className="text-center py-12 bg-[#1a1a1a] rounded-xl border border-dashed border-gray-800">
-              <p className="text-gray-500 mb-4">
-                No exercises in this routine yet.
+            <div className="text-center py-8 md:py-12 bg-[#1a1a1a] rounded-xl border border-dashed border-gray-800">
+              <p className="text-gray-500 mb-4 text-sm md:text-base">
+                {t('routines.noRoutines')}
               </p>
               <button
                 type="button"
                 onClick={addExercise}
                 className="text-orange-500 font-medium hover:underline text-sm"
               >
-                Add first exercise
+                {t('routines.addExercise')}
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Submit ── */}
+      {/* Submit */}
       <div className="flex justify-end pt-2">
         <button
           type="submit"
           disabled={submitting}
-          className="bg-orange-500 hover:bg-orange-600 disabled:bg-orange-500/50 disabled:cursor-not-allowed text-white px-8 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-orange-500/20"
+          className="w-full md:w-auto bg-orange-500 hover:bg-orange-600 disabled:bg-orange-500/50 disabled:cursor-not-allowed text-white px-6 md:px-8 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-orange-500/20"
         >
-          {submitting ? "Saving..." : "Save Exercises"}
+          {submitting ? t('common.loading') : t('routines.save')}
         </button>
       </div>
     </form>
