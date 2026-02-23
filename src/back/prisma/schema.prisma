@@ -38,6 +38,11 @@ model User {
   role         UserRole @default(COACH)
   createdAt    DateTime @default(now()) @map("created_at")
 
+  // Self-referencing: coach / clients
+  coachId Int? @map("coach_id")
+  coach   User?   @relation("UserCoach", fields: [coachId], references: [id], onDelete: SetNull)
+  clients User[]  @relation("UserCoach")
+
   // Relaciones
   routinesCreated Routine[] @relation("CoachRoutines")
   routinesAssigned Routine[] @relation("ClientRoutines")

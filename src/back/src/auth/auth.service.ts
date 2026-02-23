@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -33,7 +34,7 @@ export class AuthService {
 
   // Función para registrar un nuevo usuario. Verifica si el nombre de usuario ya existe, hashea la contraseña y crea un nuevo registro en la base de datos.
   async register(registerDto: RegisterDto) {
-    const { username, password, role = 'COACH' } = registerDto;
+    const { username, password, role = 'COACH', coachId } = registerDto as any;
     const existingUser = await this.prisma.user.findUnique({
       where: { username },
     });
@@ -41,11 +42,17 @@ export class AuthService {
       throw new ConflictException('Username already exists');
     }
     const passwordHash = await this.hashPassword(password);
+    if (coachId) {
+      const coach = await this.prisma.user.findUnique({ where: { id: coachId } });
+      if (!coach) throw new BadRequestException('Coach not found');
+    }
+
     const user = await this.prisma.user.create({
       data: {
         username,
         passwordHash,
         role,
+        coachId: coachId ?? undefined,
       },
     });
     return { message: `User ${username} registered successfully` };
