@@ -1,0 +1,91 @@
+{
+  "common": {
+    "logout": "Logout",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "back": "Back"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "passwordConfirm": "Confirm Password",
+    "name": "Name",
+    "loginButton": "Sign In",
+    "registerButton": "Create Account",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset Password",
+    "sendReset": "Send Reset Link",
+    "invalidCredentials": "Invalid email or password"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "routines": "Routines",
+    "sessions": "Sessions",
+    "profile": "Profile",
+    "documentation": "Documentation"
+  },
+  "routines": {
+    "title": "My Routines",
+    "createNew": "New Routine",
+    "name": "Name",
+    "description": "Description",
+    "exercises": "Exercises",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save Routine",
+    "createRoutine": "Create Routine",
+    "editRoutine": "Edit Routine",
+    "noRoutines": "No routines yet",
+    "addExercise": "Add Exercise",
+    "exerciseName": "Exercise Name",
+    "series": "Series",
+    "reps": "Reps",
+    "weight": "Weight (kg)",
+    "rest": "Rest (sec)"
+  },
+  "sessions": {
+    "title": "Sessions",
+    "start": "Start Session",
+    "active": "Active",
+    "completed": "Completed",
+    "noSessions": "No sessions available",
+    "joinSession": "Join Session",
+    "sessionCode": "Session Code",
+    "enterCode": "Enter session code",
+    "selectRoutine": "Select a Routine"
+  },
+  "home": {
+    "welcome": "Welcome",
+    "startTraining": "Start Training",
+    "viewRoutines": "View Routines",
+    "activeSession": "Active Session"
+  },
+  "messages": {
+    "loginSuccess": "Login successful",
+    "registerSuccess": "Account created successfully",
+    "routineSaved": "Routine saved",
+    "routineDeleted": "Routine deleted",
+    "exerciseAdded": "Exercise added",
+    "sessionStarted": "Session started",
+    "sessionJoined": "Session joined",
+    "copySuccess": "Copied to clipboard",
+    "errorOccurred": "An error occurred",
+    "invalidInput": "Invalid input"
+  },
+  "language": {
+    "selectLanguage": "Select Language",
+    "english": "English",
+    "spanish": "Español",
+    "catalan": "Català"
+  }
+}

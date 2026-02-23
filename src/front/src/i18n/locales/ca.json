@@ -1,0 +1,91 @@
+{
+  "common": {
+    "logout": "Tancar sessió",
+    "loading": "Carregant...",
+    "error": "Error",
+    "success": "Èxit",
+    "cancel": "Cancel·lar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "back": "Enrere"
+  },
+  "auth": {
+    "login": "Iniciar sessió",
+    "register": "Registre",
+    "email": "Correu electrònic",
+    "password": "Contrasenya",
+    "passwordConfirm": "Confirmar contrasenya",
+    "name": "Nom",
+    "loginButton": "Iniciar sessió",
+    "registerButton": "Crear compte",
+    "noAccount": "No tens compte?",
+    "haveAccount": "Ja tens compte?",
+    "forgotPassword": "Has oblidat la contrasenya?",
+    "resetPassword": "Restablir contrasenya",
+    "sendReset": "Enviar enllaç",
+    "invalidCredentials": "Correu o contrasenya inválids"
+  },
+  "sidebar": {
+    "dashboard": "Panell de control",
+    "routines": "Rutines",
+    "sessions": "Sessions",
+    "profile": "Perfil",
+    "documentation": "Documentació"
+  },
+  "routines": {
+    "title": "Les meves rutines",
+    "createNew": "Nova rutina",
+    "name": "Nom",
+    "description": "Descripció",
+    "exercises": "Exercicis",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "save": "Guardar rutina",
+    "createRoutine": "Crear rutina",
+    "editRoutine": "Editar rutina",
+    "noRoutines": "Encara no tens rutines",
+    "addExercise": "Afegir exercici",
+    "exerciseName": "Nom de l'exercici",
+    "series": "Sèries",
+    "reps": "Repeticions",
+    "weight": "Pes (kg)",
+    "rest": "Descans (seg)"
+  },
+  "sessions": {
+    "title": "Sessions",
+    "start": "Iniciar sessió",
+    "active": "Activa",
+    "completed": "Completada",
+    "noSessions": "No hi ha sessions disponibles",
+    "joinSession": "Unir-se a sessió",
+    "sessionCode": "Codi de sessió",
+    "enterCode": "Introdueix el codi de sessió",
+    "selectRoutine": "Selecciona una rutina"
+  },
+  "home": {
+    "welcome": "Benvingut",
+    "startTraining": "Començar entrenament",
+    "viewRoutines": "Veure rutines",
+    "activeSession": "Sessió activa"
+  },
+  "messages": {
+    "loginSuccess": "Sessió iniciada correctament",
+    "registerSuccess": "Compte creat correctament",
+    "routineSaved": "Rutina guardada",
+    "routineDeleted": "Rutina eliminada",
+    "exerciseAdded": "Exercici afegit",
+    "sessionStarted": "Sessió iniciada",
+    "sessionJoined": "Sessió unida",
+    "copySuccess": "Copiat al porta-retalls",
+    "errorOccurred": "Va ocórrer un error",
+    "invalidInput": "Entrada inválida"
+  },
+  "language": {
+    "selectLanguage": "Seleccionar idioma",
+    "english": "English",
+    "spanish": "Español",
+    "catalan": "Català"
+  }
+}
