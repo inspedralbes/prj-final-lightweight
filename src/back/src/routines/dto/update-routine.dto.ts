@@ -10,16 +10,18 @@ import {
 import { Type } from 'class-transformer';
 import { ExerciseDto } from './exercise.dto';
 
-export class CreateRoutineDto {
+export class UpdateRoutineDto {
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  name!: string;
+  name?: string;
 
+  @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => ExerciseDto)
-  exercises!: ExerciseDto[];
+  exercises?: ExerciseDto[];
 
   @IsOptional()
   @IsInt()

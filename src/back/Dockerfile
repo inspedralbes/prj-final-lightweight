@@ -12,15 +12,13 @@ COPY package*.json ./
 # Instalamos las dependencias
 RUN npm install
 
-# Copiamos el resto del código incluyendo schema.prisma
+# Copiamos el resto del código (node_modules excluido vía .dockerignore)
 COPY . .
-
-# Generamos el cliente de Prisma
-RUN npx prisma generate
 
 # Exponemos el puerto de NestJS
 EXPOSE 3000
 
 # Comando para iniciar en modo desarrollo (hot-reload)
-# Se incluye prisma db push para sincronizar la BD con el schema
-CMD ["sh", "-c", "npx prisma db push && npm run start:dev"]
+# 1. prisma generate regenera el cliente por si el volumen sobreescribió el build
+# 2. prisma migrate deploy aplica las migraciones pendientes sin borrar datos
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run start:dev"]

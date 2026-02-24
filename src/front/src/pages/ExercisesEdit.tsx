@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Layout from "../components/Layout";
 import ExercisesForm from "../components/ExercisesForm";
+import { LoadingScreen } from "../components/LoadingScreen";
 import { ChevronLeft } from "../components/Icons";
 import api from "../utils/api";
 import type { ExerciseItem } from "../components/ExercisesForm";
@@ -9,6 +11,7 @@ import type { ExerciseItem } from "../components/ExercisesForm";
 export const ExercisesEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [routineName, setRoutineName] = useState("");
@@ -31,7 +34,7 @@ export const ExercisesEdit = () => {
         setInitial({ name: r.name, exercises });
       } catch (err) {
         console.error(err);
-        alert("Error cargando rutina");
+        alert(t("messages.errorOccurred"));
       } finally {
         setLoading(false);
       }
@@ -50,7 +53,7 @@ export const ExercisesEdit = () => {
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      alert("Error saving exercises");
+      alert(t("messages.errorOccurred"));
     } finally {
       setSubmitting(false);
     }
@@ -59,9 +62,7 @@ export const ExercisesEdit = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center py-40 text-gray-500">
-          Loading exercises...
-        </div>
+        <LoadingScreen isVisible={true} message={t("common.loading")} />
       </Layout>
     );
   }
@@ -70,7 +71,7 @@ export const ExercisesEdit = () => {
     return (
       <Layout>
         <div className="flex items-center justify-center py-40 text-gray-500">
-          Routine not found.
+          {t("messages.routineNotFound")}
         </div>
       </Layout>
     );
@@ -85,7 +86,7 @@ export const ExercisesEdit = () => {
             <button
               onClick={() => navigate("/dashboard")}
               className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a1a1a] transition-colors"
-              title="Back to Dashboard"
+              title={t("sidebar.dashboard")}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -93,9 +94,7 @@ export const ExercisesEdit = () => {
               <h1 className="text-3xl font-bold text-white mb-1">
                 {routineName}
               </h1>
-              <p className="text-gray-500">
-                Manage and reorder exercises for this routine.
-              </p>
+              <p className="text-gray-500">{t("routines.manageExercises")}</p>
             </div>
           </div>
         </div>

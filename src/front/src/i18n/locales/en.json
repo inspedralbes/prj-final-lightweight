@@ -9,30 +9,47 @@
     "delete": "Delete",
     "edit": "Edit",
     "create": "Create",
-    "back": "Back"
+    "back": "Back",
+    "optional": "optional"
   },
   "auth": {
     "login": "Login",
-    "register": "Register",
+    "loginSubtitle": "Sign in to LightWeight",
+    "loginDecorativeText": "Train with the best coaches and reach your fitness goals.",
+    "register": "Create Account",
+    "registerSubtitle": "Join LightWeight and start your fitness journey.",
+    "registerDecorativeText": "Join LightWeight and start your physical transformation.",
+    "username": "Username",
+    "usernamePlaceholder": "Enter your username",
     "email": "Email",
+    "emailPlaceholder": "example@email.com",
     "password": "Password",
+    "passwordPlaceholder": "Enter your password",
     "passwordConfirm": "Confirm Password",
+    "passwordConfirmPlaceholder": "Confirm your password",
     "name": "Name",
+    "roleClient": "Client",
+    "roleCoach": "Coach",
     "loginButton": "Sign In",
     "registerButton": "Create Account",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
     "forgotPassword": "Forgot password?",
+    "forgotPasswordSubtitle": "Recover your access and continue training.",
+    "forgotPasswordHint": "Enter your username and we will send you a recovery email.",
     "resetPassword": "Reset Password",
-    "sendReset": "Send Reset Link",
-    "invalidCredentials": "Invalid email or password"
+    "sendReset": "Send Request",
+    "invalidCredentials": "Invalid username or password",
+    "acceptTerms": "I accept the",
+    "termsLink": "Terms and Conditions"
   },
   "sidebar": {
     "dashboard": "Dashboard",
     "routines": "Routines",
     "sessions": "Sessions",
     "profile": "Profile",
-    "documentation": "Documentation"
+    "documentation": "Documentation",
+    "management": "Management"
   },
   "routines": {
     "title": "My Routines",
@@ -46,12 +63,19 @@
     "createRoutine": "Create Routine",
     "editRoutine": "Edit Routine",
     "noRoutines": "No routines yet",
+    "noRoutinesHint": "Get started by creating your first training routine.",
     "addExercise": "Add Exercise",
     "exerciseName": "Exercise Name",
-    "series": "Series",
+    "exerciseNamePlaceholder": "e.g. Bench Press",
+    "manageExercises": "Manage and reorder exercises for this routine.",
+    "recentlyAssigned": "Recently assigned",
+    "moreExercises": "+{{count}} more",
+    "series": "Sets",
     "reps": "Reps",
     "weight": "Weight (kg)",
-    "rest": "Rest (sec)"
+    "rest": "Rest (sec)",
+    "notes": "Notes",
+    "notesPlaceholder": "Optional notes..."
   },
   "sessions": {
     "title": "Sessions",
@@ -62,7 +86,10 @@
     "joinSession": "Join Session",
     "sessionCode": "Session Code",
     "enterCode": "Enter session code",
-    "selectRoutine": "Select a Routine"
+    "selectRoutine": "Select a Routine",
+    "sessionError": "Session Error",
+    "sessionTitle": "Session {{code}}",
+    "sessionNotFound": "Session not found"
   },
   "home": {
     "welcome": "Welcome",
@@ -80,7 +107,12 @@
     "sessionJoined": "Session joined",
     "copySuccess": "Copied to clipboard",
     "errorOccurred": "An error occurred",
-    "invalidInput": "Invalid input"
+    "invalidInput": "Invalid input",
+    "passwordMismatch": "Passwords do not match",
+    "acceptTermsRequired": "You must accept the terms to continue",
+    "userAlreadyExists": "This user already exists",
+    "resetEmailSent": "Recovery email sent",
+    "routineNotFound": "Routine not found"
   },
   "language": {
     "selectLanguage": "Select Language",

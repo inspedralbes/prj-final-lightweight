@@ -1,6 +1,6 @@
 # Diagrama del Modelo de Datos
 
-**Actualizado**: 2026-02-19 — Modelo actualizado basado en PRD, incluyendo tabla Session para Friend Sessions y campos para códigos de cliente. Tablas en negrita son core para MVP. Tablas en cursiva son para expansiones post-MVP.
+**Actualizado**: 2026-02-24 — Añadida tabla `invitations` para gestionar el ciclo de vida de invitaciones coach→cliente. Eliminado `invitationCode` de `users` (single responsibility). Tablas en negrita son core para MVP. Tablas en cursiva son para expansiones post-MVP.
 
 ## Tablas y Campos
 
@@ -10,9 +10,19 @@
 - username (String, unique)
 - passwordHash (String)
 - role (Enum: COACH, CLIENT)
-- coachId (Int?, FK to users.id) — Para clientes asignados
-- invitationCode (String?, unique) — Código para asignar cliente
+- coachId (Int?, FK to users.id) — Para clientes asignados (se rellena al aceptar invitación)
 - createdAt (DateTime)
+
+### **invitations**
+
+- id (Int, PK)
+- coachId (Int, FK to users.id) — Coach que genera la invitación
+- clientId (Int?, FK to users.id) — Se rellena al aceptar
+- code (String, unique) — Token único generado por invitación
+- status (Enum: PENDING, ACCEPTED, EXPIRED, REVOKED)
+- expiresAt (DateTime?) — Expiración opcional por invitación
+- createdAt (DateTime)
+- acceptedAt (DateTime?) — Momento de aceptación
 
 ### _exercise_catalog_
 
@@ -112,6 +122,9 @@
 
 ## Relaciones
 
+- invitations.coachId -> users.id
+- invitations.clientId -> users.id (nullable, se rellena al aceptar)
+- users.coachId -> users.id (relación coach→cliente, se establece al aceptar invitación)
 - routines.coachId -> users.id
 - routine_exercises.routineId -> routines.id
 - routine_exercises.exerciseId -> exercise_catalog.id
@@ -129,6 +142,8 @@
 
 ```mermaid
 erDiagram
+    users ||--o{ invitations : coachId
+    users ||--o| invitations : clientId
     users ||--o{ routines : coachId
     users ||--o{ live_sessions : coachId
     users ||--o{ diet_plans : coachId
@@ -146,8 +161,20 @@ erDiagram
         int id PK
         string username UK
         string passwordHash
-        enum role "COACH"
+        enum role "COACH/CLIENT"
+        int coachId FK
         datetime createdAt
+    }
+
+    invitations {
+        int id PK
+        int coachId FK
+        int clientId FK
+        string code UK
+        enum status "PENDING/ACCEPTED/EXPIRED/REVOKED"
+        datetime expiresAt
+        datetime createdAt
+        datetime acceptedAt
     }
 
     exercise_catalog {

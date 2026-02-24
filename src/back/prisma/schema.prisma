@@ -27,6 +27,13 @@ enum ParticipantRole {
   CLIENT
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
 // --------------------------------------
 // MODELOS CORE (MVP)
 // --------------------------------------
@@ -34,15 +41,21 @@ enum ParticipantRole {
 model User {
   id           Int      @id @default(autoincrement())
   username     String   @unique
+  email        String   @unique
   passwordHash String   @map("password_hash")
-  role         UserRole @default(COACH)
+  role         UserRole
+  coachId      Int?     @map("coach_id")
   createdAt    DateTime @default(now()) @map("created_at")
 
   // Relaciones
-  routinesCreated Routine[] @relation("CoachRoutines")
-  routinesAssigned Routine[] @relation("ClientRoutines")
-  liveSessions LiveSession[]
-  dietPlans    DietPlan[] // Expansión futura
+  coach            User?        @relation("CoachClients", fields: [coachId], references: [id])
+  clients          User[]       @relation("CoachClients")
+  routinesCreated  Routine[]    @relation("CoachRoutines")
+  routinesAssigned Routine[]    @relation("ClientRoutines")
+  liveSessions     LiveSession[]
+  dietPlans        DietPlan[]
+  invitationsAsCoach  Invitation[] @relation("CoachInvitations")
+  invitationsAsClient Invitation[] @relation("ClientInvitations")
 
   @@map("users")
 }
@@ -62,14 +75,14 @@ model ExerciseCatalog {
 
 model Routine {
   id        Int      @id @default(autoincrement())
-  coachId   Int      @map("coach_id")
+  coachId   Int?      @map("coach_id")
   clientId  Int?     @map("client_id")
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relaciones
-  coach        User              @relation("CoachRoutines", fields: [coachId], references: [id])
+  coach        User?              @relation("CoachRoutines", fields: [coachId], references: [id])
   client       User?             @relation("ClientRoutines", fields: [clientId], references: [id])
   exercises    RoutineExercise[]
   liveSessions LiveSession[]
@@ -92,6 +105,23 @@ model RoutineExercise {
   exercise ExerciseCatalog @relation(fields: [exerciseId], references: [id])
 
   @@map("routine_exercises")
+}
+
+model Invitation {
+  id         Int              @id @default(autoincrement())
+  coachId    Int              @map("coach_id")
+  clientId   Int?             @map("client_id")
+  code       String           @unique
+  status     InvitationStatus @default(PENDING)
+  expiresAt  DateTime?        @map("expires_at")
+  createdAt  DateTime         @default(now()) @map("created_at")
+  acceptedAt DateTime?        @map("accepted_at")
+
+  // Relaciones
+  coach  User  @relation("CoachInvitations", fields: [coachId], references: [id])
+  client User? @relation("ClientInvitations", fields: [clientId], references: [id])
+
+  @@map("invitations")
 }
 
 model LiveSession {
