@@ -3,10 +3,11 @@ import Layout from "../components/Layout";
 import RoutineCard from "../components/RoutineCard";
 import RoutineModal from "../components/RoutineModal";
 import { Plus } from "../components/Icons";
+import { LoadingScreen } from "../components/LoadingScreen";
 import { routineService, type Routine } from "../services/routineService";
 import axios from "axios";
-
-// Mock user for MVP - coachId lo extrae el backend del token JWT
+import { useTranslation } from "react-i18next";
+import { useToast } from "../hooks/useToast";
 
 const Dashboard = () => {
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -22,6 +23,9 @@ const Dashboard = () => {
     [],
   );
 
+  const { t } = useTranslation();
+  const toast = useToast();
+
   const fetchRoutines = async () => {
     try {
       setLoading(true);
@@ -29,6 +33,7 @@ const Dashboard = () => {
       setRoutines(data);
     } catch (error) {
       console.error("Failed to fetch routines", error);
+      toast.error(t("messages.errorOccurred"));
     } finally {
       setLoading(false);
     }
@@ -40,6 +45,7 @@ const Dashboard = () => {
       setClients(data);
     } catch (error) {
       console.error("Failed to fetch clients", error);
+      toast.error(t("messages.errorOccurred"));
     }
   };
 
@@ -66,13 +72,14 @@ const Dashboard = () => {
   };
 
   const handleDeleteClick = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this routine?")) {
+    if (window.confirm(t("routines.delete") + "?")) {
       try {
         await routineService.delete(id);
         setRoutines((prev) => prev.filter((r) => r.id !== id));
+        toast.success(t("messages.routineDeleted"));
       } catch (error) {
         console.error("Failed to delete routine", error);
-        alert("Failed to delete routine");
+        toast.error(t("messages.errorOccurred"));
       }
     }
   };
@@ -89,65 +96,61 @@ const Dashboard = () => {
         setRoutines((prev) =>
           prev.map((r) => (r.id === updated.id ? updated : r)),
         );
+        toast.success(t("messages.routineSaved"));
       } else {
         const created = await routineService.create(payload);
         setRoutines((prev) => [created, ...prev]);
+        toast.success(t("messages.routineSaved"));
       }
       setIsModalOpen(false);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("Error saving routine:", error.response?.data);
-        alert(
-          `Error: ${JSON.stringify(error.response?.data?.message || "Unknown error")}`,
-        );
+        toast.error(t("messages.errorOccurred"));
       } else {
         console.error("Error saving routine:", error);
+        toast.error(t("messages.errorOccurred"));
       }
     }
   };
 
   return (
     <Layout>
+      <LoadingScreen isVisible={loading} message={t("common.loading")} />
       <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        {/* Header - Responsive */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              Dashboard Coach
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              {t("sidebar.dashboard")}
             </h1>
-            <p className="text-gray-500">Welcome back, Coach.</p>
+            <p className="text-gray-500">{t("home.welcome")}</p>
           </div>
           <button
             onClick={handleCreateClick}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-lg shadow-orange-500/20"
+            className="w-full md:w-auto bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors shadow-lg shadow-orange-500/20"
           >
             <Plus className="w-5 h-5" />
-            Add Routine
+            {t("routines.createNew")}
           </button>
         </div>
 
-        {/* Content */}
-        {loading ? (
-          <div className="text-center py-20 text-gray-500">
-            Loading routines...
-          </div>
-        ) : routines.length === 0 ? (
-          <div className="text-center py-20 bg-[#1a1a1a] rounded-xl border border-dashed border-gray-800">
+        {/* Content - Responsive Grid */}
+        {routines.length === 0 && !loading ? (
+          <div className="text-center py-12 bg-[#1a1a1a] rounded-xl border border-dashed border-gray-800">
             <h3 className="text-xl text-white font-medium mb-2">
-              No routines found
+              {t("routines.noRoutines")}
             </h3>
-            <p className="text-gray-500 mb-6">
-              Get started by creating your first training routine.
-            </p>
+            <p className="text-gray-500 mb-6">{t("routines.noRoutinesHint")}</p>
             <button
               onClick={handleCreateClick}
               className="text-orange-500 font-medium hover:underline"
             >
-              Create New Routine
+              {t("routines.createNew")}
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {routines.map((routine) => (
               <RoutineCard
                 key={routine.id}

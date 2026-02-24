@@ -13,6 +13,7 @@ import { RoutinesService } from './routines.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CoachGuard } from '../auth/guards/coach.guard';
 import { CreateRoutineDto } from './dto/create-routine.dto';
+import { UpdateRoutineDto } from './dto/update-routine.dto';
 
 @Controller('routines')
 export class RoutinesController {
@@ -63,7 +64,7 @@ export class RoutinesController {
   async edit(
     @Request() req: any,
     @Param('id') id: string,
-    @Body() body: CreateRoutineDto,
+    @Body() body: UpdateRoutineDto,
   ) {
     const coachId = req.user.userId;
     const { name, exercises, clientId } = body;
@@ -71,7 +72,7 @@ export class RoutinesController {
       Number(id),
       coachId,
       name,
-      exercises || [],
+      exercises,
       clientId,
     );
   }

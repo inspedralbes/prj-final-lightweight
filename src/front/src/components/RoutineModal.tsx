@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { X } from "./Icons";
+import { useTranslation } from "react-i18next";
 
 export interface RoutineModalProps {
   isOpen: boolean;
@@ -24,8 +25,8 @@ const RoutineModal = ({
   const [selectedClientId, setSelectedClientId] = useState<number | "">(
     initialClientId,
   );
+  const { t } = useTranslation();
 
-  // Sync internal state when the modal opens or initial values change
   useEffect(() => {
     setFormName(initialName);
     setSelectedClientId(initialClientId);
@@ -46,9 +47,9 @@ const RoutineModal = ({
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
-        <div className="flex justify-between items-center p-5 border-b border-[#2a2a2a]">
-          <h2 className="text-xl font-bold text-white">
-            {isEditing ? "Edit Routine" : "Create New Routine"}
+        <div className="flex justify-between items-center p-4 md:p-5 border-b border-[#2a2a2a]">
+          <h2 className="text-lg md:text-xl font-bold text-white">
+            {isEditing ? t('routines.editRoutine') : t('routines.createRoutine')}
           </h2>
           <button
             onClick={onClose}
@@ -58,25 +59,25 @@ const RoutineModal = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-4 md:p-6">
           <div className="mb-6 space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
-                Routine Name
+                {t('routines.name')}
               </label>
               <input
                 type="text"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="e.g. Hypertrophy Block A"
-                className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-700"
+                placeholder={t('routines.exerciseName')}
+                className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-700 text-sm md:text-base"
                 autoFocus
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
-                Assign to Client (Optional)
+                {t('sessions.selectRoutine')}
               </label>
               <select
                 value={selectedClientId}
@@ -85,9 +86,9 @@ const RoutineModal = ({
                     e.target.value ? Number(e.target.value) : "",
                   )
                 }
-                className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all appearance-none"
+                className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all appearance-none text-sm md:text-base"
               >
-                <option value="">-- No Client Assigned --</option>
+                <option value="">-- {t('common.cancel')} --</option>
                 {clients.map((client) => (
                   <option key={client.id} value={client.id}>
                     {client.username}
@@ -96,26 +97,25 @@ const RoutineModal = ({
               </select>
               {clients.length === 0 && (
                 <p className="text-xs text-yellow-500 mt-1">
-                  No clients available. Register a client account to assign
-                  routines.
+                  No clients available.
                 </p>
               )}
             </div>
           </div>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors shadow-lg shadow-orange-500/20"
             >
-              {isEditing ? "Save Changes" : "Create Routine"}
+              {isEditing ? t('common.save') : t('routines.createRoutine')}
             </button>
           </div>
         </form>

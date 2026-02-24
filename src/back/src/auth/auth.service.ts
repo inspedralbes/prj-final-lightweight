@@ -33,22 +33,23 @@ export class AuthService {
 
   // Función para registrar un nuevo usuario. Verifica si el nombre de usuario ya existe, hashea la contraseña y crea un nuevo registro en la base de datos.
   async register(registerDto: RegisterDto) {
-    const { username, password, role = 'COACH' } = registerDto;
-    const existingUser = await this.prisma.user.findUnique({
-      where: { username },
+    const { username, email, password, role } = registerDto;
+    const existingUser = await this.prisma.user.findFirst({
+      where: { OR: [{ username }, { email }] },
     });
     if (existingUser) {
-      throw new ConflictException('Username already exists');
+      throw new ConflictException('Username or email already exists');
     }
     const passwordHash = await this.hashPassword(password);
     const user = await this.prisma.user.create({
       data: {
         username,
+        email,
         passwordHash,
         role,
       },
     });
-    return { message: `User ${username} registered successfully` };
+    return { message: `User ${user.username} registered successfully` };
   }
 
   // Función para iniciar sesión. Verifica si el usuario existe, valida la contraseña y genera un token JWT si las credenciales son correctas.
