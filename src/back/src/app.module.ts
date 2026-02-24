@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { RoutinesModule } from './routines/routines.module';
 import { SessionModule } from './session/session.module';
+import { ExercisesModule } from './exercises/exercises.module';
 import { InvitationsModule } from './invitations/invitations.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { InvitationsModule } from './invitations/invitations.module';
     AuthModule,
     RoutinesModule,
     SessionModule,
+    ExercisesModule,
     InvitationsModule,
   ],
   controllers: [AppController],

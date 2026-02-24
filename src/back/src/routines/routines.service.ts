@@ -43,7 +43,10 @@ export class RoutinesService {
     clientId?: number,
   ) {
     const routine = await this.prisma.routine.create({
-      data: { coachId, name, clientId },
+      data: { 
+        coachId, 
+        name, 
+        clientId },
     });
 
     await this.upsertExercises(routine.id, exercises);
