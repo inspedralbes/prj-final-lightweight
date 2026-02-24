@@ -1,0 +1,53 @@
+name: Deploy (rsync + docker compose)
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Copiar repo al servidor (sin .git para ahorrar)
+      - name: Sync files to server
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete --exclude ".git" --exclude ".github"
+          path: ./
+          remote_path: /opt/lw-app/
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_user: ${{ secrets.SSH_USER }}
+          remote_key: ${{ secrets.SSH_KEY }}
+
+      # Crear .env en el servidor desde un secret (ENV_FILE)
+      - name: Write .env from secret
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/lw-app
+            # OJO: esto sobrescribe el .env en cada deploy (normalmente deseado)
+            cat > .env << 'EOF'
+            ${{ secrets.ENV_FILE }}
+            EOF
+            chmod 600 .env
+
+      # Levantar stack
+      - name: Compose up
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/lw-app
+            docker compose -f docker-compose.prod.yml up -d --build
+            docker image prune -f

@@ -1,0 +1,93 @@
+services:
+  # --- BASE DE DATOS ---
+  lw-postgres:
+    container_name: lw-postgres
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    # En prod NO exponemos 5432 a internet
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # --- ADMINER (opcional) ---
+  adminer:
+    container_name: adminer
+    image: adminer
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: lw-postgres
+    # En prod NO exponemos 8081 a internet (lo sacamos por Nginx si quieres)
+    expose:
+      - "8080"
+    depends_on:
+      - lw-postgres
+
+  # --- BACKEND (NestJS) ---
+  backend:
+    container_name: lw-backend
+    build:
+      context: ./src/back
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Igual que en tu compose actual, pero sin publicar el puerto fuera  [oai_citation:1‡docker-compose.yml](sediment://file_0000000025bc72469c78cc6bf8927a16)
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@lw-postgres:5432/${POSTGRES_DB}?schema=public"
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+      FRONTEND_URL: ${FRONTEND_URL}
+      NODE_ENV: production
+    expose:
+      - "3000"
+    depends_on:
+      lw-postgres:
+        condition: service_healthy
+
+  # --- FRONTEND (React + Vite) ---
+  frontend:
+    container_name: lw-frontend
+    build:
+      context: ./src/front
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - VITE_BACK_URL=${VITE_BACK_URL}
+    # En prod no montamos el código (sin volumes)  [oai_citation:2‡docker-compose.yml](sediment://file_0000000025bc72469c78cc6bf8927a16)
+    expose:
+      - "5173"
+    depends_on:
+      - backend
+
+  # --- NGINX (reverse proxy) ---
+  nginx:
+    container_name: lw-nginx
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend
+      - adminer
+
+volumes:
+  postgres_db:
