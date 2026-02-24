@@ -76,6 +76,12 @@ export class ExerciseService {
             ? exerciseData.instructions.join('\n')
             : '',
           category: exerciseData.category || null,
+          primaryMuscle: exerciseData.primaryMuscles || [],
+          secondaryMuscle: exerciseData.secondaryMuscles || [],
+          forceType: exerciseData.force || null,
+          level: exerciseData.level || null,
+          mechanic: exerciseData.mechanic || null,
+          equipment: exerciseData.equipment || null,
           // imgUrl: imageUrl, // Assign image URL if available, otherwise null
         };
 
@@ -84,6 +90,12 @@ export class ExerciseService {
           update: {
             description: formattedExercises.description,
             category: formattedExercises.category,
+            primaryMuscle: formattedExercises.primaryMuscle,
+            secondaryMuscle: formattedExercises.secondaryMuscle,
+            forceType: formattedExercises.forceType,
+            level: formattedExercises.level,
+            mechanic: formattedExercises.mechanic,
+            equipment: formattedExercises.equipment,
             // Anira la imatge
           },
           create: formattedExercises,
@@ -97,5 +109,29 @@ export class ExerciseService {
       }
     }
     this.logger.log('Finished importing exercises from GitHub');
+  }
+
+  async searchExercises(filters: any) {
+    const {
+      level,
+      category,
+      force,
+      mechanic,
+      equipment,
+      primaryMuscle,
+      secondaryMuscle,
+    } = filters;
+
+    return this.prisma.exerciseCatalog.findMany({
+      where: {
+        ...(level && { level }),
+        ...(category && { category }),
+        ...(force && { forceType: force }),
+        ...(mechanic && { mechanic }),
+        ...(equipment && { equipment }),
+        ...(primaryMuscle && { primaryMuscle: { has: primaryMuscle } }),
+        ...(secondaryMuscle && { secondaryMuscle: { has: secondaryMuscle } }),
+      },
+    });
   }
 }

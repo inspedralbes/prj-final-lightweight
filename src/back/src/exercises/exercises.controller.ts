@@ -1,7 +1,7 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, Query } from '@nestjs/common';
 import { ExerciseService } from './exercises.service';
 
-@Controller('admin/exercises')
+@Controller('exercises')
 export class ExercisesController {
   constructor(private exerciseService: ExerciseService) {}
 
@@ -13,5 +13,11 @@ export class ExercisesController {
   @Get()
   async getAllExercises() {
     return this.exerciseService.getAllExercises();
+  }
+
+  @Get('search')
+  async searchExercises(@Query() query: any) {
+    // Search logic would go here
+    return this.exerciseService.searchExercises(query);
   }
 }
