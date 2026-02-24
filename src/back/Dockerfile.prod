@@ -10,6 +10,10 @@ RUN npm install
 
 COPY . .
 
+# Prisma generate needs DATABASE_URL at config-load time (does NOT connect).
+# We provide a dummy value; the real one is injected at runtime.
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+
 # Build NestJS for production
 RUN npx prisma generate && npm run build
 
