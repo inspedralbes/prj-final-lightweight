@@ -75,6 +75,7 @@ export class ExerciseService {
           description: Array.isArray(exerciseData.instructions)
             ? exerciseData.instructions.join('\n')
             : '',
+          category: exerciseData.category || null,
           // imgUrl: imageUrl, // Assign image URL if available, otherwise null
         };
 
@@ -82,6 +83,8 @@ export class ExerciseService {
           where: { name: formattedExercises.name },
           update: {
             description: formattedExercises.description,
+            category: formattedExercises.category,
+            // Anira la imatge
           },
           create: formattedExercises,
         });
