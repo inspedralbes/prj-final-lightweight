@@ -48,5 +48,27 @@ jobs:
           script: |
             set -e
             cd /opt/lw-app
+
+            DOMAIN="lightweight.daw.inspedralbes.cat"
+            CERT_VOL="lw-app_certbot_conf"
+
+            # If real cert doesn't exist yet, create a self-signed dummy
+            # so Nginx can start. Run init-ssl.sh later to get a real one.
+            CERT_EXISTS=$(docker run --rm -v ${CERT_VOL}:/etc/letsencrypt alpine \
+              sh -c "test -f /etc/letsencrypt/live/${DOMAIN}/fullchain.pem && echo yes || echo no")
+
+            if [ "$CERT_EXISTS" = "no" ]; then
+              echo "⚠️  No SSL cert found — creating self-signed dummy..."
+              docker run --rm -v ${CERT_VOL}:/etc/letsencrypt alpine sh -c "
+                apk add --no-cache openssl &&
+                mkdir -p /etc/letsencrypt/live/${DOMAIN} &&
+                openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
+                  -keyout /etc/letsencrypt/live/${DOMAIN}/privkey.pem \
+                  -out /etc/letsencrypt/live/${DOMAIN}/fullchain.pem \
+                  -subj '/CN=${DOMAIN}'
+              "
+              echo "✅ Dummy cert created. Run 'bash init-ssl.sh' on the server for a real Let's Encrypt cert."
+            fi
+
             docker compose -f docker-compose.prod.yml up -d --build
             docker image prune -f
