@@ -40,7 +40,7 @@ services:
     container_name: lw-backend
     build:
       context: ./src/back
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     restart: unless-stopped
     env_file:
       - .env
@@ -62,14 +62,11 @@ services:
     container_name: lw-frontend
     build:
       context: ./src/front
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_BACK_URL: ${VITE_BACK_URL}
     restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      - NODE_ENV=production
-      - VITE_BACK_URL=${VITE_BACK_URL}
-    # En prod no montamos el código (sin volumes)  [oai_citation:2‡docker-compose.yml](sediment://file_0000000025bc72469c78cc6bf8927a16)
+    # No env_file needed — VITE_ vars are baked in at build time
     expose:
       - "5173"
     depends_on:

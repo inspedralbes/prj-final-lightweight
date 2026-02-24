@@ -33,10 +33,9 @@ jobs:
           script: |
             set -e
             cd /opt/lw-app
-            # OJO: esto sobrescribe el .env en cada deploy (normalmente deseado)
-            cat > .env << 'EOF'
-            ${{ secrets.ENV_FILE }}
-            EOF
+            printf '%s\n' '${{ secrets.ENV_FILE }}' > .env
+            # Eliminar posibles espacios al inicio de cada línea
+            sed -i 's/^[[:space:]]*//' .env
             chmod 600 .env
 
       # Levantar stack
