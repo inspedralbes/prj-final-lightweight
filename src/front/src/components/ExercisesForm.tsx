@@ -42,9 +42,9 @@ export const ExercisesForm = ({
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
     if (exercises.length === 0) {
-      newErrors.exercises = t('routines.addExercise');
+      newErrors.exercises = t("routines.addExercise");
     } else if (exercises.some((ex) => !ex.name.trim())) {
-      newErrors.exercises = t('messages.invalidInput');
+      newErrors.exercises = t("messages.invalidInput");
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -92,7 +92,9 @@ export const ExercisesForm = ({
       <div>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
           <div className="flex-1">
-            <h3 className="text-lg md:text-xl font-semibold text-white">{t('routines.exercises')}</h3>
+            <h3 className="text-lg md:text-xl font-semibold text-white">
+              {t("routines.exercises")}
+            </h3>
             {errors.exercises && (
               <p className="text-red-400 text-sm mt-0.5">{errors.exercises}</p>
             )}
@@ -103,7 +105,7 @@ export const ExercisesForm = ({
             className="w-full md:w-auto bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center justify-center md:justify-start gap-2 text-sm font-medium transition-colors shadow-lg shadow-orange-500/20"
           >
             <Plus className="w-4 h-4" />
-            {t('routines.addExercise')}
+            {t("routines.addExercise")}
           </button>
         </div>
 
@@ -123,7 +125,7 @@ export const ExercisesForm = ({
                     type="button"
                     onClick={() => moveUp(idx)}
                     disabled={idx === 0}
-                    title={t('common.back')}
+                    title={t("common.back")}
                     className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-[#2a2a2a] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronUp className="w-4 h-4" />
@@ -132,7 +134,7 @@ export const ExercisesForm = ({
                     type="button"
                     onClick={() => moveDown(idx)}
                     disabled={idx === exercises.length - 1}
-                    title={t('common.save')}
+                    title={t("common.save")}
                     className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-[#2a2a2a] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronDown className="w-4 h-4" />
@@ -140,7 +142,7 @@ export const ExercisesForm = ({
                   <button
                     type="button"
                     onClick={() => removeExercise(idx)}
-                    title={t('routines.delete')}
+                    title={t("routines.delete")}
                     className="p-1.5 rounded-md text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors ml-1"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -150,9 +152,11 @@ export const ExercisesForm = ({
 
               {/* Exercise name */}
               <div className="mb-4">
-                <label className={labelClass}>{t('routines.exerciseName')}</label>
+                <label className={labelClass}>
+                  {t("routines.exerciseName")}
+                </label>
                 <input
-                  placeholder="e.g. Bench Press"
+                  placeholder={t("routines.exerciseNamePlaceholder")}
                   value={ex.name}
                   onChange={(e) =>
                     updateExercise(idx, { name: e.target.value })
@@ -164,7 +168,7 @@ export const ExercisesForm = ({
               {/* Sets / Reps / Rest - Responsive Grid */}
               <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4">
                 <div>
-                  <label className={labelClass}>{t('routines.series')}</label>
+                  <label className={labelClass}>{t("routines.series")}</label>
                   <input
                     type="number"
                     min={1}
@@ -176,7 +180,7 @@ export const ExercisesForm = ({
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>{t('routines.reps')}</label>
+                  <label className={labelClass}>{t("routines.reps")}</label>
                   <input
                     type="number"
                     min={1}
@@ -188,7 +192,7 @@ export const ExercisesForm = ({
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>{t('routines.rest')}</label>
+                  <label className={labelClass}>{t("routines.rest")}</label>
                   <input
                     type="number"
                     min={0}
@@ -204,12 +208,14 @@ export const ExercisesForm = ({
               {/* Notes */}
               <div>
                 <label className={labelClass}>
-                  Notes{" "}
-                  <span className="normal-case text-gray-600">(optional)</span>
+                  {t("routines.notes")}{" "}
+                  <span className="normal-case text-gray-600">
+                    ({t("common.optional")})
+                  </span>
                 </label>
                 <textarea
                   rows={2}
-                  placeholder="e.g. Keep elbows tucked, tempo 3-1-1"
+                  placeholder={t("routines.notesPlaceholder")}
                   value={ex.notes ?? ""}
                   onChange={(e) =>
                     updateExercise(idx, { notes: e.target.value })
@@ -223,14 +229,14 @@ export const ExercisesForm = ({
           {exercises.length === 0 && (
             <div className="text-center py-8 md:py-12 bg-[#1a1a1a] rounded-xl border border-dashed border-gray-800">
               <p className="text-gray-500 mb-4 text-sm md:text-base">
-                {t('routines.noRoutines')}
+                {t("routines.noRoutines")}
               </p>
               <button
                 type="button"
                 onClick={addExercise}
                 className="text-orange-500 font-medium hover:underline text-sm"
               >
-                {t('routines.addExercise')}
+                {t("routines.addExercise")}
               </button>
             </div>
           )}
@@ -244,7 +250,7 @@ export const ExercisesForm = ({
           disabled={submitting}
           className="w-full md:w-auto bg-orange-500 hover:bg-orange-600 disabled:bg-orange-500/50 disabled:cursor-not-allowed text-white px-6 md:px-8 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-orange-500/20"
         >
-          {submitting ? t('common.loading') : t('routines.save')}
+          {submitting ? t("common.loading") : t("routines.save")}
         </button>
       </div>
     </form>

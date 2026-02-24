@@ -9,30 +9,47 @@
     "delete": "Eliminar",
     "edit": "Editar",
     "create": "Crear",
-    "back": "Enrere"
+    "back": "Enrere",
+    "optional": "opcional"
   },
   "auth": {
     "login": "Iniciar sessió",
-    "register": "Registre",
+    "loginSubtitle": "Inicia sessió a LightWeight",
+    "loginDecorativeText": "Entrena amb els millors coaches i assoleix els teus objectius de fitness.",
+    "register": "Crear compte",
+    "registerSubtitle": "Uneix-te a LightWeight i comença el teu viatge de fitness.",
+    "registerDecorativeText": "Uneix-te a LightWeight i comença la teva transformació física.",
+    "username": "Usuari",
+    "usernamePlaceholder": "Introdueix el teu usuari",
     "email": "Correu electrònic",
+    "emailPlaceholder": "exemple@correu.com",
     "password": "Contrasenya",
+    "passwordPlaceholder": "Introdueix la teva contrasenya",
     "passwordConfirm": "Confirmar contrasenya",
+    "passwordConfirmPlaceholder": "Confirma la contrasenya",
     "name": "Nom",
+    "roleClient": "Client",
+    "roleCoach": "Entrenador",
     "loginButton": "Iniciar sessió",
     "registerButton": "Crear compte",
     "noAccount": "No tens compte?",
     "haveAccount": "Ja tens compte?",
     "forgotPassword": "Has oblidat la contrasenya?",
+    "forgotPasswordSubtitle": "Recupera l'accés al teu compte i continua el teu entrenament.",
+    "forgotPasswordHint": "Introdueix el teu usuari i t'enviarem un correu de recuperació.",
     "resetPassword": "Restablir contrasenya",
-    "sendReset": "Enviar enllaç",
-    "invalidCredentials": "Correu o contrasenya inválids"
+    "sendReset": "Enviar sol\u00b7licitud",
+    "invalidCredentials": "Usuari o contrasenya invàlids",
+    "acceptTerms": "Accepto els",
+    "termsLink": "Termes i Condicions"
   },
   "sidebar": {
     "dashboard": "Panell de control",
     "routines": "Rutines",
     "sessions": "Sessions",
     "profile": "Perfil",
-    "documentation": "Documentació"
+    "documentation": "Documentació",
+    "management": "Gestió"
   },
   "routines": {
     "title": "Les meves rutines",
@@ -46,12 +63,19 @@
     "createRoutine": "Crear rutina",
     "editRoutine": "Editar rutina",
     "noRoutines": "Encara no tens rutines",
+    "noRoutinesHint": "Comença creant la teva primera rutina d'entrenament.",
     "addExercise": "Afegir exercici",
     "exerciseName": "Nom de l'exercici",
+    "exerciseNamePlaceholder": "ex. Press de pit",
+    "manageExercises": "Gestiona i reordena els exercicis d'aquesta rutina.",
+    "recentlyAssigned": "Assignada recentment",
+    "moreExercises": "+{{count}} més",
     "series": "Sèries",
     "reps": "Repeticions",
     "weight": "Pes (kg)",
-    "rest": "Descans (seg)"
+    "rest": "Descans (seg)",
+    "notes": "Notes",
+    "notesPlaceholder": "Notes opcionals..."
   },
   "sessions": {
     "title": "Sessions",
@@ -62,7 +86,10 @@
     "joinSession": "Unir-se a sessió",
     "sessionCode": "Codi de sessió",
     "enterCode": "Introdueix el codi de sessió",
-    "selectRoutine": "Selecciona una rutina"
+    "selectRoutine": "Selecciona una rutina",
+    "sessionError": "Error de sessió",
+    "sessionTitle": "Sessió {{code}}",
+    "sessionNotFound": "Sessió no trobada"
   },
   "home": {
     "welcome": "Benvingut",
@@ -80,7 +107,12 @@
     "sessionJoined": "Sessió unida",
     "copySuccess": "Copiat al porta-retalls",
     "errorOccurred": "Va ocórrer un error",
-    "invalidInput": "Entrada inválida"
+    "invalidInput": "Entrada invàlida",
+    "passwordMismatch": "Les contrasenyes no coincideixen",
+    "acceptTermsRequired": "Has d'acceptar els termes per continuar",
+    "userAlreadyExists": "Aquest usuari ja existeix",
+    "resetEmailSent": "Correu de recuperació enviat",
+    "routineNotFound": "Rutina no trobada"
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",

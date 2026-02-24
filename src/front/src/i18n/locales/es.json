@@ -9,30 +9,47 @@
     "delete": "Eliminar",
     "edit": "Editar",
     "create": "Crear",
-    "back": "Atrás"
+    "back": "Atrás",
+    "optional": "opcional"
   },
   "auth": {
     "login": "Iniciar sesión",
-    "register": "Registro",
+    "loginSubtitle": "Inicia sesión en LightWeight",
+    "loginDecorativeText": "Entrena con los mejores coaches y alcanza tus objetivos de fitness.",
+    "register": "Crear cuenta",
+    "registerSubtitle": "Únete a LightWeight y comienza tu camino fitness.",
+    "registerDecorativeText": "Únete a LightWeight y comienza tu transformación física.",
+    "username": "Usuario",
+    "usernamePlaceholder": "Ingresa tu usuario",
     "email": "Correo electrónico",
+    "emailPlaceholder": "ejemplo@correo.com",
     "password": "Contraseña",
+    "passwordPlaceholder": "Ingresa tu contraseña",
     "passwordConfirm": "Confirmar contraseña",
+    "passwordConfirmPlaceholder": "Confirma tu contraseña",
     "name": "Nombre",
+    "roleClient": "Cliente",
+    "roleCoach": "Entrenador",
     "loginButton": "Iniciar sesión",
     "registerButton": "Crear cuenta",
     "noAccount": "¿No tienes cuenta?",
     "haveAccount": "¿Ya tienes cuenta?",
     "forgotPassword": "¿Olvidaste tu contraseña?",
+    "forgotPasswordSubtitle": "Recupera el acceso a tu cuenta y continúa entrenando.",
+    "forgotPasswordHint": "Introduce tu usuario y te enviaremos un correo de recuperación.",
     "resetPassword": "Restablecer contraseña",
-    "sendReset": "Enviar enlace",
-    "invalidCredentials": "Email o contraseña inválidos"
+    "sendReset": "Enviar solicitud",
+    "invalidCredentials": "Usuario o contraseña inválidos",
+    "acceptTerms": "Acepto los",
+    "termsLink": "Términos y Condiciones"
   },
   "sidebar": {
     "dashboard": "Panel de control",
     "routines": "Rutinas",
     "sessions": "Sesiones",
     "profile": "Perfil",
-    "documentation": "Documentación"
+    "documentation": "Documentación",
+    "management": "Gestión"
   },
   "routines": {
     "title": "Mis rutinas",
@@ -46,12 +63,19 @@
     "createRoutine": "Crear rutina",
     "editRoutine": "Editar rutina",
     "noRoutines": "Aún no tienes rutinas",
+    "noRoutinesHint": "Empieza creando tu primera rutina de entrenamiento.",
     "addExercise": "Agregar ejercicio",
     "exerciseName": "Nombre del ejercicio",
+    "exerciseNamePlaceholder": "ej. Press de banca",
+    "manageExercises": "Gestiona y reordena los ejercicios de esta rutina.",
+    "recentlyAssigned": "Asignada recientemente",
+    "moreExercises": "+{{count}} más",
     "series": "Series",
     "reps": "Repeticiones",
     "weight": "Peso (kg)",
-    "rest": "Descanso (seg)"
+    "rest": "Descanso (seg)",
+    "notes": "Notas",
+    "notesPlaceholder": "Notas opcionales..."
   },
   "sessions": {
     "title": "Sesiones",
@@ -62,7 +86,10 @@
     "joinSession": "Unirse a sesión",
     "sessionCode": "Código de sesión",
     "enterCode": "Ingresa el código de sesión",
-    "selectRoutine": "Selecciona una rutina"
+    "selectRoutine": "Selecciona una rutina",
+    "sessionError": "Error de sesión",
+    "sessionTitle": "Sesión {{code}}",
+    "sessionNotFound": "Sesión no encontrada"
   },
   "home": {
     "welcome": "Bienvenido",
@@ -80,7 +107,12 @@
     "sessionJoined": "Sesión unida",
     "copySuccess": "Copiado al portapapeles",
     "errorOccurred": "Ocurrió un error",
-    "invalidInput": "Entrada inválida"
+    "invalidInput": "Entrada inválida",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "acceptTermsRequired": "Debes aceptar los términos para continuar",
+    "userAlreadyExists": "Este usuario ya existe",
+    "resetEmailSent": "Correo de recuperación enviado",
+    "routineNotFound": "Rutina no encontrada"
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",
