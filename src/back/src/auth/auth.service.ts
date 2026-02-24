@@ -15,7 +15,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   // Función para hashear la contraseña del usuario utilizando bcrypt.
   async hashPassword(password: string): Promise<string> {

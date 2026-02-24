@@ -1,4 +1,8 @@
-import { Injectable, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ExecutionContext } from '@nestjs/common';
 
@@ -16,7 +20,9 @@ export class CoachGuard extends AuthGuard('jwt') {
 
     // Verificar que el usuario tenga el rol COACH
     if (user.role !== 'COACH') {
-      console.log(`[CoachGuard] Acceso denegado. Usuario: ${user.username}, Rol: ${user.role}`);
+      console.log(
+        `[CoachGuard] Acceso denegado. Usuario: ${user.username}, Rol: ${user.role}`,
+      );
       throw new ForbiddenException('Only coaches can access this resource');
     }
 
