@@ -1,0 +1,31 @@
+# src/back/Dockerfile.prod (PRODUCTION)
+
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# Install ALL deps (including devDependencies for build tools like @nestjs/cli)
+RUN npm ci
+
+COPY . .
+
+# Prisma generate needs DATABASE_URL at config-load time (does NOT connect).
+# We provide a dummy value; the real one is injected at runtime.
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+
+# 1. Generate Prisma client
+RUN npx prisma generate
+
+# 2. Build NestJS — verify output exists
+RUN npm run build && ls dist/main.js
+
+# 3. Remove devDependencies to slim down the image
+RUN npm prune --omit=dev
+
+EXPOSE 3000
+
+# 1. prisma migrate deploy applies pending migrations without data loss
+# 2. node dist/main starts the compiled NestJS app
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]

@@ -1,0 +1,81 @@
+services:
+  # --- BASE DE DATOS (Tu configuración original) ---
+  lw-postgres:
+    container_name: lw-postgres
+    image: postgres:17-alpine
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # --- ADMINER (Tu configuración original) ---
+  adminer:
+    container_name: adminer
+    image: adminer
+    restart: always
+    ports:
+      - "8081:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: lw-postgres
+    depends_on:
+      - lw-postgres
+
+  # --- BACKEND (NestJS) ---
+  backend:
+    container_name: lw-backend
+    build:
+      context: ./src/back
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    environment:
+      # IMPORTANTE: Aquí sobreescribimos la URL para que funcione dentro de Docker
+      # Usamos el nombre del servicio "lw-postgres" como host y tus credenciales "root"
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@lw-postgres:5432/${POSTGRES_DB}?schema=public"
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+      FRONTEND_URL: ${FRONTEND_URL}
+    volumes:
+      # Solo montamos el código fuente y las migraciones
+      # node_modules queda dentro del contenedor, evitando conflictos con el cliente Prisma
+      - ./src/back/src:/app/src
+      - ./src/back/prisma:/app/prisma
+    depends_on:
+      lw-postgres:
+        condition: service_healthy
+
+  # --- FRONTEND (React + Vite) ---
+  frontend:
+    container_name: lw-frontend
+    build:
+      context: ./src/front
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src/front:/app
+      - /app/node_modules
+    # Habilitamos el polling para que el hot-reload funcione bien en Linux/Docker
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_BACK_URL=${VITE_BACK_URL}
+
+volumes:
+  postgres_db:
