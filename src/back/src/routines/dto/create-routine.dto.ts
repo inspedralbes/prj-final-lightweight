@@ -15,13 +15,14 @@ export class CreateRoutineDto {
   @IsNotEmpty()
   name!: string;
 
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
+  @ArrayMinSize(0)
   @ValidateNested({ each: true })
   @Type(() => ExerciseDto)
-  exercises!: ExerciseDto[];
+  exercises?: ExerciseDto[];
 
   @IsOptional()
   @IsInt()
-  clientId?: number;
+  clientId?: number | null;
 }

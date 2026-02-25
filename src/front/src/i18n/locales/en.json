@@ -10,7 +10,8 @@
     "edit": "Edit",
     "create": "Create",
     "back": "Back",
-    "optional": "optional"
+    "optional": "optional",
+    "user": "User"
   },
   "auth": {
     "login": "Login",
@@ -49,7 +50,8 @@
     "sessions": "Sessions",
     "profile": "Profile",
     "documentation": "Documentation",
-    "management": "Management"
+    "management": "Management",
+    "clients": "Clients"
   },
   "routines": {
     "title": "My Routines",
@@ -112,7 +114,22 @@
     "acceptTermsRequired": "You must accept the terms to continue",
     "userAlreadyExists": "This user already exists",
     "resetEmailSent": "Recovery email sent",
-    "routineNotFound": "Routine not found"
+    "routineNotFound": "Routine not found",
+    "clientUpdated": "Client updated successfully"
+  },
+  "clients": {
+    "title": "My Clients",
+    "noClients": "You don't have any clients yet",
+    "noClientsHint": "Start by inviting clients to train with you.",
+    "viewProfile": "View Profile",
+    "goals": "Goals",
+    "privateNotes": "Private Notes",
+    "personalData": "Personal Data Shared",
+    "joined": "Joined on",
+    "email": "Email",
+    "editNotes": "Edit Notes",
+    "saveNotes": "Save Notes",
+    "cancel": "Cancel"
   },
   "language": {
     "selectLanguage": "Select Language",

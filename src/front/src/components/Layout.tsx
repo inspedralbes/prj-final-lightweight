@@ -1,16 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Dumbbell,
   List,
   ChevronRight,
   LogOut,
-  FileText,
   Menu,
   X,
 } from "./Icons";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../context/AuthContext";
 
 export interface LayoutProps {
   children: React.ReactNode;
@@ -20,7 +20,16 @@ const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [username, setUsername] = useState<string>("");
+
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -30,10 +39,19 @@ const Layout = ({ children }: LayoutProps) => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const navItems = [
-    { path: "/dashboard", label: t("sidebar.dashboard"), icon: List },
-    { path: "/programs", label: t("sidebar.documentation"), icon: FileText },
+  // 🟢 MENÚ PARA ENTRENADORES
+  const coachNavItems = [
+    { path: "/dashboard", label: t("sidebar.dashboard") || "Panel de control", icon: List },
+    { path: "/clients", label: t("sidebar.clients") || "Clientes", icon: List },
   ];
+
+  // 🟢 MENÚ PARA CLIENTES
+  const clientNavItems = [
+    { path: "/client-home", label: "Mis rutinas", icon: Dumbbell },
+  ];
+
+  // El menú cambia automáticamente según quién inicie sesión
+  const navItems = user?.role === 'CLIENT' ? clientNavItems : coachNavItems;
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-gray-300 font-sans">
@@ -70,7 +88,7 @@ const Layout = ({ children }: LayoutProps) => {
         {/* Navigation */}
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           <div className="text-xs font-semibold text-gray-500 uppercase px-3 mb-4 tracking-wider">
-            {t("sidebar.management")}
+            {t("sidebar.management") || "Gestión"}
           </div>
 
           {navItems.map(({ path, label, icon: Icon }) => (
@@ -101,20 +119,36 @@ const Layout = ({ children }: LayoutProps) => {
           ))}
         </nav>
 
-        {/* Language Switcher */}
-        <div className="p-4 border-t border-[#1a1a1a]">
-          <LanguageSwitcher />
-        </div>
+        {/* --- PARTE INFERIOR DEL SIDEBAR --- */}
+        <div className="mt-auto flex flex-col">
+          {/* Language Switcher */}
+          <div className="p-4 border-t border-[#1a1a1a]">
+            <LanguageSwitcher />
+          </div>
 
-        {/* Logout Button */}
-        <div className="p-4 border-t border-[#1a1a1a]">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-[#1a1a1a] hover:text-white transition-all duration-200"
-          >
-            <LogOut className="w-5 h-5" />
-            {t("common.logout")}
-          </button>
+          {/* Tarjeta de Perfil y Botón de Salir */}
+          <div className="p-4 border-t border-[#1a1a1a]">
+            <div className="flex items-center justify-between bg-[#111111] p-3 rounded-xl border border-[#222222]">
+              
+              <div className="flex flex-col">
+                <span className="text-white font-medium text-sm truncate max-w-[120px]">
+                  {user?.username || username || "Usuario"}
+                </span>
+                <span className="text-gray-500 text-xs mt-0.5">
+                  {user?.role === 'COACH' ? 'Coach Account' : 'Client Account'}
+                </span>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="text-gray-400 hover:text-orange-500 hover:bg-[#1a1a1a] p-2 rounded-lg transition-all"
+                title={t("common.logout") || "Cerrar sesión"}
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+              
+            </div>
+          </div>
         </div>
       </aside>
 

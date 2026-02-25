@@ -55,7 +55,7 @@ export class RoutinesController {
       coachId,
       name,
       exercises || [],
-      clientId,
+      clientId || undefined,
     );
   }
 
@@ -73,7 +73,7 @@ export class RoutinesController {
       coachId,
       name,
       exercises,
-      clientId,
+      clientId || undefined,
     );
   }
 

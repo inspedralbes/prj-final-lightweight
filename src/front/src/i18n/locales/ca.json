@@ -10,7 +10,8 @@
     "edit": "Editar",
     "create": "Crear",
     "back": "Enrere",
-    "optional": "opcional"
+    "optional": "opcional",
+    "user": "Usuari"
   },
   "auth": {
     "login": "Iniciar sessió",
@@ -49,7 +50,8 @@
     "sessions": "Sessions",
     "profile": "Perfil",
     "documentation": "Documentació",
-    "management": "Gestió"
+    "management": "Gestió",
+    "clients": "Clients"
   },
   "routines": {
     "title": "Les meves rutines",
@@ -112,7 +114,22 @@
     "acceptTermsRequired": "Has d'acceptar els termes per continuar",
     "userAlreadyExists": "Aquest usuari ja existeix",
     "resetEmailSent": "Correu de recuperació enviat",
-    "routineNotFound": "Rutina no trobada"
+    "routineNotFound": "Rutina no trobada",
+    "clientUpdated": "Client actualitzat correctament"
+  },
+  "clients": {
+    "title": "Els meus clients",
+    "noClients": "Encara no tens clients",
+    "noClientsHint": "Comença convidant clients per entrenar-los.",
+    "viewProfile": "Veure perfil",
+    "goals": "Objectius",
+    "privateNotes": "Notas privades",
+    "personalData": "Dades personals compartides",
+    "joined": "Uniat el",
+    "email": "Correu electrònic",
+    "editNotes": "Editar notas",
+    "saveNotes": "Guardar notas",
+    "cancel": "Cancel·lar"
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",

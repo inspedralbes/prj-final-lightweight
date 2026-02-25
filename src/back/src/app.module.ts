@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { RoutinesModule } from './routines/routines.module';
 import { SessionModule } from './session/session.module';
 import { InvitationsModule } from './invitations/invitations.module';
+import { ClientsModule } from './clients/clients.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { InvitationsModule } from './invitations/invitations.module';
     RoutinesModule,
     SessionModule,
     InvitationsModule,
+    ClientsModule,
   ],
   controllers: [AppController],
   providers: [

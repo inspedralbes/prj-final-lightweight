@@ -10,7 +10,8 @@
     "edit": "Editar",
     "create": "Crear",
     "back": "Atrás",
-    "optional": "opcional"
+    "optional": "opcional",
+    "user": "Usuario"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -49,7 +50,8 @@
     "sessions": "Sesiones",
     "profile": "Perfil",
     "documentation": "Documentación",
-    "management": "Gestión"
+    "management": "Gestión",
+    "clients": "Clientes"
   },
   "routines": {
     "title": "Mis rutinas",
@@ -112,7 +114,22 @@
     "acceptTermsRequired": "Debes aceptar los términos para continuar",
     "userAlreadyExists": "Este usuario ya existe",
     "resetEmailSent": "Correo de recuperación enviado",
-    "routineNotFound": "Rutina no encontrada"
+    "routineNotFound": "Rutina no encontrada",
+    "clientUpdated": "Cliente actualizado correctamente"
+  },
+  "clients": {
+    "title": "Mis clientes",
+    "noClients": "Aún no tienes clientes",
+    "noClientsHint": "Comienza invitando clientes para entrenar.",
+    "viewProfile": "Ver perfil",
+    "goals": "Objetivos",
+    "privateNotes": "Notas privadas",
+    "personalData": "Datos personales compartidos",
+    "joined": "Se unió el",
+    "email": "Correo electrónico",
+    "editNotes": "Editar notas",
+    "saveNotes": "Guardar notas",
+    "cancel": "Cancelar"
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",
