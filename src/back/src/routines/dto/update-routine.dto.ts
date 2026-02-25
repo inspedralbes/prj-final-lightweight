@@ -13,17 +13,16 @@ import { ExerciseDto } from './exercise.dto';
 export class UpdateRoutineDto {
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
   name?: string;
 
   @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
+  @ArrayMinSize(0)
   @ValidateNested({ each: true })
   @Type(() => ExerciseDto)
   exercises?: ExerciseDto[];
 
   @IsOptional()
   @IsInt()
-  clientId?: number;
+  clientId?: number | null;
 }

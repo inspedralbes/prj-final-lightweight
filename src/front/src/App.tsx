@@ -7,6 +7,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import ClientHome from "./pages/ClientHome";
+import Clients from "./pages/Clients";
 import Session from "./pages/Session";
 import ExercisesEdit from "./pages/ExercisesEdit";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -53,6 +54,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole="COACH">
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/clients"
+          element={
+            <ProtectedRoute requiredRole="COACH">
+              <Clients />
             </ProtectedRoute>
           }
         />

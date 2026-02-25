@@ -9,6 +9,7 @@ import { RoutinesModule } from './routines/routines.module';
 import { SessionModule } from './session/session.module';
 import { ExercisesModule } from './exercises/exercises.module';
 import { InvitationsModule } from './invitations/invitations.module';
+import { ClientsModule } from './clients/clients.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { InvitationsModule } from './invitations/invitations.module';
     SessionModule,
     ExercisesModule,
     InvitationsModule,
+    ClientsModule,
   ],
   controllers: [AppController],
   providers: [

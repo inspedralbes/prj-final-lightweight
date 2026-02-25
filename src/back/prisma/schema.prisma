@@ -56,8 +56,23 @@ model User {
   dietPlans        DietPlan[]
   invitationsAsCoach  Invitation[] @relation("CoachInvitations")
   invitationsAsClient Invitation[] @relation("ClientInvitations")
+  clientProfile    ClientProfile?
 
   @@map("users")
+}
+
+model ClientProfile {
+  id                  Int      @id @default(autoincrement())
+  clientId            Int      @unique @map("client_id")
+  goals               String?  // JSON con objetivos del cliente
+  privateNotes        String?  @map("private_notes")  // Notas privadas del coach
+  personalDataShared  Boolean  @default(false) @map("personal_data_shared")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relaciones
+  client User @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_profiles")
 }
 
 model ExerciseCatalog {
