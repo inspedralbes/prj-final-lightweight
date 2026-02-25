@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -13,7 +12,7 @@ import ExercisesEdit from "./pages/ExercisesEdit";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
-const socket = io(import.meta.env.VITE_BACK_URL);
+import { socket } from "./services/socket";
 
 // Ruta raíz inteligente: redirige según rol o a /login
 const RootRedirect = () => {

@@ -4,7 +4,8 @@ import { LoadingScreen } from "../components/LoadingScreen";
 import { clientsService, type Client } from "../services/clientsService";
 import { useTranslation } from "react-i18next";
 import { useToast } from "../hooks/useToast";
-import { Mail, Edit, X } from "../components/Icons";
+import { Mail, Edit, X, MessageCircle } from "../components/Icons";
+import P2PChat from "../components/P2PChat";
 
 const Clients = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -13,6 +14,7 @@ const Clients = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingNotes, setEditingNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const { t } = useTranslation();
   const toast = useToast();
@@ -55,12 +57,12 @@ const Clients = () => {
         prev.map((c) =>
           c.id === selectedClient.id
             ? {
-                ...c,
-                clientProfile: {
-                  ...c.clientProfile,
-                  privateNotes: editingNotes,
-                },
-              }
+              ...c,
+              clientProfile: {
+                ...c.clientProfile,
+                privateNotes: editingNotes,
+              },
+            }
             : c,
         ),
       );
@@ -143,11 +145,10 @@ const Clients = () => {
                 <div className="mb-4">
                   <p className="text-sm text-gray-400">
                     <span
-                      className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                        client.clientProfile?.personalDataShared
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-gray-500/20 text-gray-400"
-                      }`}
+                      className={`inline-block px-2 py-1 rounded text-xs font-medium ${client.clientProfile?.personalDataShared
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-gray-500/20 text-gray-400"
+                        }`}
                     >
                       {client.clientProfile?.personalDataShared
                         ? t("clients.personalData")
@@ -168,14 +169,26 @@ const Clients = () => {
                   </div>
                 )}
 
-                {/* Action Button */}
-                <button
-                  onClick={() => handleViewProfile(client)}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors mt-2"
-                >
-                  <Edit className="w-4 h-4" />
-                  {t("clients.viewProfile")}
-                </button>
+                {/* Action Buttons */}
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => handleViewProfile(client)}
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    {t("clients.viewProfile")}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedClient(client);
+                      setIsChatOpen(true);
+                    }}
+                    className="bg-[#2a2a2a] hover:bg-[#333] text-white p-2 rounded-lg transition-colors border border-[#3a3a3a]"
+                    title="Real-time Chat"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -262,6 +275,17 @@ const Clients = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {/* Chat Overlay */}
+      {isChatOpen && selectedClient && (
+        <div className="fixed bottom-6 right-6 z-50 w-80 md:w-96 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
+          <P2PChat
+            roomId={`chat_client_${selectedClient.id}`}
+            title={`Chat con ${selectedClient.username}`}
+            onClose={() => setIsChatOpen(false)}
+            isInitiator={true}
+          />
         </div>
       )}
     </Layout>
