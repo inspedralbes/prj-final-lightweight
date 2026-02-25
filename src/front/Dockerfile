@@ -1,4 +1,4 @@
-# src/front/Dockerfile
+# src/front/Dockerfile (DEVELOPMENT)
 
 FROM node:22-alpine
 
