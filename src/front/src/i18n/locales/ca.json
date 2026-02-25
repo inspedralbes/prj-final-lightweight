@@ -141,6 +141,22 @@
     "enterCode": "Si us plau introdueix un codi",
     "footerInfo": "Els teus codis d'invitació t'ajuden a mantenir-te connectat amb la teva comunitat de fitness. Comparteix-los de forma segura amb amics i entrenadors de confiança."
   },
+  "virtualGym": {
+    "title": "Gimnàs Virtual - Sessiò en directe",
+    "subtitle": "Entrena en companyia",
+    "enterButton": "Entrar al Gimnàs Virtual",
+    "connectedToRoom": "Connectat al gimnàs virtual",
+    "connectionError": "Error de connexió",
+    "connected": "Connectat",
+    "disconnected": "Desconnectat",
+    "roomCode": "Codi de sala",
+    "usersOnline": "Usuaris en línia",
+    "connecting": "Connectant...",
+    "noUsers": "Ningú en la sala",
+    "online": "En línia",
+    "videoPlaceholder": "Vídeo en directe",
+    "leaveButton": "Sortir de la sala"
+  },
   "language": {
     "selectLanguage": "Seleccionar idioma",
     "english": "English",

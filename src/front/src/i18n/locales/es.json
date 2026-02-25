@@ -141,6 +141,22 @@
     "enterCode": "Por favor ingresa un código",
     "footerInfo": "Tus códigos de invitación te ayudan a mantenerte conectado con tu comunidad de fitness. Compártelos de forma segura con amigos y entrenadores de confianza."
   },
+  "virtualGym": {
+    "title": "Gimnasio Virtual - Sesión en directo",
+    "subtitle": "Entrena en compañía",
+    "enterButton": "Entrar al Gimnasio Virtual",
+    "connectedToRoom": "Conectado al gimnasio virtual",
+    "connectionError": "Error de conexión",
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "roomCode": "Código de sala",
+    "usersOnline": "Usuarios en línea",
+    "connecting": "Conectando...",
+    "noUsers": "Nadie en la sala",
+    "online": "En línea",
+    "videoPlaceholder": "Vídeo en directo",
+    "leaveButton": "Salir de la sala"
+  },
   "language": {
     "selectLanguage": "Seleccionar idioma",
     "english": "English",

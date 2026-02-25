@@ -141,6 +141,22 @@
     "enterCode": "Please enter a code",
     "footerInfo": "Your invitation codes help you stay connected with your fitness community. Share them securely with trusted friends and coaches."
   },
+  "virtualGym": {
+    "title": "Virtual Gym - Live Session",
+    "subtitle": "Train together",
+    "enterButton": "Enter Virtual Gym",
+    "connectedToRoom": "Connected to the virtual gym",
+    "connectionError": "Connection error",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "roomCode": "Room code",
+    "usersOnline": "Users online",
+    "connecting": "Connecting...",
+    "noUsers": "No one in the room",
+    "online": "Online",
+    "videoPlaceholder": "Live video",
+    "leaveButton": "Leave room"
+  },
   "language": {
     "selectLanguage": "Select Language",
     "english": "English",

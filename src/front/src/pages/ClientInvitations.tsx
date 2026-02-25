@@ -66,14 +66,15 @@ export default function ClientInvitations() {
     setLoadingAccept(true);
     try {
       const response = await invitationsService.acceptInvitationCode(inputCode);
+      const acceptedCode = inputCode;
       setInputCode("");
       toast.success(
         t("invitations.codeAccepted") || "Successfully connected to your friend!"
       );
-      // Opcional: redirigir después de un tiempo
+      // Redirigir automáticamente a la sala virtual
       setTimeout(() => {
-        navigate("/client-home");
-      }, 2000);
+        navigate(`/room/${acceptedCode}`);
+      }, 1500);
     } catch (error) {
       const message =
         error instanceof Error
@@ -165,6 +166,15 @@ export default function ClientInvitations() {
                       <span>{t("invitations.copyButton") || "Copy code"}</span>
                     </>
                   )}
+                </button>
+
+                {/* Botón Entrar al Gimnàs Virtual */}
+                <button
+                  onClick={() => navigate(`/room/${generatedCode}`)}
+                  className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <Ticket className="w-5 h-5" />
+                  <span>{t("virtualGym.enterButton") || "Enter Virtual Gym"}</span>
                 </button>
               </div>
             )}

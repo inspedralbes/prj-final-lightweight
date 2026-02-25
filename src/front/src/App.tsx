@@ -11,6 +11,7 @@ import Session from "./pages/Session";
 import ExercisesEdit from "./pages/ExercisesEdit";
 import ClientInvitations from "./pages/ClientInvitations";
 import Programs from "./pages/Programs";
+import VirtualGymRoom from "./pages/VirtualGymRoom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
@@ -97,6 +98,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole="CLIENT">
               <ClientInvitations />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/room/:roomId"
+          element={
+            <ProtectedRoute requiredRole="CLIENT">
+              <VirtualGymRoom />
             </ProtectedRoute>
           }
         />

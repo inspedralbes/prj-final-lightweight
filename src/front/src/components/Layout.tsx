@@ -9,7 +9,7 @@ import {
   Menu,
   X,
 } from "./Icons";
-import { Ticket } from "lucide-react";
+import { Ticket, User } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
@@ -117,6 +117,23 @@ const Layout = ({ children }: LayoutProps) => {
         <div className="p-4 border-t border-[#1a1a1a]">
           <LanguageSwitcher />
         </div>
+
+        {/* User Info */}
+        {user && (
+          <div className="px-4 py-4 border-t border-[#1a1a1a]">
+            <div className="flex items-center gap-3 px-3 py-3 rounded-lg bg-[#1a1a1a]">
+              <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center">
+                <User className="w-5 h-5 text-orange-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">{user.username}</p>
+                <p className="text-xs text-gray-500">
+                  {user.role === "COACH" ? t("auth.roleCoach") : t("auth.roleClient")}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Logout Button */}
         <div className="p-4 border-t border-[#1a1a1a]">
