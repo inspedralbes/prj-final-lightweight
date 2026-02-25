@@ -9,8 +9,10 @@ import {
   Menu,
   X,
 } from "./Icons";
+import { Ticket } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../context/AuthContext";
 
 export interface LayoutProps {
   children: React.ReactNode;
@@ -20,6 +22,7 @@ const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
@@ -30,10 +33,19 @@ const Layout = ({ children }: LayoutProps) => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const navItems = [
+  // Items comunes para todos
+  const baseNavItems = [
     { path: "/dashboard", label: t("sidebar.dashboard"), icon: List },
     { path: "/programs", label: t("sidebar.documentation"), icon: FileText },
   ];
+
+  // Items específicos por rol
+  const clientNavItems = user?.role === "CLIENT" 
+    ? [{ path: "/clients/invitations", label: t("sidebar.invitations") || "Invitations", icon: Ticket }]
+    : [];
+
+  // Combinar items
+  const navItems = [...baseNavItems, ...clientNavItems];
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-gray-300 font-sans">

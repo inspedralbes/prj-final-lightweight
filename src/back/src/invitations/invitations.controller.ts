@@ -18,8 +18,8 @@ import { CoachGuard } from '../auth/guards/coach.guard';
 export class InvitationsController {
   constructor(private readonly invitationsService: InvitationsService) {}
 
-  // POST /invitations — Coach genera una nueva invitación
-  @UseGuards(CoachGuard)
+  // POST /invitations — Genera una nueva invitación (permitir usuarios autenticados)
+  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Req() req, @Body() dto: CreateInvitationDto) {
     return this.invitationsService.create(req.user.userId, dto);

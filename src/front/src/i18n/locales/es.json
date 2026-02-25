@@ -2,6 +2,8 @@
   "common": {
     "logout": "Cerrar sesión",
     "loading": "Cargando...",
+    "generating": "Generando...",
+    "checking": "Verificando...",
     "error": "Error",
     "success": "Éxito",
     "cancel": "Cancelar",
@@ -49,7 +51,8 @@
     "sessions": "Sesiones",
     "profile": "Perfil",
     "documentation": "Documentación",
-    "management": "Gestión"
+    "management": "Gestión",
+    "invitations": "Invitaciones"
   },
   "routines": {
     "title": "Mis rutinas",
@@ -113,6 +116,30 @@
     "userAlreadyExists": "Este usuario ya existe",
     "resetEmailSent": "Correo de recuperación enviado",
     "routineNotFound": "Rutina no encontrada"
+  },
+  "invitations": {
+    "mainTitle": "Invitaciones",
+    "mainSubtitle": "Gestiona tus códigos de invitación y conecta con entrenadores",
+    "generateTitle": "Invitar a un amigo",
+    "generateSubtitle": "Comparte tu código de invitación con un amigo",
+    "generateButton": "Generar código",
+    "generated": "Generado",
+    "yourCode": "Tu código",
+    "copyButton": "Copiar código",
+    "copied": "¡Copiado!",
+    "generateInfo": "Haz clic en el botón para generar un código único",
+    "codeGenerated": "Código generado correctamente",
+    "codeCopied": "Código copiado al portapapeles",
+    "copyFailed": "Error al copiar el código",
+    "redeemTitle": "¿Tienes un código?",
+    "redeemSubtitle": "Ingresa el código que recibiste de tu entrenador",
+    "codeInput": "Código de invitación",
+    "codePlaceholder": "Introduce el código aquí...",
+    "redeemButton": "Unirse",
+    "redeemInfo": "Pega el código que recibiste y conecta con tu entrenador",
+    "codeAccepted": "¡Conectado con tu entrenador correctamente!",
+    "enterCode": "Por favor ingresa un código",
+    "footerInfo": "Tus códigos de invitación te ayudan a mantenerte conectado con tu comunidad de fitness. Compártelos de forma segura con amigos y entrenadores de confianza."
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",

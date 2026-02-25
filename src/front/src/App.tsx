@@ -4,11 +4,13 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
-import Home from "./pages/Home";
+  import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import ClientHome from "./pages/ClientHome";
 import Session from "./pages/Session";
 import ExercisesEdit from "./pages/ExercisesEdit";
+import ClientInvitations from "./pages/ClientInvitations";
+import Programs from "./pages/Programs";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
@@ -79,6 +81,22 @@ function App() {
           element={
             <ProtectedRoute requiredRole="CLIENT">
               <ClientHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/programs"
+          element={
+            <ProtectedRoute requiredRole="COACH">
+              <Programs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/clients/invitations"
+          element={
+            <ProtectedRoute requiredRole="CLIENT">
+              <ClientInvitations />
             </ProtectedRoute>
           }
         />

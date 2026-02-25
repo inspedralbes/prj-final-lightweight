@@ -2,6 +2,8 @@
   "common": {
     "logout": "Tancar sessió",
     "loading": "Carregant...",
+    "generating": "Generant...",
+    "checking": "Verificant...",
     "error": "Error",
     "success": "Èxit",
     "cancel": "Cancel·lar",
@@ -49,7 +51,8 @@
     "sessions": "Sessions",
     "profile": "Perfil",
     "documentation": "Documentació",
-    "management": "Gestió"
+    "management": "Gestió",
+    "invitations": "Invitacions"
   },
   "routines": {
     "title": "Les meves rutines",
@@ -113,6 +116,30 @@
     "userAlreadyExists": "Aquest usuari ja existeix",
     "resetEmailSent": "Correu de recuperació enviat",
     "routineNotFound": "Rutina no trobada"
+  },
+  "invitations": {
+    "mainTitle": "Invitacions",
+    "mainSubtitle": "Gestiona els teus codis d'invitació i connecta amb entrenadors",
+    "generateTitle": "Convidar a un amic",
+    "generateSubtitle": "Comparteix el teu codi d'invitació amb un amic",
+    "generateButton": "Generar codi",
+    "generated": "Generat",
+    "yourCode": "El teu codi",
+    "copyButton": "Copiar codi",
+    "copied": "Copiat!",
+    "generateInfo": "Fes clic al botó per generar un codi únic",
+    "codeGenerated": "Codi generat correctament",
+    "codeCopied": "Codi copiat al porta-retalls",
+    "copyFailed": "Error al copiar el codi",
+    "redeemTitle": "Tens un codi?",
+    "redeemSubtitle": "Introdueix el codi que vas rebre del teu entrenador",
+    "codeInput": "Codi d'invitació",
+    "codePlaceholder": "Introdueix el codi aquí...",
+    "redeemButton": "Unir-se",
+    "redeemInfo": "Enganxa el codi que vas rebre i connecta amb el teu entrenador",
+    "codeAccepted": "Connectat amb el teu entrenador correctament!",
+    "enterCode": "Si us plau introdueix un codi",
+    "footerInfo": "Els teus codis d'invitació t'ajuden a mantenir-te connectat amb la teva comunitat de fitness. Comparteix-los de forma segura amb amics i entrenadors de confiança."
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",
