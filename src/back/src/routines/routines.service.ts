@@ -49,6 +49,20 @@ export class RoutinesService {
         clientId },
     });
 
+    // Si se asigna un cliente, establecer la relación coach-cliente y crear su perfil
+    if (clientId) {
+      await this.prisma.user.update({
+        where: { id: clientId },
+        data: { coachId },
+      });
+      // Crear perfil del cliente si no existe
+      await this.prisma.clientProfile.upsert({
+        where: { clientId },
+        update: {},
+        create: { clientId },
+      });
+    }
+
     await this.upsertExercises(routine.id, exercises);
     return this.getRoutineById(routine.id);
   }
@@ -75,6 +89,20 @@ export class RoutinesService {
       await this.prisma.routine.update({
         where: { id: routineId },
         data: updateData,
+      });
+    }
+
+    // Si se asigna un nuevo cliente, establecer la relación coach-cliente y crear su perfil
+    if (clientId !== undefined && clientId !== null) {
+      await this.prisma.user.update({
+        where: { id: clientId },
+        data: { coachId },
+      });
+      // Crear perfil del cliente si no existe
+      await this.prisma.clientProfile.upsert({
+        where: { clientId },
+        update: {},
+        create: { clientId },
       });
     }
 

@@ -57,6 +57,8 @@ model User {
   invitationsAsCoach  Invitation[] @relation("CoachInvitations")
   invitationsAsClient Invitation[] @relation("ClientInvitations")
   clientProfile    ClientProfile?
+  sentMessages     P2PChatMessage[] @relation("SentMessages")
+  receivedMessages P2PChatMessage[] @relation("ReceivedMessages")
 
   @@map("users")
 }
@@ -202,6 +204,21 @@ model ChatMessage {
   session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("chat_messages")
+}
+
+model P2PChatMessage {
+  id        Int      @id @default(autoincrement())
+  senderId  Int      @map("sender_id")
+  receiverId Int     @map("receiver_id")
+  text      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("p2p_chat_messages")
 }
 
 // --------------------------------------

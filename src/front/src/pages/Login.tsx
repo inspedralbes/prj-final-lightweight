@@ -28,7 +28,13 @@ export default function Login() {
       const user = res.data?.user;
 
       if (token && user) {
-        login({ id: user.id, username: user.username, role: user.role, token });
+        login({ 
+          id: user.id, 
+          username: user.username, 
+          role: user.role, 
+          token,
+          coachId: user.coachId
+        });
         api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
         toast.success(t("messages.loginSuccess"));
