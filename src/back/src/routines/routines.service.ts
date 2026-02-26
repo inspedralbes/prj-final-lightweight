@@ -36,7 +36,7 @@ export class RoutinesService {
 
   async getGlobalRoutines() {
     return this.prisma.routine.findMany({
-      where: { clientId: null, isPublic: true },
+      where: { clientId: null },
       include: { exercises: { include: { exercise: true } } },
     });
   }

@@ -20,8 +20,7 @@ export class RoutinesController {
   constructor(private routinesService: RoutinesService) { }
 
   // ⚠️ IMPORTANTE: Las rutas estáticas SIEMPRE antes que las dinámicas (:id)
-  // Si 'clients-options' estuviera DESPUÉS de ':id', NestJS lo trataría como un ID.
-
+  // Si 'global' estuviera DESPUÉS de ':id', NestJS lo trataría como un ID.
   @Get('global')
   @UseGuards(JwtAuthGuard)
   async getGlobalRoutines() {

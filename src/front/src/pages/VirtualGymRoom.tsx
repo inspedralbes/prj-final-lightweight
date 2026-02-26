@@ -157,6 +157,7 @@ export default function VirtualGymRoom() {
 
   // Handlers
   const handleOpenRoutineModal = () => {
+    setSelectedRoutine(null);
     setIsRoutineModalOpen(true);
     fetchRoutines('global');
   };
@@ -650,7 +651,7 @@ export default function VirtualGymRoom() {
                   : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
                   }`}
               >
-                Inicia Sessió
+                Començar Sessió
               </button>
             </div>
           </div>
