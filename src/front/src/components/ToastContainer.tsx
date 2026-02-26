@@ -33,7 +33,7 @@ export const ToastContainer = () => {
   };
 
   return (
-    <div className="fixed top-5 right-5 z-50 space-y-3 max-w-sm">
+    <div className="fixed top-5 right-5 z-[9999] space-y-3 max-w-sm">
       {toasts.map((toast) => {
         const styles = getToastStyles(toast.type);
         return (

@@ -28,7 +28,13 @@ export default function Login() {
       const user = res.data?.user;
 
       if (token && user) {
-        login({ id: user.id, username: user.username, role: user.role, token });
+        login({ 
+          id: user.id, 
+          username: user.username, 
+          role: user.role, 
+          token,
+          coachId: user.coachId
+        });
         api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
         toast.success(t("messages.loginSuccess"));
@@ -55,44 +61,41 @@ export default function Login() {
 
   return (
     <>
-      <div className="min-h-screen w-full flex bg-zinc-950 text-white">
+      <AuthPageHeader />
+      <div className="h-screen w-full flex overflow-hidden bg-zinc-950 text-white">
         {/* Columna Izquierda - Decorativa */}
-        <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col items-center justify-center">
-          <div
-            className="absolute inset-0 bg-gradient-to-br from-orange-900/40 via-black/60 to-black/80 z-10"
-            style={{
-              backgroundImage:
-                'url(\'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"%3E%3Crect fill="%23000" width="1200" height="800"/%3E%3Cg fill="%23111" opacity="0.3"%3E%3Ccircle cx="400" cy="300" r="150"/%3E%3Ccircle cx="800" cy="500" r="200"/%3E%3C/g%3E%3C/svg%3E\')',
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
-          <div className="relative z-20 text-center px-8">
-            <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-400 to-orange-600 mb-4">
-              SUPERA
-              <br />
-              ELS TEUS
-              <br />
-              LÍMITS
+        <div
+          className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col items-center justify-center"
+          style={{
+            backgroundImage: "url('/background.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          {/* Base dark overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black z-10" />
+          {/* Hard right-edge bleed strip */}
+          <div className="absolute right-0 top-0 h-full w-24 bg-gradient-to-r from-transparent to-black z-20" />
+          <div className="relative z-30 text-center px-8">
+            <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-400 to-orange-600 mb-4 whitespace-pre-line">
+              {t("auth.loginDecorativeTitle")}
             </h1>
             <p className="text-gray-300 text-lg mt-6 max-w-sm">
               {t("auth.loginDecorativeText")}
             </p>
-            <div className="mt-8">
-              <AuthPageHeader />
-            </div>
           </div>
         </div>
 
         {/* Columna Derecha - Formulario */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-black">
+        <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-6 pt-20 bg-black overflow-y-auto">
           <div className="w-full max-w-md">
             {/* Títulos */}
             <div className="mb-8">
-              <h2 className="text-4xl font-bold mb-2 text-white">
+              <h2 className="text-4xl font-extrabold mb-2 text-white">
                 {t("auth.login")}
               </h2>
-              <p className="text-gray-400">{t("auth.loginSubtitle")}</p>
+              <p className="text-gray-200">{t("auth.loginSubtitle")}</p>
             </div>
 
             {/* Formulario */}

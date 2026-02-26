@@ -5,6 +5,7 @@ interface AuthUser {
     username: string;
     role: 'COACH' | 'CLIENT';
     token: string;
+    coachId?: number;
 }
 
 interface AuthContextType {
@@ -26,9 +27,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const role = localStorage.getItem('userRole') as 'COACH' | 'CLIENT' | null;
         const username = localStorage.getItem('username');
         const userId = localStorage.getItem('userId');
+        const coachId = localStorage.getItem('coachId');
 
         if (token && role && username && userId) {
-            setUser({ id: Number(userId), username, role, token });
+            setUser({ 
+                id: Number(userId), 
+                username, 
+                role, 
+                token,
+                coachId: coachId ? Number(coachId) : undefined
+            });
         }
         setIsLoading(false);
     }, []);
@@ -38,6 +46,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('userRole', userData.role);
         localStorage.setItem('username', userData.username);
         localStorage.setItem('userId', String(userData.id));
+        if (userData.coachId) {
+            localStorage.setItem('coachId', String(userData.coachId));
+        }
         setUser(userData);
     };
 
@@ -46,6 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem('userRole');
         localStorage.removeItem('username');
         localStorage.removeItem('userId');
+        localStorage.removeItem('coachId');
         setUser(null);
     };
 
