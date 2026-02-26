@@ -43,7 +43,10 @@ export class RoutinesService {
     clientId?: number,
   ) {
     const routine = await this.prisma.routine.create({
-      data: { coachId, name, clientId },
+      data: { 
+        coachId, 
+        name, 
+        clientId },
     });
 
     // Si se asigna un cliente, establecer la relación coach-cliente y crear su perfil

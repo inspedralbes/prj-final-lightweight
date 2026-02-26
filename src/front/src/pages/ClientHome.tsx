@@ -62,7 +62,7 @@ const ClientHome = () => {
   return (
     <Layout>
       <LoadingScreen isVisible={loading} message={t("common.loading")} />
-
+      
       {/* Cabecera del Contenido (Ya sin la Navbar superior) */}
       <div className="mb-8 md:mb-10 flex flex-col md:flex-row items-start justify-between gap-4">
         <div>

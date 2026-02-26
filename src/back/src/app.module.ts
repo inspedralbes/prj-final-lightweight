@@ -8,6 +8,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { RoutinesModule } from './routines/routines.module';
 import { SessionModule } from './session/session.module';
+import { ExercisesModule } from './exercises/exercises.module';
 import { InvitationsModule } from './invitations/invitations.module';
 import { ClientsModule } from './clients/clients.module';
 import { ChatModule } from './chat/chat.module';
@@ -22,6 +23,7 @@ import { ChatModule } from './chat/chat.module';
     AuthModule,
     RoutinesModule,
     SessionModule,
+    ExercisesModule,
     InvitationsModule,
     ClientsModule,
     ChatModule,
