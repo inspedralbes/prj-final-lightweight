@@ -17,10 +17,16 @@ import { UpdateRoutineDto } from './dto/update-routine.dto';
 
 @Controller('routines')
 export class RoutinesController {
-  constructor(private routinesService: RoutinesService) {}
+  constructor(private routinesService: RoutinesService) { }
 
   // ⚠️ IMPORTANTE: Las rutas estáticas SIEMPRE antes que las dinámicas (:id)
   // Si 'clients-options' estuviera DESPUÉS de ':id', NestJS lo trataría como un ID.
+
+  @Get('global')
+  @UseGuards(JwtAuthGuard)
+  async getGlobalRoutines() {
+    return this.routinesService.getGlobalRoutines();
+  }
 
   @Get('clients-options')
   @UseGuards(CoachGuard)
@@ -43,7 +49,11 @@ export class RoutinesController {
 
   @Get(':id')
   async getById(@Param('id') id: string) {
-    return this.routinesService.getRoutineById(Number(id));
+    const routineId = Number(id);
+    if (isNaN(routineId)) {
+      return null; // O lanzar un BadRequestException
+    }
+    return this.routinesService.getRoutineById(routineId);
   }
 
   @Post('create')

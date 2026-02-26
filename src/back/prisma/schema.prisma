@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // --------------------------------------
@@ -84,6 +85,7 @@ model Routine {
   coachId   Int?      @map("coach_id")
   clientId  Int?     @map("client_id")
   name      String
+  isPublic  Boolean  @default(false) @map("is_public")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

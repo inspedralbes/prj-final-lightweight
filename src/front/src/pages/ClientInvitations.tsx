@@ -71,9 +71,9 @@ export default function ClientInvitations() {
       toast.success(
         t("invitations.codeAccepted") || "Successfully connected to your friend!"
       );
-      // Redirigir automáticamente a la sala virtual
+      // Redirigir automàticament a la sala virtual com a convidat
       setTimeout(() => {
-        navigate(`/room/${acceptedCode}`);
+        navigate(`/room/${acceptedCode}`, { state: { isHost: false } });
       }, 1500);
     } catch (error) {
       const message =
@@ -125,7 +125,7 @@ export default function ClientInvitations() {
               disabled={loadingGenerate || !!generatedCode}
               className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 mb-6"
             >
-                  {loadingGenerate ? (
+              {loadingGenerate ? (
                 <>
                   <Loader className="w-5 h-5 animate-spin" />
                   {t("common.generating") || "Generating..."}
@@ -135,7 +135,7 @@ export default function ClientInvitations() {
                   <Check className="w-5 h-5 text-green-400" />
                   {t("invitations.generated") || "Generated"}
                 </>
-                  ) : (
+              ) : (
                 t("invitations.generateButton") || "Generate code"
               )}
             </button>
@@ -143,7 +143,7 @@ export default function ClientInvitations() {
             {/* Mostrar código generado */}
             {generatedCode && (
               <div className="bg-zinc-800 border border-orange-500/30 rounded-lg p-4 space-y-3">
-                  <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider">
+                <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider">
                   {t("invitations.yourCode") || "Your code"}
                 </p>
                 <div className="bg-zinc-950 border border-zinc-700 rounded-lg p-4 font-mono text-sm md:text-base text-white break-all select-all cursor-pointer hover:border-orange-500/50 transition-colors">
@@ -170,11 +170,11 @@ export default function ClientInvitations() {
 
                 {/* Botón Entrar al Gimnàs Virtual */}
                 <button
-                  onClick={() => navigate(`/room/${generatedCode}`)}
+                  onClick={() => navigate(`/room/${generatedCode}`, { state: { isHost: true } })}
                   className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <Ticket className="w-5 h-5" />
-                  <span>{t("virtualGym.enterButton") || "Enter Virtual Gym"}</span>
+                  <span>{t("virtualGym.enterButton") || "Entrar al Gimnàs Virtual"}</span>
                 </button>
               </div>
             )}
@@ -183,7 +183,7 @@ export default function ClientInvitations() {
             {!generatedCode && (
               <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-center">
                 <p className="text-sm text-orange-200">
-                   {t("invitations.generateInfo") ||
+                  {t("invitations.generateInfo") ||
                     "Click the button to generate a unique code"}
                 </p>
               </div>
@@ -228,7 +228,7 @@ export default function ClientInvitations() {
                 disabled={loadingAccept || !inputCode.trim()}
                 className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
               >
-                  {loadingAccept ? (
+                {loadingAccept ? (
                   <>
                     <Loader className="w-5 h-5 animate-spin" />
                     {t("common.checking") || "Checking..."}

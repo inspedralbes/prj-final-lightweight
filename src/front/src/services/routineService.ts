@@ -30,6 +30,12 @@ export const routineService = {
         return res.data;
     },
 
+    /** Rutinas globales (públicas) */
+    getGlobalRoutines: async (): Promise<Routine[]> => {
+        const res = await api.get('/routines/global');
+        return res.data;
+    },
+
     /** Crea una nueva rutina */
     create: async (payload: {
         name: string;

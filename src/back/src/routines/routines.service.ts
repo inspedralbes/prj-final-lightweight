@@ -9,7 +9,7 @@ import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class RoutinesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // ─── CLIENTES ────────────────────────────────────────────────────────────────
 
@@ -29,7 +29,14 @@ export class RoutinesService {
 
   async getClientRoutines(clientId: number) {
     return this.prisma.routine.findMany({
-      where: { clientId },
+      where: { clientId: clientId },
+      include: { exercises: { include: { exercise: true } } },
+    });
+  }
+
+  async getGlobalRoutines() {
+    return this.prisma.routine.findMany({
+      where: { clientId: null, isPublic: true },
       include: { exercises: { include: { exercise: true } } },
     });
   }
@@ -43,10 +50,11 @@ export class RoutinesService {
     clientId?: number,
   ) {
     const routine = await this.prisma.routine.create({
-      data: { 
-        coachId, 
-        name, 
-        clientId },
+      data: {
+        coachId,
+        name,
+        clientId
+      },
     });
 
     await this.upsertExercises(routine.id, exercises);

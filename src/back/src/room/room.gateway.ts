@@ -29,9 +29,9 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  // Almacenar usuarios conectados por sala
-  private roomUsers: Map<string, Map<string, RoomUser>> = new Map();
-  // Mapear socketId -> userId y roomId
+  // Almacenar usuarios conectados por sala: roomId -> Array de usuarios
+  private roomUsers: Map<string, any[]> = new Map();
+  // Mapear socketId -> { userId, roomId } para limpieza al desconectar
   private socketToUser: Map<string, { userId: string; roomId: string }> =
     new Map();
 
@@ -52,52 +52,74 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('joinRoom')
   handleJoinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { roomId: string; userId: string; username?: string },
+    @MessageBody() payload: { roomId: string; userId: string; username?: string; isHost?: boolean },
   ) {
-    const { roomId, userId, username } = payload;
+    console.log('📥 [Room] joinRoom recibido:', payload);
+    const { roomId, userId, username, isHost: requestedIsHost } = payload;
 
     try {
-      // Añadir usuario a la sala
       if (!this.roomUsers.has(roomId)) {
-        this.roomUsers.set(roomId, new Map());
+        this.roomUsers.set(roomId, []);
       }
 
-      const room = this.roomUsers.get(roomId)!;
-      const user: RoomUser = {
-        id: userId,
-        socketId: client.id,
-        username: username || `User-${userId}`,
-      };
+      const users = this.roomUsers.get(roomId)!;
+      const userExists = users.find((u) => u.id === userId);
 
-      room.set(userId, user);
+      let isHost = requestedIsHost ?? false;
+
+      if (!userExists) {
+        users.push({
+          id: userId,
+          username: username || `User-${userId}`,
+          isHost,
+        });
+      } else {
+        // Actualizar el estado de host si el usuario ya existía pero cambió su rol
+        userExists.isHost = isHost;
+      }
+
       this.socketToUser.set(client.id, { userId, roomId });
-
-      // Unir el cliente al room en socket.io
       client.join(roomId);
 
-      // Obtener lista de usuarios actuales
-      const usersInRoom = Array.from(room.values()).map((u) => ({
-        id: u.id,
-        username: u.username,
-      }));
+      // Notificar al usuario su rol y lista actualizada
+      client.emit('joinedRoom', { isHost, usersInRoom: users });
 
-      // Notificar a todos en la sala (incluyendo el recién llegado) con la lista actualizada
+      console.log(`📤 [Room] Emitiendo roomUsersUpdate a sala ${roomId}:`, users);
       this.server.to(roomId).emit('roomUsersUpdate', {
-        usersInRoom,
+        usersInRoom: users,
       });
 
-      console.log(
-        `👤 Usuario ${username || userId} se unió a sala ${roomId}. Total: ${usersInRoom.length}`,
-      );
-
-      return {
-        success: true,
-        usersInRoom,
-      };
+      return { success: true, isHost };
     } catch (error) {
       console.error('Error en joinRoom:', error);
       return { success: false, error: 'Failed to join room' };
     }
+  }
+
+  @SubscribeMessage('startSession')
+  handleStartSession(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { roomId: string; routine: any },
+  ) {
+    const { roomId, routine } = payload;
+    // Emitir a todos que la sesión comienza (esto activará la cuenta atrás en el front)
+    this.server.to(roomId).emit('sessionStarting', { routine });
+    return { success: true };
+  }
+
+  @SubscribeMessage('exerciseCompleted')
+  handleExerciseCompleted(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { roomId: string; userId: string; exerciseId: number; progress: number },
+  ) {
+    const { roomId, userId, exerciseId, progress } = payload;
+    // Notificar al oponente
+    client.to(roomId).emit('opponentProgressUpdate', {
+      userId,
+      exerciseId,
+      progress,
+    });
+    return { success: true };
   }
 
   @SubscribeMessage('leaveRoom')
@@ -107,6 +129,22 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const { roomId, userId } = payload;
     this.removeUserFromRoom(roomId, userId, client.id);
+    return { success: true };
+  }
+
+  @SubscribeMessage('updateProgress')
+  handleUpdateProgress(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { roomId: string; userId: string; progressPercentage: number; completedExercises: number[] },
+  ) {
+    const { roomId, userId, progressPercentage, completedExercises } = payload;
+    // Hacer broadcast a todos en la sala EXCEPTO al emisor (o a todos, según se prefiera)
+    // Usualmente para 'partnerProgress' queremos que otros lo vean
+    client.to(roomId).emit('partnerProgress', {
+      userId,
+      progressPercentage,
+      completedExercises,
+    });
     return { success: true };
   }
 
@@ -128,24 +166,23 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private removeUserFromRoom(roomId: string, userId: string, socketId: string) {
-    const room = this.roomUsers.get(roomId);
-    if (!room) return;
+    const users = this.roomUsers.get(roomId);
+    if (!users) return;
 
-    room.delete(userId);
-    const usersInRoom = Array.from(room.values()).map((u) => ({
-      id: u.id,
-      username: u.username,
-    }));
+    // Filtrar el usuario que sale
+    const updatedUsers = users.filter((u) => u.id !== userId);
+
+    if (updatedUsers.length === 0) {
+      this.roomUsers.delete(roomId);
+    } else {
+      this.roomUsers.set(roomId, updatedUsers);
+    }
 
     // Notificar a todos en la sala con la lista actualizada
+    console.log(`📤 [Room] Emitiendo roomUsersUpdate (por salida) a sala ${roomId}:`, updatedUsers);
     this.server.to(roomId).emit('roomUsersUpdate', {
-      usersInRoom,
+      usersInRoom: updatedUsers,
     });
-
-    // Limpiar si la sala está vacía
-    if (room.size === 0) {
-      this.roomUsers.delete(roomId);
-    }
 
     console.log(`👤 Usuario ${userId} salió de sala ${roomId}`);
   }

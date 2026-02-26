@@ -84,11 +84,18 @@ const Dashboard = () => {
     }
   };
 
-  const handleSubmit = async (data: { name: string; clientId?: number }) => {
+  const handleSubmit = async (data: { name: string; clientId?: number; exercises: any[] }) => {
     try {
       const payload = {
-        name: data.name,
-        clientId: data.clientId,
+        name: data.name.trim(),
+        clientId: data.clientId ? Number(data.clientId) : undefined,
+        exercises: data.exercises.map(ex => ({
+          name: ex.name.trim(),
+          sets: Number(ex.sets),
+          reps: Number(ex.reps),
+          rest: Number(ex.rest),
+          notes: ex.notes
+        })),
       };
 
       if (currentRoutine?.id) {
@@ -105,8 +112,14 @@ const Dashboard = () => {
       setIsModalOpen(false);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error("Error saving routine:", error.response?.data);
-        toast.error(t("messages.errorOccurred"));
+        const messages = error.response?.data?.message;
+        console.error("Campos rechazados por validación:", messages);
+
+        if (Array.isArray(messages)) {
+          messages.forEach((msg: string) => toast.error(msg));
+        } else {
+          toast.error(t("messages.errorOccurred"));
+        }
       } else {
         console.error("Error saving routine:", error);
         toast.error(t("messages.errorOccurred"));
