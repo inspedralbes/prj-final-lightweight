@@ -1,11 +1,10 @@
 import {
   IsString,
   IsNotEmpty,
-  IsArray,
-  ArrayMinSize,
   ValidateNested,
   IsOptional,
   IsInt,
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ExerciseDto } from './exercise.dto';
@@ -17,7 +16,6 @@ export class UpdateRoutineDto {
 
   @IsOptional()
   @IsArray()
-  @ArrayMinSize(0)
   @ValidateNested({ each: true })
   @Type(() => ExerciseDto)
   exercises?: ExerciseDto[];

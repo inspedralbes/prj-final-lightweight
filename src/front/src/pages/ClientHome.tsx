@@ -3,14 +3,12 @@ import { useTranslation } from "react-i18next";
 import { Calendar, Dumbbell } from "../components/Icons";
 import Layout from "../components/Layout";
 import { LoadingScreen } from "../components/LoadingScreen";
-import { useAuth } from "../context/AuthContext";
 import { useToast } from "../hooks/useToast";
 import { routineService, type Routine } from "../services/routineService";
 
 const POLL_INTERVAL_MS = 10_000;
 
 const ClientHome = () => {
-  const { user } = useAuth();
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -47,8 +45,8 @@ const ClientHome = () => {
   return (
     <Layout>
       <LoadingScreen isVisible={loading} message={t("common.loading")} />
-      
-      {/* Cabecera del Contenido (Ya sin la Navbar superior) */}
+
+      {/* Cabecera del Contenido */}
       <div className="mb-8 md:mb-10 flex flex-col md:flex-row items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 tracking-tight">
@@ -60,7 +58,11 @@ const ClientHome = () => {
             </p>
             {lastUpdated && (
               <span className="text-xs text-gray-700 bg-[#1a1a1a] px-2 py-1 rounded-full border border-[#2a2a2a]">
-                Actualizado: {lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                Actualizado:{" "}
+                {lastUpdated.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </span>
             )}
           </div>
@@ -69,7 +71,7 @@ const ClientHome = () => {
         {/* Botón de actualizar (Refresh) */}
         <button
           onClick={() => fetchClientRoutines(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] hover:border-gray-500 rounded-lg transition-all w-full md:w-auto"
+          className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] hover:border-orange-500/40 rounded-lg transition-all w-full md:w-auto"
           title="Actualizar rutinas"
         >
           <svg
@@ -85,7 +87,7 @@ const ClientHome = () => {
               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
             />
           </svg>
-          Actualizar
+          {t("common.update") || "Actualizar"}
         </button>
       </div>
 
@@ -99,7 +101,8 @@ const ClientHome = () => {
             {t("routines.noRoutines") || "No tienes rutinas asignadas"}
           </h3>
           <p className="text-gray-500 text-sm md:text-base max-w-sm">
-            {t("sessions.noSessions") || "Tu entrenador todavía no te ha asignado ninguna tabla de ejercicios."}
+            {t("sessions.noSessions") ||
+              "Tu entrenador todavía no te ha asignado ninguna tabla de ejercicios."}
           </p>
         </div>
       ) : (
@@ -115,7 +118,8 @@ const ClientHome = () => {
                   <Dumbbell className="w-5 h-5 text-orange-500 opacity-80 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <span className="text-xs font-medium text-gray-500 bg-[#1a1a1a] border border-[#2a2a2a] px-2.5 py-1 rounded-full">
-                  {routine.exercises?.length ?? 0} {t("routines.exercises") || "Ejercicios"}
+                  {routine.exercises?.length ?? 0}{" "}
+                  {t("routines.exercises") || "Ejercicios"}
                 </span>
               </div>
 
@@ -126,8 +130,13 @@ const ClientHome = () => {
                 </h3>
                 <p className="text-xs font-medium text-gray-600 mb-5">
                   {routine.createdAt
-                    ? new Date(routine.createdAt).toLocaleDateString([], {day:'2-digit', month:'2-digit', year:'numeric'})
-                    : t("routines.recentlyAssigned") || "Asignada recientemente"}
+                    ? new Date(routine.createdAt).toLocaleDateString([], {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })
+                    : t("routines.recentlyAssigned") ||
+                      "Asignada recientemente"}
                 </p>
 
                 {/* Lista de Ejercicios Previa */}
@@ -148,7 +157,8 @@ const ClientHome = () => {
                     ))}
                     {routine.exercises.length > 3 && (
                       <div className="text-xs text-gray-600 font-medium pt-2 text-center">
-                        +{routine.exercises.length - 3} {t("routines.moreExercises") || "ejercicios más"}
+                        +{routine.exercises.length - 3}{" "}
+                        {t("routines.moreExercises") || "ejercicios más"}
                       </div>
                     )}
                   </div>
