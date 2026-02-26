@@ -15,8 +15,9 @@ export class CreateRoutineDto {
   @IsNotEmpty()
   name!: string;
 
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
+  // @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => ExerciseDto)
   exercises!: ExerciseDto[];
