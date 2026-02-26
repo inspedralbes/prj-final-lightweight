@@ -34,6 +34,21 @@ const Clients = () => {
 
   useEffect(() => {
     fetchClients();
+
+    // Escuchar evento de apertura de chat desde notificaciones
+    const handleOpenChat = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const roomId = customEvent.detail?.roomId;
+      if (roomId && roomId.startsWith('chat_client_')) {
+        setIsChatOpen(true);
+      }
+    };
+
+    window.addEventListener('openChat', handleOpenChat);
+
+    return () => {
+      window.removeEventListener('openChat', handleOpenChat);
+    };
   }, []);
 
   const handleViewProfile = (client: Client) => {
@@ -285,6 +300,7 @@ const Clients = () => {
             title={`Chat con ${selectedClient.username}`}
             onClose={() => setIsChatOpen(false)}
             isInitiator={true}
+            otherUserId={selectedClient.id}
           />
         </div>
       )}

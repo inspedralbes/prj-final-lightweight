@@ -43,8 +43,21 @@ const ClientHome = () => {
       fetchClientRoutines(false);
     }, POLL_INTERVAL_MS);
 
-    return () => clearInterval(interval);
-  }, [fetchClientRoutines]);
+    // Escuchar evento de apertura de chat desde notificaciones
+    const handleOpenChat = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail?.roomId === `chat_client_${user?.id}`) {
+        setIsChatOpen(true);
+      }
+    };
+
+    window.addEventListener('openChat', handleOpenChat);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('openChat', handleOpenChat);
+    };
+  }, [fetchClientRoutines, user?.id]);
 
   return (
     <Layout>
@@ -177,6 +190,7 @@ const ClientHome = () => {
             title="Chat con mi Entrenador"
             onClose={() => setIsChatOpen(false)}
             isInitiator={false}
+            otherUserId={user.coachId || undefined}
           />
         </div>
       )}
