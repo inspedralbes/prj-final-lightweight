@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRole } from '@prisma/client';
+import { ExerciseDto } from './dto/exercise.dto';
 
 @Injectable()
 export class RoutinesService {
@@ -20,7 +21,7 @@ export class RoutinesService {
         select: { id: true, username: true },
         orderBy: { username: 'asc' },
       });
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException(
         'Error al obtener la lista de clientes',
       );
@@ -39,14 +40,15 @@ export class RoutinesService {
   async createRoutine(
     coachId: number,
     name: string,
-    exercises: any[],
+    exercises: ExerciseDto[],
     clientId?: number,
   ) {
     const routine = await this.prisma.routine.create({
-      data: { 
-        coachId, 
-        name, 
-        clientId },
+      data: {
+        coachId,
+        name,
+        clientId,
+      },
     });
 
     // Si se asigna un cliente, establecer la relación coach-cliente y crear su perfil
@@ -71,7 +73,7 @@ export class RoutinesService {
     routineId: number,
     coachId: number,
     name?: string,
-    exercises?: any[],
+    exercises?: ExerciseDto[],
     clientId?: number,
   ) {
     const routine = await this.prisma.routine.findUnique({
@@ -144,21 +146,31 @@ export class RoutinesService {
 
   // ─── HELPER ───────────────────────────────────────────────────────────────────
 
-  private async upsertExercises(routineId: number, exercises: any[]) {
+  private async upsertExercises(routineId: number, exercises: ExerciseDto[]) {
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
-      let exercise = await this.prisma.exerciseCatalog.findFirst({
-        where: { name: ex.name },
-      });
-      if (!exercise) {
-        exercise = await this.prisma.exerciseCatalog.create({
-          data: { name: ex.name, description: ex.notes ?? null },
+      let exerciseId: number;
+
+      // Si viene exerciseId, usarlo directamente
+      if (ex.exerciseId && typeof ex.exerciseId === 'number') {
+        exerciseId = ex.exerciseId as number;
+      } else {
+        // Buscar o crear por nombre
+        let exercise = await this.prisma.exerciseCatalog.findFirst({
+          where: { name: ex.name },
         });
+        if (!exercise) {
+          exercise = await this.prisma.exerciseCatalog.create({
+            data: { name: ex.name, description: ex.notes ?? null },
+          });
+        }
+        exerciseId = exercise.id;
       }
+
       await this.prisma.routineExercise.create({
         data: {
           routineId,
-          exerciseId: exercise.id,
+          exerciseId,
           sets: ex.sets,
           reps: ex.reps,
           rest: ex.rest,

@@ -8,6 +8,29 @@ import { ChevronLeft } from "../components/Icons";
 import api from "../utils/api";
 import type { ExerciseItem } from "../components/ExercisesForm";
 
+interface RoutineExercise {
+  exercise?: {
+    id: number;
+    name: string;
+    level?: string;
+    category?: string;
+    forceType?: string;
+    mechanic?: string;
+    equipment?: string;
+    primaryMuscle?: string[];
+    description?: string;
+  };
+  sets: number;
+  reps: number;
+  rest: number;
+  notes?: string;
+}
+
+interface RoutineData {
+  name: string;
+  exercises: ExerciseItem[];
+}
+
 export const ExercisesEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -15,7 +38,7 @@ export const ExercisesEdit = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [routineName, setRoutineName] = useState("");
-  const [initial, setInitial] = useState<any>(null);
+  const [initial, setInitial] = useState<RoutineData | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -23,12 +46,21 @@ export const ExercisesEdit = () => {
         setLoading(true);
         const res = await api.get(`/routines/${id}`);
         const r = res.data;
-        const exercises = (r.exercises || []).map((ex: any) => ({
+        const exercises = (r.exercises || []).map((ex: RoutineExercise) => ({
           name: ex.exercise?.name ?? "",
+          exerciseId: ex.exercise?.id,
           sets: ex.sets,
           reps: ex.reps,
           rest: ex.rest,
           notes: ex.notes,
+          // Información adicional del catálogo
+          level: ex.exercise?.level,
+          category: ex.exercise?.category,
+          forceType: ex.exercise?.forceType,
+          mechanic: ex.exercise?.mechanic,
+          equipment: ex.exercise?.equipment,
+          primaryMuscle: ex.exercise?.primaryMuscle,
+          description: ex.exercise?.description,
         }));
         setRoutineName(r.name);
         setInitial({ name: r.name, exercises });
@@ -40,7 +72,7 @@ export const ExercisesEdit = () => {
       }
     };
     if (id) load();
-  }, [id]);
+  }, [id, t]);
 
   const handleSubmit = async (payload: { exercises: ExerciseItem[] }) => {
     try {
