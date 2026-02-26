@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Calendar, Dumbbell } from "../components/Icons";
+import { Calendar, Dumbbell, MessageCircle } from "../components/Icons";
+import P2PChat from "../components/P2PChat";
 import Layout from "../components/Layout";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { useAuth } from "../context/AuthContext";
@@ -14,6 +15,7 @@ const ClientHome = () => {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const { t } = useTranslation();
   const toast = useToast();
 
@@ -41,8 +43,21 @@ const ClientHome = () => {
       fetchClientRoutines(false);
     }, POLL_INTERVAL_MS);
 
-    return () => clearInterval(interval);
-  }, [fetchClientRoutines]);
+    // Escuchar evento de apertura de chat desde notificaciones
+    const handleOpenChat = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail?.roomId === `chat_client_${user?.id}`) {
+        setIsChatOpen(true);
+      }
+    };
+
+    window.addEventListener('openChat', handleOpenChat);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('openChat', handleOpenChat);
+    };
+  }, [fetchClientRoutines, user?.id]);
 
   return (
     <Layout>
@@ -60,7 +75,7 @@ const ClientHome = () => {
             </p>
             {lastUpdated && (
               <span className="text-xs text-gray-700 bg-[#1a1a1a] px-2 py-1 rounded-full border border-[#2a2a2a]">
-                Actualizado: {lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                Actualizado: {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
           </div>
@@ -126,7 +141,7 @@ const ClientHome = () => {
                 </h3>
                 <p className="text-xs font-medium text-gray-600 mb-5">
                   {routine.createdAt
-                    ? new Date(routine.createdAt).toLocaleDateString([], {day:'2-digit', month:'2-digit', year:'numeric'})
+                    ? new Date(routine.createdAt).toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' })
                     : t("routines.recentlyAssigned") || "Asignada recientemente"}
                 </p>
 
@@ -156,6 +171,27 @@ const ClientHome = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+      {/* Floating Chat Button */}
+      <button
+        onClick={() => setIsChatOpen(true)}
+        className="fixed bottom-6 right-6 bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-full shadow-lg transition-all hover:scale-110 z-40"
+        title="Chat with Coach"
+      >
+        <MessageCircle className="w-6 h-6" />
+      </button>
+
+      {/* Chat Overlay */}
+      {isChatOpen && user && (
+        <div className="fixed bottom-24 right-6 z-50 w-80 md:w-96 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
+          <P2PChat
+            roomId={`chat_client_${user.id}`}
+            title="Chat con mi Entrenador"
+            onClose={() => setIsChatOpen(false)}
+            isInitiator={false}
+            otherUserId={user.coachId || undefined}
+          />
         </div>
       )}
     </Layout>

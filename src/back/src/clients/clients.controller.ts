@@ -18,12 +18,12 @@ import { Response } from 'express';
 @Controller('clients')
 @UseGuards(AuthGuard('jwt'))
 export class ClientsController {
-  constructor(private clientsService: ClientsService) {}
+  constructor(private clientsService: ClientsService) { }
 
   @Get()
   async getClients(@Request() req, @Res() res: Response) {
     try {
-      const coachId = req.user.id;
+      const coachId = req.user.userId;
       const clients = await this.clientsService.getClients(coachId);
       res.json(clients);
     } catch (error) {
@@ -41,7 +41,7 @@ export class ClientsController {
     @Res() res: Response,
   ) {
     try {
-      const coachId = req.user.id;
+      const coachId = req.user.userId;
       const client = await this.clientsService.getClientById(
         parseInt(clientId),
         coachId,
@@ -72,7 +72,7 @@ export class ClientsController {
     @Res() res: Response,
   ) {
     try {
-      const coachId = req.user.id;
+      const coachId = req.user.userId;
       const updated = await this.clientsService.updateClient(
         parseInt(clientId),
         coachId,
