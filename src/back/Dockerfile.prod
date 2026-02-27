@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ALL deps (including devDependencies for build tools like @nestjs/cli)
-RUN npm ci
+RUN npm install
 
 COPY . .
 
