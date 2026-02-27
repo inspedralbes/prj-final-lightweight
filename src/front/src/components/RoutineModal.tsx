@@ -129,14 +129,6 @@ const RoutineModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
-        <div className="flex justify-between items-center p-4 md:p-5 border-b border-[#2a2a2a]">
-          <h2 className="text-lg md:text-xl font-bold text-white">
-            {isEditing
-              ? t("routines.editRoutine")
-              : t("routines.createRoutine")}
-          </h2>
     <div
       className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={(e) => {
@@ -208,20 +200,7 @@ const RoutineModal = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 md:p-6">
-          <div className="mb-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("routines.name")}
-              </label>
-              <input
-                type="text"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder={t("routines.exerciseName")}
-                className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-gray-700 text-sm md:text-base"
-                autoFocus
-              />
+        {/* previous simple form removed */}
         {/* Form — scrolls when picker expands */}
         <form onSubmit={handleSubmit} className="p-5 space-y-5 overflow-y-auto">
           {/* Routine name */}
@@ -272,31 +251,6 @@ const RoutineModal = ({
             )}
           </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("sessions.selectRoutine")}
-              </label>
-              <select
-                value={selectedClientId}
-                onChange={(e) =>
-                  setSelectedClientId(
-                    e.target.value ? Number(e.target.value) : "",
-                  )
-                }
-                className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all appearance-none text-sm md:text-base"
-              >
-                <option value="">-- {t("common.cancel")} --</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.username}
-                  </option>
-                ))}
-              </select>
-              {clients.length === 0 && (
-                <p className="text-xs text-yellow-500 mt-1">
-                  No clients available.
-                </p>
-          {/* Client assignment */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm font-medium text-gray-300">
