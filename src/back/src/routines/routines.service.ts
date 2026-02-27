@@ -30,7 +30,14 @@ export class RoutinesService {
 
   async getClientRoutines(clientId: number) {
     return this.prisma.routine.findMany({
-      where: { clientId },
+      where: { clientId: clientId },
+      include: { exercises: { include: { exercise: true } } },
+    });
+  }
+
+  async getGlobalRoutines() {
+    return this.prisma.routine.findMany({
+      where: { clientId: null },
       include: { exercises: { include: { exercise: true } } },
     });
   }

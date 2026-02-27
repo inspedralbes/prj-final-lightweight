@@ -107,8 +107,14 @@ const Dashboard = () => {
       setIsModalOpen(false);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error("Error saving routine:", error.response?.data);
-        toast.error(t("messages.errorOccurred"));
+        const messages = error.response?.data?.message;
+        console.error("Campos rechazados por validación:", messages);
+
+        if (Array.isArray(messages)) {
+          messages.forEach((msg: string) => toast.error(msg));
+        } else {
+          toast.error(t("messages.errorOccurred"));
+        }
       } else {
         console.error("Error saving routine:", error);
         toast.error(t("messages.errorOccurred"));

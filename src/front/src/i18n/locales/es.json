@@ -2,6 +2,8 @@
   "common": {
     "logout": "Cerrar sesión",
     "loading": "Cargando...",
+    "generating": "Generando...",
+    "checking": "Verificando...",
     "error": "Error",
     "success": "Éxito",
     "cancel": "Cancelar",
@@ -55,6 +57,7 @@
     "profile": "Perfil",
     "documentation": "Documentación",
     "management": "Gestión",
+    "invitations": "Invitaciones",
     "clients": "Clientes"
   },
   "routines": {
@@ -146,6 +149,46 @@
     "editNotes": "Editar notas",
     "saveNotes": "Guardar notas",
     "cancel": "Cancelar"
+  },
+  "invitations": {
+    "mainTitle": "Invitaciones",
+    "mainSubtitle": "Gestiona tus códigos de invitación y conecta con entrenadores",
+    "generateTitle": "Invitar a un amigo",
+    "generateSubtitle": "Comparte tu código de invitación con un amigo",
+    "generateButton": "Generar código",
+    "generated": "Generado",
+    "yourCode": "Tu código",
+    "copyButton": "Copiar código",
+    "copied": "¡Copiado!",
+    "generateInfo": "Haz clic en el botón para generar un código único",
+    "codeGenerated": "Código generado correctamente",
+    "codeCopied": "Código copiado al portapapeles",
+    "copyFailed": "Error al copiar el código",
+    "redeemTitle": "¿Tienes un código?",
+    "redeemSubtitle": "Ingresa el código que recibiste de tu entrenador",
+    "codeInput": "Código de invitación",
+    "codePlaceholder": "Introduce el código aquí...",
+    "redeemButton": "Unirse",
+    "redeemInfo": "Pega el código que recibiste y conecta con tu entrenador",
+    "codeAccepted": "¡Conectado con tu entrenador correctamente!",
+    "enterCode": "Por favor ingresa un código",
+    "footerInfo": "Tus códigos de invitación te ayudan a mantenerte conectado con tu comunidad de fitness. Compártelos de forma segura con amigos y entrenadores de confianza."
+  },
+  "virtualGym": {
+    "title": "Gimnasio Virtual - Sesión en directo",
+    "subtitle": "Entrena en compañía",
+    "enterButton": "Entrar al Gimnasio Virtual",
+    "connectedToRoom": "Conectado al gimnasio virtual",
+    "connectionError": "Error de conexión",
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "roomCode": "Código de sala",
+    "usersOnline": "Usuarios en línea",
+    "connecting": "Conectando...",
+    "noUsers": "Nadie en la sala",
+    "online": "En línea",
+    "videoPlaceholder": "Vídeo en directo",
+    "leaveButton": "Salir de la sala"
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",

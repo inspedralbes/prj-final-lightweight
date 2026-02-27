@@ -2,6 +2,8 @@
   "common": {
     "logout": "Logout",
     "loading": "Loading...",
+    "generating": "Generating...",
+    "checking": "Checking...",
     "error": "Error",
     "success": "Success",
     "cancel": "Cancel",
@@ -55,6 +57,7 @@
     "profile": "Profile",
     "documentation": "Documentation",
     "management": "Management",
+    "invitations": "Invitations",
     "clients": "Clients"
   },
   "routines": {
@@ -146,6 +149,46 @@
     "editNotes": "Edit Notes",
     "saveNotes": "Save Notes",
     "cancel": "Cancel"
+  },
+  "invitations": {
+    "mainTitle": "Invitations",
+    "mainSubtitle": "Manage your invitation codes and connect with coaches",
+    "generateTitle": "Invite a friend",
+    "generateSubtitle": "Share your invitation code with a friend",
+    "generateButton": "Generate code",
+    "generated": "Generated",
+    "yourCode": "Your code",
+    "copyButton": "Copy code",
+    "copied": "Copied!",
+    "generateInfo": "Click the button to generate a unique code",
+    "codeGenerated": "Code generated successfully",
+    "codeCopied": "Code copied to clipboard",
+    "copyFailed": "Failed to copy code",
+    "redeemTitle": "Have a code?",
+    "redeemSubtitle": "Enter the code you received from your coach",
+    "codeInput": "Invitation Code",
+    "codePlaceholder": "Enter the code here...",
+    "redeemButton": "Join",
+    "redeemInfo": "Paste the code you received and connect with your coach",
+    "codeAccepted": "Successfully connected to your coach!",
+    "enterCode": "Please enter a code",
+    "footerInfo": "Your invitation codes help you stay connected with your fitness community. Share them securely with trusted friends and coaches."
+  },
+  "virtualGym": {
+    "title": "Virtual Gym - Live Session",
+    "subtitle": "Train together",
+    "enterButton": "Enter Virtual Gym",
+    "connectedToRoom": "Connected to the virtual gym",
+    "connectionError": "Connection error",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "roomCode": "Room code",
+    "usersOnline": "Users online",
+    "connecting": "Connecting...",
+    "noUsers": "No one in the room",
+    "online": "Online",
+    "videoPlaceholder": "Live video",
+    "leaveButton": "Leave room"
   },
   "language": {
     "selectLanguage": "Select Language",

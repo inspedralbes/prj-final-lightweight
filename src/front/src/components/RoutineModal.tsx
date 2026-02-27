@@ -1,6 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X } from "./Icons";
 import { useTranslation } from "react-i18next";
+
+export interface ExerciseData {
+  name: string;
+  sets: number;
+  reps: number;
+  rest: number;
+  notes?: string;
+}
 
 export interface RoutineModalProps {
   isOpen: boolean;
@@ -200,7 +208,6 @@ const RoutineModal = ({
           </button>
         </div>
 
-        {/* previous simple form removed */}
         {/* Form — scrolls when picker expands */}
         <form onSubmit={handleSubmit} className="p-5 space-y-5 overflow-y-auto">
           {/* Routine name */}

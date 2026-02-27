@@ -9,6 +9,9 @@ import ClientHome from "./pages/ClientHome";
 import Clients from "./pages/Clients";
 import Session from "./pages/Session";
 import ExercisesEdit from "./pages/ExercisesEdit";
+import ClientInvitations from "./pages/ClientInvitations";
+import Programs from "./pages/Programs";
+import VirtualGymRoom from "./pages/VirtualGymRoom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 import { useNotification } from "./context/NotificationContext";
@@ -37,46 +40,65 @@ const AppContent = () => {
     console.log("[Notification] Opening chat for room:", roomId);
     // El evento será manejado por las páginas que tengan el chat abierto
     // Se puede expandir para abrir el chat automáticamente usando un evento global
-    window.dispatchEvent(new CustomEvent('openChat', { detail: { roomId } }));
+    window.dispatchEvent(new CustomEvent("openChat", { detail: { roomId } }));
   };
 
   useEffect(() => {
     socket.on("connect", () => {
       setIsConnected(true);
       if (user) {
-        console.log('[Socket] connected - emitting register-user for', user.id);
-        socket.emit('register-user', user.id);
+        console.log("[Socket] connected - emitting register-user for", user.id);
+        socket.emit("register-user", user.id);
       }
     });
     socket.on("disconnect", () => setIsConnected(false));
-    
+
     // Escuchar notificaciones de chat P2P con preview de mensaje
     socket.on("p2p-message-notification", (data: any) => {
       console.log("[P2P Message Notification]", data);
-      const preview = data.text.length > 50 ? data.text.substring(0, 50) + '...' : data.text;
-      const senderName = data.fromUsername || data.from || 'Alguien';
+      const preview =
+        data.text.length > 50 ? data.text.substring(0, 50) + "..." : data.text;
+      const senderName = data.fromUsername || data.from || "Alguien";
       // roomId debe ser chat_client_{clientId}. Si soy CLIENT, mi clientId es user.id.
       // Si soy COACH, el clientId viene en data.from (el remitente es el cliente).
-      const roomId = user?.role === 'CLIENT' ? `chat_client_${user.id}` : `chat_client_${data.from}`;
-      addNotification(roomId, `${senderName} te ha enviado: ${preview}`, senderName);
+      const roomId =
+        user?.role === "CLIENT"
+          ? `chat_client_${user.id}`
+          : `chat_client_${data.from}`;
+      addNotification(
+        roomId,
+        `${senderName} te ha enviado: ${preview}`,
+        senderName,
+      );
     });
 
     // Registrar el usuario con su ID (también emitir cuando cambie user)
     if (user) {
-      console.log('[Socket] emitting register-user for', user.id);
-      socket.emit('register-user', user.id);
+      console.log("[Socket] emitting register-user for", user.id);
+      socket.emit("register-user", user.id);
 
       // Al conectarse o recargar, pedir mensajes no leídos para generar notificaciones
-      chatService.getUnreadMessages().then((msgs: P2PMessage[]) => {
-        msgs.forEach((m) => {
-          const preview = m.text.length > 50 ? m.text.substring(0, 50) + '...' : m.text;
-          const senderName = m.sender?.username || `Usuario ${m.senderId}`;
-          const roomId = user?.role === 'CLIENT' ? `chat_client_${user.id}` : `chat_client_${m.senderId}`;
-          addNotification(roomId, `${senderName} te ha enviado: ${preview}`, senderName);
+      chatService
+        .getUnreadMessages()
+        .then((msgs: P2PMessage[]) => {
+          msgs.forEach((m) => {
+            const preview =
+              m.text.length > 50 ? m.text.substring(0, 50) + "..." : m.text;
+            const senderName = m.sender?.username || `Usuario ${m.senderId}`;
+            const roomId =
+              user?.role === "CLIENT"
+                ? `chat_client_${user.id}`
+                : `chat_client_${m.senderId}`;
+            addNotification(
+              roomId,
+              `${senderName} te ha enviado: ${preview}`,
+              senderName,
+            );
+          });
+        })
+        .catch((err) => {
+          console.error("Error fetching unread messages:", err);
         });
-      }).catch((err) => {
-        console.error('Error fetching unread messages:', err);
-      });
     }
 
     return () => {
@@ -142,13 +164,39 @@ const AppContent = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/clients/invitations"
+            element={
+              <ProtectedRoute requiredRole="CLIENT">
+                <ClientInvitations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId"
+            element={
+              <ProtectedRoute requiredRole="CLIENT">
+                <VirtualGymRoom />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/programs"
+            element={
+              <ProtectedRoute requiredRole="COACH">
+                <Programs />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Ruta de debug WebSocket */}
           <Route
             path="/ws"
             element={
               <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white">
-                <h1 className="text-4xl font-bold mb-8">Test de WebSockets 🔌</h1>
+                <h1 className="text-4xl font-bold mb-8">
+                  Test de WebSockets 🔌
+                </h1>
                 <div
                   className={`p-6 rounded-xl text-2xl font-semibold ${isConnected ? "bg-green-600" : "bg-red-600"}`}
                 >
@@ -161,11 +209,11 @@ const AppContent = () => {
           />
         </Routes>
       </BrowserRouter>
-      
+
       {/* Notification Center */}
       <NotificationCenter onChatClick={handleNotificationChatClick} />
     </>
   );
-}
+};
 
 export default AppContent;

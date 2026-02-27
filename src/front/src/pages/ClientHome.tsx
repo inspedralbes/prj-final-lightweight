@@ -61,18 +61,17 @@ const ClientHome = () => {
       }
     };
 
-    window.addEventListener('openChat', handleOpenChat);
+    window.addEventListener("openChat", handleOpenChat);
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener('openChat', handleOpenChat);
+      window.removeEventListener("openChat", handleOpenChat);
     };
   }, [fetchClientRoutines, user]);
 
   return (
     <Layout>
       <LoadingScreen isVisible={loading} message={t("common.loading")} />
-
       {/* Cabecera del Contenido */}
       <div className="mb-8 md:mb-10 flex flex-col md:flex-row items-start justify-between gap-4">
         <div>
@@ -94,12 +93,11 @@ const ClientHome = () => {
             )}
           </div>
         </div>
-
-        {/* Botón de actualizar (Refresh) */}
+        {/* Botón de refresh manual */}
         <button
           onClick={() => fetchClientRoutines(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] hover:border-orange-500/40 rounded-lg transition-all w-full md:w-auto"
-          title="Actualizar rutinas"
+          className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 hover:text-white border border-[#2a2a2a] hover:border-orange-500/40 rounded-lg transition-all w-full md:w-auto"
+          title={t("common.save")}
         >
           <svg
             className="w-4 h-4"
@@ -114,7 +112,7 @@ const ClientHome = () => {
               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
             />
           </svg>
-          {t("common.update") || "Actualizar"}
+          {t("common.save")}
         </button>
       </div>
 

@@ -10,6 +10,7 @@ import { RoutinesModule } from './routines/routines.module';
 import { SessionModule } from './session/session.module';
 import { ExercisesModule } from './exercises/exercises.module';
 import { InvitationsModule } from './invitations/invitations.module';
+import { RoomModule } from './room/room.module';
 import { ClientsModule } from './clients/clients.module';
 import { ChatModule } from './chat/chat.module';
 
@@ -25,6 +26,7 @@ import { ChatModule } from './chat/chat.module';
     SessionModule,
     ExercisesModule,
     InvitationsModule,
+    RoomModule,
     ClientsModule,
     ChatModule,
   ],
