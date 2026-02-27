@@ -50,13 +50,25 @@ const Layout = ({ children }: LayoutProps) => {
       icon: List,
     },
     { path: "/clients", label: t("sidebar.clients") || "Clientes", icon: List },
-    { path: "/programs", label: t("sidebar.documentation") || "Documentación", icon: FileText },
+    {
+      path: "/programs",
+      label: t("sidebar.documentation") || "Documentación",
+      icon: FileText,
+    },
   ];
 
   // 🟢 MENÚ PARA CLIENTES
   const clientNavItems = [
-    { path: "/client-home", label: t("routines.title") || "Mis rutinas", icon: Dumbbell },
-    { path: "/clients/invitations", label: t("sidebar.invitations") || "Invitations", icon: Ticket },
+    {
+      path: "/client-home",
+      label: t("routines.title") || "Mis rutinas",
+      icon: Dumbbell,
+    },
+    {
+      path: "/clients/invitations",
+      label: t("sidebar.invitations") || "Invitations",
+      icon: Ticket,
+    },
   ];
 
   // El menú cambia automáticamente según quién inicie sesión
@@ -147,7 +159,9 @@ const Layout = ({ children }: LayoutProps) => {
                   {user?.username || username || "Usuario"}
                 </span>
                 <span className="text-gray-500 text-xs mt-0.5">
-                  {user?.role === "COACH" ? t("auth.roleCoach") : t("auth.roleClient")}
+                  {user?.role === "COACH"
+                    ? t("auth.roleCoach")
+                    : t("auth.roleClient")}
                 </span>
               </div>
 

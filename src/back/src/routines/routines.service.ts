@@ -10,7 +10,7 @@ import { ExerciseDto } from './dto/exercise.dto';
 
 @Injectable()
 export class RoutinesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   // ─── CLIENTES ────────────────────────────────────────────────────────────────
 

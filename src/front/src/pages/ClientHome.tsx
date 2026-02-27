@@ -61,11 +61,11 @@ const ClientHome = () => {
       }
     };
 
-    window.addEventListener('openChat', handleOpenChat);
+    window.addEventListener("openChat", handleOpenChat);
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener('openChat', handleOpenChat);
+      window.removeEventListener("openChat", handleOpenChat);
     };
   }, [fetchClientRoutines, user]);
 
