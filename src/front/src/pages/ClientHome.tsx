@@ -6,15 +6,27 @@ import Layout from "../components/Layout";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { useToast } from "../hooks/useToast";
 import { routineService, type Routine } from "../services/routineService";
+import { useAuth } from "../context/AuthContext";
 
 const POLL_INTERVAL_MS = 10_000;
 
 const ClientHome = () => {
+  const { user } = useAuth();
+  const { t } = useTranslation();
+
+  // avoid running component logic when there is no authenticated user
+  if (!user) {
+    return (
+      <Layout>
+        <LoadingScreen isVisible={true} message={t("common.loading")} />
+      </Layout>
+    );
+  }
+
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const { t } = useTranslation();
   const toast = useToast();
 
   const fetchClientRoutines = useCallback(
@@ -44,7 +56,7 @@ const ClientHome = () => {
     // Escuchar evento de apertura de chat desde notificaciones
     const handleOpenChat = (event: Event) => {
       const customEvent = event as CustomEvent;
-      if (customEvent.detail?.roomId === `chat_client_${user?.id}`) {
+      if (user && customEvent.detail?.roomId === `chat_client_${user.id}`) {
         setIsChatOpen(true);
       }
     };
@@ -55,7 +67,7 @@ const ClientHome = () => {
       clearInterval(interval);
       window.removeEventListener('openChat', handleOpenChat);
     };
-  }, [fetchClientRoutines, user?.id]);
+  }, [fetchClientRoutines, user]);
 
   return (
     <Layout>
