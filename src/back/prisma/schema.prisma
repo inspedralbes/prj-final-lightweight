@@ -57,8 +57,25 @@ model User {
   dietPlans        DietPlan[]
   invitationsAsCoach  Invitation[] @relation("CoachInvitations")
   invitationsAsClient Invitation[] @relation("ClientInvitations")
+  clientProfile    ClientProfile?
+  sentMessages     P2PChatMessage[] @relation("SentMessages")
+  receivedMessages P2PChatMessage[] @relation("ReceivedMessages")
 
   @@map("users")
+}
+
+model ClientProfile {
+  id                  Int      @id @default(autoincrement())
+  clientId            Int      @unique @map("client_id")
+  goals               String?  // JSON con objetivos del cliente
+  privateNotes        String?  @map("private_notes")  // Notas privadas del coach
+  personalDataShared  Boolean  @default(false) @map("personal_data_shared")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relaciones
+  client User @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_profiles")
 }
 
 model ExerciseCatalog {
@@ -189,6 +206,21 @@ model ChatMessage {
   session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("chat_messages")
+}
+
+model P2PChatMessage {
+  id        Int      @id @default(autoincrement())
+  senderId  Int      @map("sender_id")
+  receiverId Int     @map("receiver_id")
+  text      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("p2p_chat_messages")
 }
 
 // --------------------------------------

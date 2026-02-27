@@ -1,11 +1,10 @@
 import {
   IsString,
   IsNotEmpty,
-  IsArray,
-  ArrayMinSize,
   ValidateNested,
   IsOptional,
   IsInt,
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ExerciseDto } from './exercise.dto';
@@ -15,13 +14,13 @@ export class CreateRoutineDto {
   @IsNotEmpty()
   name!: string;
 
-  @IsArray()
   @IsOptional()
+  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ExerciseDto)
   exercises?: ExerciseDto[];
 
   @IsOptional()
   @IsInt()
-  clientId?: number;
+  clientId?: number | null;
 }

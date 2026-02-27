@@ -8,15 +8,20 @@
     "success": "Èxit",
     "cancel": "Cancel·lar",
     "save": "Guardar",
+    "update": "Actualitzar",
     "delete": "Eliminar",
     "edit": "Editar",
     "create": "Crear",
     "back": "Enrere",
-    "optional": "opcional"
+    "optional": "opcional",
+    "user": "Usuari",
+    "search": "Cerca…",
+    "noResults": "Sense resultats"
   },
   "auth": {
     "login": "Iniciar sessió",
     "loginSubtitle": "Inicia sessió a LightWeight",
+    "loginDecorativeTitle": "SUPERA\nELS TEUS\nLÍMITS",
     "loginDecorativeText": "Entrena amb els millors coaches i assoleix els teus objectius de fitness.",
     "register": "Crear compte",
     "registerSubtitle": "Uneix-te a LightWeight i comença el teu viatge de fitness.",
@@ -52,7 +57,8 @@
     "profile": "Perfil",
     "documentation": "Documentació",
     "management": "Gestió",
-    "invitations": "Invitacions"
+    "invitations": "Invitacions",
+    "clients": "Clients"
   },
   "routines": {
     "title": "Les meves rutines",
@@ -65,6 +71,18 @@
     "save": "Guardar rutina",
     "createRoutine": "Crear rutina",
     "editRoutine": "Editar rutina",
+    "createRoutineHint": "Configura la teva nova rutina d'entrenament",
+    "editRoutineHint": "Modifica les dades de la rutina",
+    "namePlaceholder": "Ex: Força — Tren superior",
+    "nameRequired": "El nom és obligatori",
+    "assignClient": "Assignar a client",
+    "noClientAssigned": "Sense client assignat",
+    "noClientsAvailable": "Encara no hi ha clients registrats",
+    "noClientsAvailableHint": "Pots assignar-lo més tard des de la rutina",
+    "selectClients": "Seleccionar clients…",
+    "selectAll": "Seleccionar tots",
+    "deselectAll": "Desseleccionar",
+    "clearAll": "Netejar",
     "noRoutines": "Encara no tens rutines",
     "noRoutinesHint": "Comença creant la teva primera rutina d'entrenament.",
     "addExercise": "Afegir exercici",
@@ -115,7 +133,22 @@
     "acceptTermsRequired": "Has d'acceptar els termes per continuar",
     "userAlreadyExists": "Aquest usuari ja existeix",
     "resetEmailSent": "Correu de recuperació enviat",
-    "routineNotFound": "Rutina no trobada"
+    "routineNotFound": "Rutina no trobada",
+    "clientUpdated": "Client actualitzat correctament"
+  },
+  "clients": {
+    "title": "Els meus clients",
+    "noClients": "Encara no tens clients",
+    "noClientsHint": "Comença convidant clients per entrenar-los.",
+    "viewProfile": "Veure perfil",
+    "goals": "Objectius",
+    "privateNotes": "Notas privades",
+    "personalData": "Dades personals compartides",
+    "joined": "Uniat el",
+    "email": "Correu electrònic",
+    "editNotes": "Editar notas",
+    "saveNotes": "Guardar notas",
+    "cancel": "Cancel·lar"
   },
   "invitations": {
     "mainTitle": "Invitacions",

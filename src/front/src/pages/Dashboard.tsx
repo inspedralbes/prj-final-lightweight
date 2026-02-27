@@ -84,18 +84,13 @@ const Dashboard = () => {
     }
   };
 
-  const handleSubmit = async (data: { name: string; clientId?: number; exercises: any[] }) => {
+  const handleSubmit = async (data: { name: string; clientIds: number[] }) => {
     try {
       const payload = {
-        name: data.name.trim(),
-        clientId: data.clientId ? Number(data.clientId) : undefined,
-        exercises: data.exercises.map(ex => ({
-          name: ex.name.trim(),
-          sets: Number(ex.sets),
-          reps: Number(ex.reps),
-          rest: Number(ex.rest),
-          notes: ex.notes
-        })),
+        name: data.name,
+        // Backend currently supports one clientId; send the first selected
+        clientId: data.clientIds[0] ?? undefined,
+        exercises: [] as any[],
       };
 
       if (currentRoutine?.id) {
@@ -184,7 +179,9 @@ const Dashboard = () => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
         initialName={currentRoutine?.name || ""}
-        initialClientId={currentRoutine?.clientId ?? ""}
+        initialClientIds={
+          currentRoutine?.clientId ? [currentRoutine.clientId] : []
+        }
         clients={clients}
         isEditing={!!currentRoutine}
       />

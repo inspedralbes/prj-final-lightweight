@@ -8,15 +8,20 @@
     "success": "Success",
     "cancel": "Cancel",
     "save": "Save",
+    "update": "Update",
     "delete": "Delete",
     "edit": "Edit",
     "create": "Create",
     "back": "Back",
-    "optional": "optional"
+    "optional": "optional",
+    "user": "User",
+    "search": "Search…",
+    "noResults": "No results"
   },
   "auth": {
     "login": "Login",
     "loginSubtitle": "Sign in to LightWeight",
+    "loginDecorativeTitle": "PUSH\nYOUR\nLIMITS",
     "loginDecorativeText": "Train with the best coaches and reach your fitness goals.",
     "register": "Create Account",
     "registerSubtitle": "Join LightWeight and start your fitness journey.",
@@ -52,7 +57,8 @@
     "profile": "Profile",
     "documentation": "Documentation",
     "management": "Management",
-    "invitations": "Invitations"
+    "invitations": "Invitations",
+    "clients": "Clients"
   },
   "routines": {
     "title": "My Routines",
@@ -65,6 +71,18 @@
     "save": "Save Routine",
     "createRoutine": "Create Routine",
     "editRoutine": "Edit Routine",
+    "createRoutineHint": "Set up your new training routine",
+    "editRoutineHint": "Modify the routine details",
+    "namePlaceholder": "E.g: Strength — Upper body",
+    "nameRequired": "Name is required",
+    "assignClient": "Assign to client",
+    "noClientAssigned": "No client assigned",
+    "noClientsAvailable": "No registered clients yet",
+    "noClientsAvailableHint": "You can assign one later from the routine",
+    "selectClients": "Select clients…",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "clearAll": "Clear",
     "noRoutines": "No routines yet",
     "noRoutinesHint": "Get started by creating your first training routine.",
     "addExercise": "Add Exercise",
@@ -115,7 +133,22 @@
     "acceptTermsRequired": "You must accept the terms to continue",
     "userAlreadyExists": "This user already exists",
     "resetEmailSent": "Recovery email sent",
-    "routineNotFound": "Routine not found"
+    "routineNotFound": "Routine not found",
+    "clientUpdated": "Client updated successfully"
+  },
+  "clients": {
+    "title": "My Clients",
+    "noClients": "You don't have any clients yet",
+    "noClientsHint": "Start by inviting clients to train with you.",
+    "viewProfile": "View Profile",
+    "goals": "Goals",
+    "privateNotes": "Private Notes",
+    "personalData": "Personal Data Shared",
+    "joined": "Joined on",
+    "email": "Email",
+    "editNotes": "Edit Notes",
+    "saveNotes": "Save Notes",
+    "cancel": "Cancel"
   },
   "invitations": {
     "mainTitle": "Invitations",

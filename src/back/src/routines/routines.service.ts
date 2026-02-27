@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRole } from '@prisma/client';
+import { ExerciseDto } from './dto/exercise.dto';
 
 @Injectable()
 export class RoutinesService {
@@ -20,7 +21,7 @@ export class RoutinesService {
         select: { id: true, username: true },
         orderBy: { username: 'asc' },
       });
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException(
         'Error al obtener la lista de clientes',
       );
@@ -46,16 +47,30 @@ export class RoutinesService {
   async createRoutine(
     coachId: number,
     name: string,
-    exercises: any[],
+    exercises: ExerciseDto[],
     clientId?: number,
   ) {
     const routine = await this.prisma.routine.create({
       data: {
         coachId,
         name,
-        clientId
+        clientId,
       },
     });
+
+    // Si se asigna un cliente, establecer la relación coach-cliente y crear su perfil
+    if (clientId) {
+      await this.prisma.user.update({
+        where: { id: clientId },
+        data: { coachId },
+      });
+      // Crear perfil del cliente si no existe
+      await this.prisma.clientProfile.upsert({
+        where: { clientId },
+        update: {},
+        create: { clientId },
+      });
+    }
 
     await this.upsertExercises(routine.id, exercises);
     return this.getRoutineById(routine.id);
@@ -65,7 +80,7 @@ export class RoutinesService {
     routineId: number,
     coachId: number,
     name?: string,
-    exercises?: any[],
+    exercises?: ExerciseDto[],
     clientId?: number,
   ) {
     const routine = await this.prisma.routine.findUnique({
@@ -83,6 +98,20 @@ export class RoutinesService {
       await this.prisma.routine.update({
         where: { id: routineId },
         data: updateData,
+      });
+    }
+
+    // Si se asigna un nuevo cliente, establecer la relación coach-cliente y crear su perfil
+    if (clientId !== undefined && clientId !== null) {
+      await this.prisma.user.update({
+        where: { id: clientId },
+        data: { coachId },
+      });
+      // Crear perfil del cliente si no existe
+      await this.prisma.clientProfile.upsert({
+        where: { clientId },
+        update: {},
+        create: { clientId },
       });
     }
 
@@ -124,21 +153,31 @@ export class RoutinesService {
 
   // ─── HELPER ───────────────────────────────────────────────────────────────────
 
-  private async upsertExercises(routineId: number, exercises: any[]) {
+  private async upsertExercises(routineId: number, exercises: ExerciseDto[]) {
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
-      let exercise = await this.prisma.exerciseCatalog.findFirst({
-        where: { name: ex.name },
-      });
-      if (!exercise) {
-        exercise = await this.prisma.exerciseCatalog.create({
-          data: { name: ex.name, description: ex.notes ?? null },
+      let exerciseId: number;
+
+      // Si viene exerciseId, usarlo directamente
+      if (ex.exerciseId && typeof ex.exerciseId === 'number') {
+        exerciseId = ex.exerciseId as number;
+      } else {
+        // Buscar o crear por nombre
+        let exercise = await this.prisma.exerciseCatalog.findFirst({
+          where: { name: ex.name },
         });
+        if (!exercise) {
+          exercise = await this.prisma.exerciseCatalog.create({
+            data: { name: ex.name, description: ex.notes ?? null },
+          });
+        }
+        exerciseId = exercise.id;
       }
+
       await this.prisma.routineExercise.create({
         data: {
           routineId,
-          exerciseId: exercise.id,
+          exerciseId,
           sets: ex.sets,
           reps: ex.reps,
           rest: ex.rest,

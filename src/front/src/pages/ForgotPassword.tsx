@@ -6,7 +6,7 @@ import { useToast } from "../hooks/useToast";
 import { AuthPageHeader } from "../components/AuthPageHeader";
 
 export default function ForgotPassword() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -31,89 +31,92 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-zinc-950 dark:bg-white text-white dark:text-black">
-      {/* Columna Izquierda - Decorativa */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col items-center justify-center bg-black dark:hidden">
+    <>
+      <AuthPageHeader />
+      <div className="h-screen w-full flex overflow-hidden bg-zinc-950 text-white">
+        {/* Columna Izquierda - Decorativa */}
         <div
-          className="absolute inset-0 bg-gradient-to-br from-orange-900/40 via-black/60 to-black/80 z-10"
+          className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col items-center justify-center"
           style={{
-            backgroundImage:
-              'url(\'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"%3E%3Crect fill="%23000" width="1200" height="800"/%3E%3Cg fill="%23111" opacity="0.3"%3E%3Ccircle cx="400" cy="300" r="150"/%3E%3Ccircle cx="800" cy="500" r="200"/%3E%3C/g%3E%3C/svg%3E\')',
+            backgroundImage: "url('/background.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
           }}
-        />
-        <div className="relative z-20 text-center px-8">
-          <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-400 to-orange-600 mb-4">
-            SUPERA
-            <br />
-            ELS TEUS
-            <br />
-            LÍMITS
-          </h1>
-          <p className="text-gray-300 text-lg mt-6 max-w-sm">
-            {t("auth.forgotPasswordSubtitle")}
-          </p>
-          <div className="mt-8">
-            <AuthPageHeader />
+        >
+          {/* Base dark overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black z-10" />
+          {/* Hard right-edge bleed strip */}
+          <div className="absolute right-0 top-0 h-full w-24 bg-gradient-to-r from-transparent to-black z-20" />
+          <div className="relative z-30 text-center px-8">
+            <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-400 to-orange-600 mb-4">
+              SUPERA
+              <br />
+              ELS TEUS
+              <br />
+              LÍMITS
+            </h1>
+            <p className="text-gray-300 text-lg mt-6 max-w-sm">
+              {t("auth.forgotPasswordSubtitle")}
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Columna Derecha - Formulario */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-black">
-        <div className="w-full max-w-md">
-          {/* Títulos */}
-          <div className="mb-8">
-            <h2 className="text-4xl font-bold mb-2 text-white">
-              {t("auth.forgotPassword")}
-            </h2>
-            <p className="text-gray-400">{t("auth.forgotPasswordHint")}</p>
-          </div>
-
-          {/* Formulario */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Input - Nom d'usuari */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">
-                {t("auth.email")}
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder={t("auth.email")}
-                  className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
-                  required
-                />
-              </div>
+        {/* Columna Derecha - Formulario */}
+        <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-6 pt-20 bg-black overflow-y-auto">
+          <div className="w-full max-w-md">
+            {/* Títulos */}
+            <div className="mb-8">
+              <h2 className="text-4xl font-extrabold mb-2 text-white">
+                {t("auth.forgotPassword")}
+              </h2>
+              <p className="text-gray-200">{t("auth.forgotPasswordHint")}</p>
             </div>
 
-            {/* Botón Principal */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-700 text-black font-bold rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
-            >
-              {isLoading ? t("common.loading") : t("auth.sendReset")}
-              {!isLoading && <ArrowRight className="w-5 h-5" />}
-            </button>
-          </form>
+            {/* Formulario */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Input - Nom d'usuari */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  {t("auth.email")}
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <input
+                    type="text"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t("auth.email")}
+                    className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                    required
+                  />
+                </div>
+              </div>
 
-          {/* Pie del formulario */}
-          <p className="mt-6 text-center text-gray-400 text-sm">
-            {t("auth.noAccount")}{" "}
-            <Link
-              to="/login"
-              className="text-orange-500 hover:text-orange-400 font-semibold transition-colors"
-            >
-              {t("auth.loginButton")}
-            </Link>
-          </p>
+              {/* Botón Principal */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-700 text-black font-bold rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
+              >
+                {isLoading ? t("common.loading") : t("auth.sendReset")}
+                {!isLoading && <ArrowRight className="w-5 h-5" />}
+              </button>
+            </form>
+
+            {/* Pie del formulario */}
+            <p className="mt-6 text-center text-gray-400 text-sm">
+              {t("auth.haveAccount")}{" "}
+              <Link
+                to="/login"
+                className="text-orange-500 hover:text-orange-400 font-semibold transition-colors"
+              >
+                {t("auth.loginButton")}
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
