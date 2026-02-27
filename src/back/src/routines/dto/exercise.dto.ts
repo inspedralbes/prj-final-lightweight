@@ -5,6 +5,10 @@ export class ExerciseDto {
   @IsNotEmpty()
   name!: string;
 
+  @IsOptional()
+  @IsInt()
+  exerciseId?: number;
+
   @IsInt()
   @Min(1)
   sets!: number;

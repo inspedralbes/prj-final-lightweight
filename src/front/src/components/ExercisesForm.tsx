@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, Trash2, ChevronUp, ChevronDown } from "./Icons";
 import { useTranslation } from "react-i18next";
+import ExerciseSearchModal from "./ExerciseSearchModal";
 
 export type ExerciseItem = {
   name: string;
@@ -8,6 +9,15 @@ export type ExerciseItem = {
   reps: number;
   rest: number;
   notes?: string | null;
+  exerciseId?: number;
+  // Datos adicionales del catálogo (solo para mostrar)
+  level?: string;
+  category?: string;
+  forceType?: string;
+  mechanic?: string;
+  equipment?: string;
+  primaryMuscle?: string[];
+  description?: string;
 };
 
 type Props = {
@@ -83,8 +93,28 @@ export const ExercisesForm = ({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    await onSubmit({ exercises });
+
+    // Solo enviar los campos que el backend espera (el servidor en docker no acepta exerciseId ni otros metadatos)
+    const cleanExercises = exercises.map(
+      ({
+        exerciseId,
+        level,
+        category,
+        forceType,
+        mechanic,
+        equipment,
+        primaryMuscle,
+        description,
+        ...rest
+      }) => ({
+        ...rest,
+      }),
+    );
+
+    await onSubmit({ exercises: cleanExercises });
   };
+
+  const [openSearch, setOpenSearch] = useState<number | null>(null);
 
   return (
     <form onSubmit={submit} className="space-y-6">
@@ -156,14 +186,112 @@ export const ExercisesForm = ({
                   {t("routines.exerciseName")}
                 </label>
                 <input
+                  readOnly
+                  value={ex.name}
+                  onClick={() => setOpenSearch(idx)}
+                  className={inputClass}
+                />
+                {/* <input
                   placeholder={t("routines.exerciseNamePlaceholder")}
                   value={ex.name}
                   onChange={(e) =>
                     updateExercise(idx, { name: e.target.value })
                   }
                   className={`${inputClass} ${!ex.name.trim() ? "!border-red-500/50" : ""}`}
-                />
+                /> */}
               </div>
+
+              {/* Exercise Info - Only show if data is available */}
+              {ex.level && (
+                <div className="mb-4 p-3 bg-[#0a0a0a] rounded border border-[#2a2a2a]">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+                    {ex.level && (
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium mb-1">
+                          Level
+                        </p>
+                        <p className="text-sm text-white capitalize">
+                          {ex.level}
+                        </p>
+                      </div>
+                    )}
+                    {ex.category && (
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium mb-1">
+                          Category
+                        </p>
+                        <p className="text-sm text-white capitalize">
+                          {ex.category}
+                        </p>
+                      </div>
+                    )}
+                    {ex.forceType && (
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium mb-1">
+                          Force Type
+                        </p>
+                        <p className="text-sm text-white capitalize">
+                          {ex.forceType}
+                        </p>
+                      </div>
+                    )}
+                    {ex.mechanic && (
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium mb-1">
+                          Mechanic
+                        </p>
+                        <p className="text-sm text-white capitalize">
+                          {ex.mechanic}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {ex.equipment && (
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-500 font-medium mb-1">
+                        Equipment
+                      </p>
+                      <p className="text-sm text-white capitalize">
+                        {ex.equipment}
+                      </p>
+                    </div>
+                  )}
+
+                  {ex.primaryMuscle && ex.primaryMuscle.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-500 font-medium mb-1">
+                        Primary Muscles
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {ex.primaryMuscle.map((muscle: string) => (
+                          <span
+                            key={muscle}
+                            className="bg-orange-500/20 text-orange-400 px-2 py-1 rounded text-xs capitalize"
+                          >
+                            {muscle}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Description */}
+
+                  {ex.description && (
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium mb-1">
+                        Instructions
+                      </p>
+                      <div className="bg-[#0a0a0a] rounded p-2 max-h-24 overflow-y-auto">
+                        <p className="text-xs text-gray-400 whitespace-pre-wrap">
+                          {ex.description}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Sets / Reps / Rest - Responsive Grid */}
               <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4">
@@ -225,6 +353,25 @@ export const ExercisesForm = ({
               </div>
             </div>
           ))}
+          {openSearch !== null && (
+            <ExerciseSearchModal
+              onClose={() => setOpenSearch(null)}
+              onSelect={(exercise) => {
+                updateExercise(openSearch, {
+                  name: exercise.name,
+                  exerciseId: exercise.id,
+                  level: exercise.level,
+                  category: exercise.category,
+                  forceType: exercise.forceType,
+                  mechanic: exercise.mechanic,
+                  equipment: exercise.equipment,
+                  primaryMuscle: exercise.primaryMuscle,
+                  description: exercise.description,
+                });
+                setOpenSearch(null);
+              }}
+            />
+          )}
 
           {exercises.length === 0 && (
             <div className="text-center py-8 md:py-12 bg-[#1a1a1a] rounded-xl border border-dashed border-gray-800">

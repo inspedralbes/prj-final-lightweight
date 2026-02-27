@@ -1,13 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  Dumbbell,
-  List,
-  ChevronRight,
-  LogOut,
-  Menu,
-  X,
-} from "./Icons";
+import { Dumbbell, List, ChevronRight, LogOut, Menu, X } from "./Icons";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
@@ -41,7 +34,11 @@ const Layout = ({ children }: LayoutProps) => {
 
   // 🟢 MENÚ PARA ENTRENADORES
   const coachNavItems = [
-    { path: "/dashboard", label: t("sidebar.dashboard") || "Panel de control", icon: List },
+    {
+      path: "/dashboard",
+      label: t("sidebar.dashboard") || "Panel de control",
+      icon: List,
+    },
     { path: "/clients", label: t("sidebar.clients") || "Clientes", icon: List },
   ];
 
@@ -51,7 +48,7 @@ const Layout = ({ children }: LayoutProps) => {
   ];
 
   // El menú cambia automáticamente según quién inicie sesión
-  const navItems = user?.role === 'CLIENT' ? clientNavItems : coachNavItems;
+  const navItems = user?.role === "CLIENT" ? clientNavItems : coachNavItems;
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-gray-300 font-sans">
@@ -71,8 +68,12 @@ const Layout = ({ children }: LayoutProps) => {
       >
         {/* Header */}
         <div className="p-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Dumbbell className="w-8 h-8 text-orange-500" />
+          <div className="flex items-center gap-0">
+            <img
+              src="/LW_logo.png"
+              alt="LightWeight Logo"
+              className="w-15 h-15 object-contain"
+            />
             <span className="text-xl font-bold text-white tracking-tight hidden sm:inline">
               Light<span className="text-orange-500">Weight</span>
             </span>
@@ -129,13 +130,12 @@ const Layout = ({ children }: LayoutProps) => {
           {/* Tarjeta de Perfil y Botón de Salir */}
           <div className="p-4 border-t border-[#1a1a1a]">
             <div className="flex items-center justify-between bg-[#111111] p-3 rounded-xl border border-[#222222]">
-              
               <div className="flex flex-col">
                 <span className="text-white font-medium text-sm truncate max-w-[120px]">
                   {user?.username || username || "Usuario"}
                 </span>
                 <span className="text-gray-500 text-xs mt-0.5">
-                  {user?.role === 'COACH' ? 'Coach Account' : 'Client Account'}
+                  {user?.role === "COACH" ? "Coach Account" : "Client Account"}
                 </span>
               </div>
 
@@ -146,7 +146,6 @@ const Layout = ({ children }: LayoutProps) => {
               >
                 <LogOut className="w-5 h-5" />
               </button>
-              
             </div>
           </div>
         </div>
@@ -162,7 +161,11 @@ const Layout = ({ children }: LayoutProps) => {
           >
             <Menu className="w-6 h-6" />
           </button>
-          <Dumbbell className="w-6 h-6 text-orange-500" />
+          <img
+            src="/LW_logo.png"
+            alt="LightWeight Logo"
+            className="w-10 h-10 object-contain"
+          />
         </div>
 
         {/* Main Content Area */}
