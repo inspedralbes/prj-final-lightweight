@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_BACK_URL;
 
@@ -16,17 +16,38 @@ export interface Client {
   clientProfile?: ClientProfile;
 }
 
+export interface MyCoachInfo {
+  hasCoach: boolean;
+  coachId: number | null;
+  coach: { id: number; username: string } | null;
+}
+
 export const clientsService = {
-  async getClients(): Promise<Client[]> {
+  /** Devuelve si el cliente autenticado tiene coach asignado */
+  async getMe(): Promise<MyCoachInfo> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/clients`, {
+      const response = await axios.get(`${API_BASE_URL}/clients/me`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       return response.data;
     } catch (error) {
-      console.error('Error fetching clients:', error);
+      console.error("Error fetching my coach info:", error);
+      throw error;
+    }
+  },
+
+  async getClients(): Promise<Client[]> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/clients`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching clients:", error);
       throw error;
     }
   },
@@ -35,12 +56,12 @@ export const clientsService = {
     try {
       const response = await axios.get(`${API_BASE_URL}/clients/${clientId}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       return response.data;
     } catch (error) {
-      console.error('Error fetching client:', error);
+      console.error("Error fetching client:", error);
       throw error;
     }
   },
@@ -55,13 +76,13 @@ export const clientsService = {
         updates,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         },
       );
       return response.data;
     } catch (error) {
-      console.error('Error updating client:', error);
+      console.error("Error updating client:", error);
       throw error;
     }
   },

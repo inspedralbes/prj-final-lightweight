@@ -6,12 +6,13 @@ import Layout from "../components/Layout";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { useToast } from "../hooks/useToast";
 import { routineService, type Routine } from "../services/routineService";
+import { clientsService } from "../services/clientsService";
 import { useAuth } from "../context/AuthContext";
 
 const POLL_INTERVAL_MS = 10_000;
 
 const ClientHome = () => {
-  const { user } = useAuth();
+  const { user, updateCoachId } = useAuth();
   const { t } = useTranslation();
 
   // avoid running component logic when there is no authenticated user
@@ -27,7 +28,20 @@ const ClientHome = () => {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  // null = todavía verificando; true/false = confirmado por backend
+  const [hasCoach, setHasCoach] = useState<boolean | null>(null);
   const toast = useToast();
+
+  // Verificar asignación de coach directamente en el backend al montar
+  useEffect(() => {
+    clientsService
+      .getMe()
+      .then((info) => {
+        setHasCoach(info.hasCoach);
+        updateCoachId(info.coachId);
+      })
+      .catch(() => setHasCoach(false));
+  }, []);
 
   const fetchClientRoutines = useCallback(
     async (showLoader = false) => {
@@ -172,14 +186,16 @@ const ClientHome = () => {
           ))}
         </div>
       )}
-      {/* Floating Chat Button */}
-      <button
-        onClick={() => setIsChatOpen(true)}
-        className="fixed bottom-6 right-6 bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-full shadow-lg transition-all hover:scale-110 z-40"
-        title="Chat with Coach"
-      >
-        <MessageCircle className="w-6 h-6" />
-      </button>
+      {/* Floating Chat Button — solo visible si el backend confirma coach asignado */}
+      {hasCoach === true && (
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="fixed bottom-6 right-6 bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-full shadow-lg transition-all hover:scale-110 z-40"
+          title="Chat with Coach"
+        >
+          <MessageCircle className="w-6 h-6" />
+        </button>
+      )}
 
       {/* Chat Overlay */}
       {isChatOpen && user && (

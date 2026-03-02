@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -6,6 +10,46 @@ export class ChatService {
   constructor(private prisma: PrismaService) {}
 
   async sendMessage(senderId: number, receiverId: number, text: string) {
+    // Validate coach–client relationship before allowing the message
+    const sender = await this.prisma.user.findUnique({
+      where: { id: senderId },
+      select: { id: true, role: true, coachId: true },
+    });
+
+    if (!sender) {
+      throw new NotFoundException('Sender not found');
+    }
+
+    if (sender.role === 'CLIENT') {
+      // El cliente solo puede chatear con su coach asignado y este debe tener rol COACH
+      if (!sender.coachId || sender.coachId !== receiverId) {
+        throw new ForbiddenException(
+          'You can only chat with your assigned coach',
+        );
+      }
+      // Verificar que el receptor sea realmente un COACH
+      const coach = await this.prisma.user.findUnique({
+        where: { id: receiverId },
+        select: { id: true, role: true },
+      });
+      if (!coach || coach.role !== 'COACH') {
+        throw new ForbiddenException(
+          'Your assigned contact is not a valid coach',
+        );
+      }
+    } else if (sender.role === 'COACH') {
+      // Coach can only chat with their own clients
+      const receiver = await this.prisma.user.findUnique({
+        where: { id: receiverId },
+        select: { id: true, role: true, coachId: true },
+      });
+      if (!receiver || receiver.coachId !== senderId) {
+        throw new ForbiddenException(
+          'You can only chat with your assigned clients',
+        );
+      }
+    }
+
     const message = await this.prisma.p2PChatMessage.create({
       data: {
         senderId,

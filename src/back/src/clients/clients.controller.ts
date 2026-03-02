@@ -9,6 +9,7 @@ import {
   Res,
   HttpException,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -18,7 +19,7 @@ import { Response } from 'express';
 @Controller('clients')
 @UseGuards(AuthGuard('jwt'))
 export class ClientsController {
-  constructor(private clientsService: ClientsService) { }
+  constructor(private clientsService: ClientsService) {}
 
   @Get()
   async getClients(@Request() req, @Res() res: Response) {
@@ -29,6 +30,22 @@ export class ClientsController {
     } catch (error) {
       throw new HttpException(
         'Failed to fetch clients',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // GET /clients/me — Cliente autenticado consulta si tiene coach asignado
+  // IMPORTANTE: ruta estática ANTES de la dinámica :id
+  @Get('me')
+  async getMyCoach(@Request() req, @Res() res: Response) {
+    try {
+      const clientId = req.user.userId;
+      const result = await this.clientsService.getMyCoach(clientId);
+      res.json(result);
+    } catch (error) {
+      throw new HttpException(
+        'Failed to fetch coach info',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

@@ -44,6 +44,17 @@ export class InvitationsService {
       );
     }
 
+    // Verificar que el propietario de la invitación tenga rol COACH
+    const coach = await this.prisma.user.findUnique({
+      where: { id: invitation.coachId },
+      select: { id: true, role: true },
+    });
+    if (!coach || coach.role !== 'COACH') {
+      throw new BadRequestException(
+        'The invitation owner is not a valid coach',
+      );
+    }
+
     // Vincular cliente con coach y marcar como aceptada en una transacción
     const [updatedInvitation] = await this.prisma.$transaction([
       this.prisma.invitation.update({
