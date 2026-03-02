@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus, Trash2, ChevronUp, ChevronDown } from "./Icons";
 import { useTranslation } from "react-i18next";
 import ExerciseSearchModal from "./ExerciseSearchModal";
@@ -48,6 +48,15 @@ export const ExercisesForm = ({
   );
   const [errors, setErrors] = useState<FormErrors>({});
   const { t } = useTranslation();
+
+  const lastItemRef = useRef<HTMLDivElement | null>(null);
+
+  // when a new exercise is pushed, scroll it into view so user sees the newly added card
+  useEffect(() => {
+    if (lastItemRef.current) {
+      lastItemRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [exercises.length]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -142,6 +151,7 @@ export const ExercisesForm = ({
         <div className="space-y-4">
           {exercises.map((ex, idx) => (
             <div
+              ref={idx === exercises.length - 1 ? lastItemRef : undefined}
               key={idx}
               className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4 md:p-5 hover:border-[#333] transition-colors"
             >

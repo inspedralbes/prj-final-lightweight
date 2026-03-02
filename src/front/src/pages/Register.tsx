@@ -25,6 +25,17 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // enforce minimum length before comparing or sending
+    const MIN_PASSWORD = 6;
+    if (password.length < MIN_PASSWORD) {
+      toast.error(
+        t("messages.errorOccurred"),
+        t("auth.passwordMinLength", { count: MIN_PASSWORD }),
+      );
+      setIsLoading(false);
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast.error(t("messages.errorOccurred"), t("messages.passwordMismatch"));
       return;
@@ -77,12 +88,8 @@ export default function Register() {
           {/* Hard right-edge bleed strip */}
           <div className="absolute right-0 top-0 h-full w-24 bg-gradient-to-r from-transparent to-black z-20" />
           <div className="relative z-30 text-center px-8">
-            <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-400 to-orange-600 mb-4">
-              SUPERA
-              <br />
-              ELS TEUS
-              <br />
-              LÍMITS
+            <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-400 to-orange-600 mb-4 whitespace-pre-line">
+              {t("auth.loginDecorativeTitle")}
             </h1>
             <p className="text-gray-300 text-lg mt-6 max-w-sm">
               {t("auth.registerDecorativeText")}
@@ -173,10 +180,21 @@ export default function Register() {
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      // clear any custom validity when user types
+                      (e.currentTarget as HTMLInputElement).setCustomValidity("");
+                    }}
+                    onInvalid={(e) => {
+                      // override browser message to only show the static hint
+                      (e.currentTarget as HTMLInputElement).setCustomValidity(
+                        t("auth.passwordMinLength", { count: 6 }),
+                      );
+                    }}
                     placeholder={t("auth.passwordPlaceholder")}
                     className="w-full pl-10 pr-10 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                     required
+                    minLength={6}
                   />
                   <button
                     type="button"
@@ -190,6 +208,9 @@ export default function Register() {
                     )}
                   </button>
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {t("auth.passwordMinLength", { count: 6 })}
+                </p>
               </div>
 
               {/* Input - Confirmar Contrasenya */}

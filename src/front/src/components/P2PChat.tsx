@@ -211,15 +211,17 @@ const P2PChat: React.FC<P2PChatProps> = ({ roomId, onClose, title, isInitiator, 
 
         return () => {
             console.log("[WebRTC] Cleaning up...");
-            // indicar al servidor que cerramos el chat
+            // indicar al servidor que cerramos el chat y salimos de la sala de señalización
             if (user && user.id) {
                 socket.emit('close-chat', { userId: user.id, roomId });
             }
+            socket.emit('leave-room', roomId);
             pc.close();
             socket.off("offer");
             socket.off("answer");
             socket.off("ice-candidate");
             socket.off("user-joined");
+            socket.off("current-peers");
         };
     }, [roomId, isInitiator]);
 
@@ -269,7 +271,10 @@ const P2PChat: React.FC<P2PChatProps> = ({ roomId, onClose, title, isInitiator, 
                     </span>
                 </div>
                 <button onClick={() => {
-                    if (user && user.id) socket.emit('close-chat', { userId: user.id, roomId });
+                    if (user && user.id) {
+                        socket.emit('close-chat', { userId: user.id, roomId });
+                    }
+                    socket.emit('leave-room', roomId);
                     onClose();
                 }} className="text-gray-400 hover:text-white">
                     <X className="w-4 h-4" />
