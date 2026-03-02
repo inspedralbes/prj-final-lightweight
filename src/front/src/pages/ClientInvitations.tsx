@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Copy, Check, Loader, Ticket } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "../hooks/useToast";
+import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
 import { invitationsService } from "../services/invitationsService";
 
@@ -10,6 +11,7 @@ export default function ClientInvitations() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const toast = useToast();
+  const { user } = useAuth();
 
   // Sección A: Generar Código
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
@@ -26,9 +28,7 @@ export default function ClientInvitations() {
     try {
       const response = await invitationsService.generateCode();
       setGeneratedCode(response.code);
-      toast.success(
-        t("invitations.codeGenerated") || "Code generated successfully",
-      );
+      toast.success(t("invitations.codeGenerated") || "Code generated successfully");
     } catch (error) {
       const message =
         error instanceof Error
@@ -65,12 +65,11 @@ export default function ClientInvitations() {
 
     setLoadingAccept(true);
     try {
-      await invitationsService.acceptInvitationCode(inputCode);
+      const response = await invitationsService.acceptInvitationCode(inputCode);
       const acceptedCode = inputCode;
       setInputCode("");
       toast.success(
-        t("invitations.codeAccepted") ||
-          "Successfully connected to your friend!",
+        t("invitations.codeAccepted") || "Successfully connected to your friend!"
       );
       // Redirigir automàticament a la sala virtual com a convidat
       setTimeout(() => {
@@ -171,17 +170,11 @@ export default function ClientInvitations() {
 
                 {/* Botón Entrar al Gimnàs Virtual */}
                 <button
-                  onClick={() =>
-                    navigate(`/room/${generatedCode}`, {
-                      state: { isHost: true },
-                    })
-                  }
+                  onClick={() => navigate(`/room/${generatedCode}`, { state: { isHost: true } })}
                   className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <Ticket className="w-5 h-5" />
-                  <span>
-                    {t("virtualGym.enterButton") || "Entrar al Gimnàs Virtual"}
-                  </span>
+                  <span>{t("virtualGym.enterButton") || "Entrar al Gimnàs Virtual"}</span>
                 </button>
               </div>
             )}
@@ -224,9 +217,7 @@ export default function ClientInvitations() {
                       handleAcceptCode();
                     }
                   }}
-                  placeholder={
-                    t("invitations.codePlaceholder") || "Enter the code here..."
-                  }
+                  placeholder={t("invitations.codePlaceholder") || "Enter the code here..."}
                   className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/50 transition-all"
                 />
               </div>
