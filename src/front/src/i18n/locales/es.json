@@ -85,6 +85,7 @@
     "clearAll": "Limpiar",
     "noRoutines": "Aún no tienes rutinas",
     "noRoutinesHint": "Empieza creando tu primera rutina de entrenamiento.",
+    "assignedTo": "Asignada a",
     "addExercise": "Agregar ejercicio",
     "exerciseName": "Nombre del ejercicio",
     "exerciseNamePlaceholder": "ej. Press de banca",

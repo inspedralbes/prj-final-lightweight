@@ -85,6 +85,7 @@
     "clearAll": "Clear",
     "noRoutines": "No routines yet",
     "noRoutinesHint": "Get started by creating your first training routine.",
+    "assignedTo": "Assigned to",
     "addExercise": "Add Exercise",
     "exerciseName": "Exercise Name",
     "exerciseNamePlaceholder": "e.g. Bench Press",

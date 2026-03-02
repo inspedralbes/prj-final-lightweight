@@ -85,6 +85,7 @@
     "clearAll": "Netejar",
     "noRoutines": "Encara no tens rutines",
     "noRoutinesHint": "Comença creant la teva primera rutina d'entrenament.",
+    "assignedTo": "Assignada a",
     "addExercise": "Afegir exercici",
     "exerciseName": "Nom de l'exercici",
     "exerciseNamePlaceholder": "ex. Press de pit",
