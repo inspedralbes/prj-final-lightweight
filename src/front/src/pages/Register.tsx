@@ -15,7 +15,6 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState<"CLIENT" | "COACH">("CLIENT");
-  const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -27,14 +26,6 @@ export default function Register() {
 
     if (password !== confirmPassword) {
       toast.error(t("messages.errorOccurred"), t("messages.passwordMismatch"));
-      return;
-    }
-
-    if (!acceptTerms) {
-      toast.error(
-        t("messages.errorOccurred"),
-        t("messages.acceptTermsRequired"),
-      );
       return;
     }
 
@@ -221,33 +212,16 @@ export default function Register() {
                 </div>
               </div>
 
-              {/* Checkbox - Accepto els Termes */}
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="acceptTerms"
-                  checked={acceptTerms}
-                  onChange={(e) => setAcceptTerms(e.target.checked)}
-                  className="w-4 h-4 bg-zinc-900 border border-zinc-800 rounded cursor-pointer accent-orange-500 mt-1"
-                />
-                <label
-                  htmlFor="acceptTerms"
-                  className="ml-2 text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition-colors"
-                >
-                  {t("auth.acceptTerms")}{" "}
-                  <a
-                    href="#"
-                    className="text-orange-500 hover:text-orange-400 font-semibold"
-                  >
-                    {t("auth.termsLink")}
-                  </a>
-                </label>
-              </div>
-
               {/* Botón Principal */}
               <button
                 type="submit"
-                disabled={isLoading || !acceptTerms}
+                disabled={
+                  isLoading ||
+                  !username ||
+                  !email ||
+                  !password ||
+                  !confirmPassword
+                }
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-700 text-black font-bold rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
               >
                 {isLoading
