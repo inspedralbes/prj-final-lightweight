@@ -152,7 +152,7 @@
   },
   "invitations": {
     "mainTitle": "Invitacions",
-    "mainSubtitle": "Gestiona els teus codis d'invitació i connecta amb entrenadors",
+    "mainSubtitle": "Gestiona els teus codis d'invitació i connecta amb amics",
     "generateTitle": "Convidar a un amic",
     "generateSubtitle": "Comparteix el teu codi d'invitació amb un amic",
     "generateButton": "Generar codi",
@@ -165,14 +165,14 @@
     "codeCopied": "Codi copiat al porta-retalls",
     "copyFailed": "Error al copiar el codi",
     "redeemTitle": "Tens un codi?",
-    "redeemSubtitle": "Introdueix el codi que vas rebre del teu entrenador",
+    "redeemSubtitle": "Introdueix el codi que vas rebre del teu amic",
     "codeInput": "Codi d'invitació",
     "codePlaceholder": "Introdueix el codi aquí...",
     "redeemButton": "Unir-se",
-    "redeemInfo": "Enganxa el codi que vas rebre i connecta amb el teu entrenador",
-    "codeAccepted": "Connectat amb el teu entrenador correctament!",
+    "redeemInfo": "Enganxa el codi que vas rebre i connecta amb el teu amic",
+    "codeAccepted": "Connectat amb el teu amic correctament!",
     "enterCode": "Si us plau introdueix un codi",
-    "footerInfo": "Els teus codis d'invitació t'ajuden a mantenir-te connectat amb la teva comunitat de fitness. Comparteix-los de forma segura amb amics i entrenadors de confiança."
+    "footerInfo": "Els teus codis d'invitació t'ajuden a mantenir-te connectat amb la teva comunitat de fitness. Comparteix-los de forma segura amb els teus amics de confiança."
   },
   "virtualGym": {
     "title": "Gimnàs Virtual - Sessiò en directe",
