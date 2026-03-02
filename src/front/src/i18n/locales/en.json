@@ -48,7 +48,8 @@
     "sendReset": "Send Request",
     "invalidCredentials": "Invalid username or password",
     "acceptTerms": "I accept the",
-    "termsLink": "Terms and Conditions"
+    "termsLink": "Terms and Conditions",
+    "passwordMinLength": "Password must be at least {{count}} characters"
   },
   "sidebar": {
     "dashboard": "Dashboard",
