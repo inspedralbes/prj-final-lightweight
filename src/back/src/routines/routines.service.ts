@@ -14,10 +14,10 @@ export class RoutinesService {
 
   // ─── CLIENTES ────────────────────────────────────────────────────────────────
 
-  async getClientsOptions() {
+  async getClientsOptions(coachId: number) {
     try {
       return await this.prisma.user.findMany({
-        where: { role: UserRole.CLIENT },
+        where: { role: UserRole.CLIENT, coachId: coachId },
         select: { id: true, username: true },
         orderBy: { username: 'asc' },
       });
