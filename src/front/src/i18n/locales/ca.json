@@ -169,8 +169,10 @@
     "codeInput": "Codi d'invitació",
     "codePlaceholder": "Introdueix el codi aquí...",
     "redeemButton": "Unir-se",
-    "redeemInfo": "Enganxa el codi que vas rebre i connecta amb el teu entrenador",
-    "codeAccepted": "Connectat amb el teu entrenador correctament!",
+    "redeemInfo": "Enganxa el codi que vas rebre i connecta amb el teu amic",
+    "codeAccepted": "Connectat amb el teu amic correctament!",
+    "acceptError": "Error al canjear el codi",
+    "selfUseError": "No pots utilitzar el teu propi codi",
     "enterCode": "Si us plau introdueix un codi",
     "footerInfo": "Els teus codis d'invitació t'ajuden a mantenir-te connectat amb la teva comunitat de fitness. Comparteix-los de forma segura amb amics i entrenadors de confiança."
   },
@@ -189,6 +191,10 @@
     "online": "En línia",
     "videoPlaceholder": "Vídeo en directe",
     "leaveButton": "Sortir de la sala"
+  },
+  "virtualRoom": {
+    "partnerDisconnected": "El teu contrincant s'ha desconnectat",
+    "partnerLocation": "Fent: {{exercise}} - Sèrie {{set}}/{{total}}"
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",

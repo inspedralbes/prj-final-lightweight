@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,6 +23,10 @@ interface PartnerProgress {
   userId: string;
   progressPercentage: number;
   completedExercises: number[];
+  currentExerciseIndex?: number;
+  currentSet?: number;
+  exerciseName?: string;
+  totalSets?: number;
 }
 
 export default function VirtualGymRoom() {
@@ -61,6 +65,7 @@ export default function VirtualGymRoom() {
 
   // Partner State
   const [partnerProgress, setPartnerProgress] = useState<PartnerProgress | null>(null);
+  const [partnerDisconnected, setPartnerDisconnected] = useState(false);
 
   // Timer State
   const [time, setTime] = useState(0);
@@ -135,19 +140,28 @@ export default function VirtualGymRoom() {
       }, 1000);
     });
 
-    newSocket.on("opponentProgressUpdate", (data: { userId: string, exerciseId: number, progress: number }) => {
+    newSocket.on("opponentProgressUpdate", (data: PartnerProgress) => {
       if (String(data.userId) !== String(user.id)) {
-        setPartnerProgress(prev => {
-          const currentCompleted = prev?.completedExercises || [];
-          if (!currentCompleted.includes(data.exerciseId)) {
-            currentCompleted.push(data.exerciseId);
-          }
-          return {
-            userId: data.userId,
-            progressPercentage: data.progress,
-            completedExercises: currentCompleted
-          };
-        });
+        // simplemente rehacemos el estado tal cual llega
+        setPartnerProgress({ ...data });
+      }
+    });
+
+    // Host left: only guests need to react
+    newSocket.on('hostDisconnected', () => {
+      if (!isHost) {
+        toast.error("Host has abandoned the room");
+        newSocket.disconnect();
+        navigate('/clients/invitations');
+      }
+    });
+
+    // Guest left: notify host, keep session active
+    newSocket.on('guestDisconnected', () => {
+      if (isHost) {
+        toast.error( 'Your opponent has disconnected');
+        newSocket.disconnect();
+        navigate('/clients/invitations');
       }
     });
 
@@ -196,50 +210,72 @@ export default function VirtualGymRoom() {
     const currentEx = selectedRoutine.exercises?.[currentExerciseIdx];
     if (!currentEx) return;
 
-    let newProgress = progress;
+    // Antes de cualquier cambio, incrementamos el contador de series completadas
+    let updatedExerciseIdx = currentExerciseIdx;
+    let updatedSet = currentSet;
+    let justFinishedExercise = false;
 
     if (currentSet < currentEx.sets) {
-      setCurrentSet(prev => prev + 1);
+      updatedSet = currentSet + 1;
       toast.success("Sèrie completada!");
     } else {
-      // Avanzar ejercicio
+      // la última sèrie d'aquest exercici
+      justFinishedExercise = true;
+      setCompletedExercises(prev => [...prev, currentEx.exerciseId]);
       if (currentExerciseIdx < (selectedRoutine.exercises?.length || 0) - 1) {
-        setCompletedExercises(prev => [...prev, currentEx.exerciseId]);
-        setCurrentExerciseIdx(prev => prev + 1);
-        setCurrentSet(1);
+        updatedExerciseIdx = currentExerciseIdx + 1;
+        updatedSet = 1;
         toast.success("Exercici completat! Següent exercici...");
-
-        // Emitir que hemos completado un ejercicio
-        socket?.emit('exerciseCompleted', {
-          roomId,
-          userId: user?.id,
-          exerciseId: currentEx.exerciseId,
-          progress: Math.round(((currentExerciseIdx + 1) / selectedRoutine.exercises!.length) * 100)
-        });
       } else {
         // Rutina terminada
-        setCompletedExercises(prev => [...prev, currentEx.exerciseId]);
-        newProgress = 100;
-        setProgress(100);
+        updatedSet = currentEx.sets;
+        const finalProgress = 100;
+        setProgress(finalProgress);
         setIsTimerRunning(false);
         toast.success("FELICITATS! Entrenament completat!");
-
-        socket?.emit('exerciseCompleted', {
+        // Emitir último update antes de salir
+        socket?.emit('updateProgress', {
           roomId,
           userId: user?.id,
-          exerciseId: currentEx.exerciseId,
-          progress: 100
+          progressPercentage: finalProgress,
+          completedExercises: [...completedExercises, currentEx.exerciseId],
+          currentExerciseIndex: updatedExerciseIdx,
+          currentSet: updatedSet,
+          exerciseName: currentEx.exercise.name,
+          totalSets: currentEx.sets,
         });
         return;
       }
     }
 
-    // Calcular progreso para la UI local
+    // actualizar estados locales
+    setCurrentExerciseIdx(updatedExerciseIdx);
+    setCurrentSet(updatedSet);
+    if (justFinishedExercise && updatedExerciseIdx !== currentExerciseIdx) {
+      setCompletedExercises(prev => [...prev, currentEx.exerciseId]);
+    }
+
+    // Calcular progreso para la UI local (series completas / total series)
     const totalSets = selectedRoutine.exercises?.reduce((acc, ex) => acc + ex.sets, 0) || 1;
-    const completedSets = selectedRoutine.exercises?.slice(0, currentExerciseIdx).reduce((acc, ex) => acc + ex.sets, 0) || 0;
-    const currentTotalCompleted = completedSets + currentSet;
-    newProgress = Math.round((currentTotalCompleted / totalSets) * 100);
+    const completedSets =
+      selectedRoutine.exercises
+        ?.slice(0, updatedExerciseIdx)
+        .reduce((acc, ex) => acc + ex.sets, 0) || 0;
+    const currentTotalCompleted = completedSets + updatedSet;
+    const newProgress = Math.round((currentTotalCompleted / totalSets) * 100);
     setProgress(newProgress);
+
+    // notificar el progreso al servidor incluyendo estado detallado
+    socket?.emit('updateProgress', {
+      roomId,
+      userId: user?.id,
+      progressPercentage: newProgress,
+      completedExercises: [...(justFinishedExercise ? [...completedExercises, currentEx.exerciseId] : completedExercises)],
+      currentExerciseIndex: updatedExerciseIdx,
+      currentSet: updatedSet,
+      exerciseName: currentEx.exercise.name,
+      totalSets: currentEx.sets,
+    });
 
     setWeight("");
     setReps("");
@@ -365,6 +401,13 @@ export default function VirtualGymRoom() {
                   <Activity className="text-orange-500" /> Progrés de la sala
                 </h2>
 
+                {partnerDisconnected && (
+                  <div className="mb-4 text-center text-red-400 font-bold">
+                    {isHost
+                      ? t('virtualRoom.guestDisconnected')
+                      : t('virtualRoom.hostAbandoned')}
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-6 mb-12">
                   {/* Mi progreso */}
                   <div className="text-center space-y-4">
@@ -392,6 +435,15 @@ export default function VirtualGymRoom() {
                     <p className="text-sm font-bold text-zinc-400 flex items-center justify-center gap-2">
                       <Users size={14} className="text-blue-500" /> Contrincant
                     </p>
+                    {partnerProgress?.exerciseName && partnerProgress.currentSet != null && partnerProgress.totalSets != null && (
+                      <p className="text-xs text-zinc-500 mt-1">
+                        {t('virtualRoom.partnerLocation', {
+                          exercise: partnerProgress.exerciseName,
+                          set: partnerProgress.currentSet,
+                          total: partnerProgress.totalSets,
+                        })}
+                      </p>
+                    )}
                   </div>
                 </div>
 

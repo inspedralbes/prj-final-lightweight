@@ -9,6 +9,8 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { InvitationStatus } from '@prisma/client';
 
 interface RoomUser {
   id: string;
@@ -29,23 +31,70 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
+  constructor(private prisma: PrismaService) {}
+
   // Almacenar usuarios conectados por sala: roomId -> Array de usuarios
   private roomUsers: Map<string, any[]> = new Map();
   // Mapear socketId -> { userId, roomId } para limpieza al desconectar
   private socketToUser: Map<string, { userId: string; roomId: string }> =
     new Map();
+  // Guardar último progreso emitido por cada sala (generalmente del host)
+  private roomLastProgress: Map<
+    string,
+    {
+      userId: string;
+      progressPercentage: number;
+      completedExercises: number[];
+      currentExerciseIndex?: number;
+      currentSet?: number;
+      exerciseName?: string;
+      totalSets?: number;
+    }
+  > = new Map();
 
   handleConnection(client: Socket) {
     console.log(`🔌 [Room] Cliente conectado: ${client.id}`);
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
     console.log(`❌ [Room] Cliente desconectado: ${client.id}`);
     const userInfo = this.socketToUser.get(client.id);
     if (userInfo) {
       const { userId, roomId } = userInfo;
+      // determinar si era host antes de quitarlo
+      const users = this.roomUsers.get(roomId) || [];
+      const leaving = users.find((u) => u.id === userId);
+      const wasHost = leaving?.isHost;
+
+      // removemos al usuario
       this.removeUserFromRoom(roomId, userId, client.id);
       this.socketToUser.delete(client.id);
+
+      if (wasHost) {
+        // host destroyed the room
+        this.server.to(roomId).emit('hostDisconnected');
+        // marcar la invitación como cerrada en la base de datos
+        try {
+          await this.prisma.invitation.update({
+            where: { code: roomId },
+            data: { status: InvitationStatus.REVOKED },
+          });
+        } catch (e) {
+          console.warn('[Room] no se pudo actualizar invitación al cerrar sala', e);
+        }
+        // limpiar cualquier progreso almacenado
+        this.roomLastProgress.delete(roomId);
+        // también limpiar la lista completa
+        this.roomUsers.delete(roomId);
+      } else {
+        // guest disconnected, notify host alone
+        // encontrar socket id del host y enviarle evento
+        const host = users.find((u) => u.isHost);
+        if (host) {
+          // broadcast to room but host only will handle it client-side
+          this.server.to(roomId).emit('guestDisconnected');
+        }
+      }
     }
   }
 
@@ -84,6 +133,15 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Notificar al usuario su rol y lista actualizada
       client.emit('joinedRoom', { isHost, usersInRoom: users });
 
+      // si el usuario que entra no es host y existen progresos guardados,
+      // reenviárselos inmediatamente para sincronización
+      if (!isHost) {
+        const last = this.roomLastProgress.get(roomId);
+        if (last) {
+          client.emit('opponentProgressUpdate', last);
+        }
+      }
+
       console.log(`📤 [Room] Emitiendo roomUsersUpdate a sala ${roomId}:`, users);
       this.server.to(roomId).emit('roomUsersUpdate', {
         usersInRoom: users,
@@ -113,7 +171,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() payload: { roomId: string; userId: string; exerciseId: number; progress: number },
   ) {
     const { roomId, userId, exerciseId, progress } = payload;
-    // Notificar al oponente
+    // this legacy event still notifica un progreso básico; preferir `updateProgress`
     client.to(roomId).emit('opponentProgressUpdate', {
       userId,
       exerciseId,
@@ -123,27 +181,81 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('leaveRoom')
-  handleLeaveRoom(
+  async handleLeaveRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { roomId: string; userId: string },
   ) {
     const { roomId, userId } = payload;
+    // basically trigger same logic as disconnect
+    const users = this.roomUsers.get(roomId) || [];
+    const leaving = users.find((u) => u.id === userId);
+    const wasHost = leaving?.isHost;
+
     this.removeUserFromRoom(roomId, userId, client.id);
+    this.socketToUser.delete(client.id);
+
+    if (wasHost) {
+      this.server.to(roomId).emit('hostDisconnected');
+      try {
+        await this.prisma.invitation.update({
+          where: { code: roomId },
+          data: { status: InvitationStatus.REVOKED },
+        });
+      } catch {}
+      this.roomLastProgress.delete(roomId);
+      this.roomUsers.delete(roomId);
+    } else {
+      this.server.to(roomId).emit('guestDisconnected');
+    }
+
     return { success: true };
   }
 
   @SubscribeMessage('updateProgress')
   handleUpdateProgress(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { roomId: string; userId: string; progressPercentage: number; completedExercises: number[] },
+    @MessageBody()
+    payload: {
+      roomId: string;
+      userId: string;
+      progressPercentage: number;
+      completedExercises: number[];
+      currentExerciseIndex?: number;
+      currentSet?: number;
+      exerciseName?: string;
+      totalSets?: number;
+    },
   ) {
-    const { roomId, userId, progressPercentage, completedExercises } = payload;
-    // Hacer broadcast a todos en la sala EXCEPTO al emisor (o a todos, según se prefiera)
-    // Usualmente para 'partnerProgress' queremos que otros lo vean
-    client.to(roomId).emit('partnerProgress', {
+    const {
+      roomId,
       userId,
       progressPercentage,
       completedExercises,
+      currentExerciseIndex,
+      currentSet,
+      exerciseName,
+      totalSets,
+    } = payload;
+    // almacenar último estado para recuperar a invitados que regresen
+    this.roomLastProgress.set(roomId, {
+      userId,
+      progressPercentage,
+      completedExercises,
+      currentExerciseIndex,
+      currentSet,
+      exerciseName,
+      totalSets,
+    });
+    // retransmitimos de inmediato a los demás en la sala usando el evento
+    // que el front espera (`opponentProgressUpdate`) para mantener compatibilidad
+    client.to(roomId).emit('opponentProgressUpdate', {
+      userId,
+      progressPercentage,
+      completedExercises,
+      currentExerciseIndex,
+      currentSet,
+      exerciseName,
+      totalSets,
     });
     return { success: true };
   }

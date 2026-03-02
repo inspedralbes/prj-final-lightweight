@@ -76,11 +76,21 @@ export default function ClientInvitations() {
         navigate(`/room/${acceptedCode}`, { state: { isHost: false } });
       }, 1500);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to accept invitation code";
+      let message: string;
+      if (error instanceof Error) {
+        // si el backend devolvió un string reconocible, podemos traducirlo
+        if (error.message.includes('own invitation')) {
+          message = t('invitations.selfUseError') || error.message;
+        } else {
+          message = error.message;
+        }
+      } else {
+        message = t(
+          'invitations.acceptError',
+        ) || 'Failed to accept invitation code';
+      }
       toast.error(message);
+      // no redirigimos en caso de error
     } finally {
       setLoadingAccept(false);
     }

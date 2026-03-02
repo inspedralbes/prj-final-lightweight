@@ -169,9 +169,9 @@
     "codeInput": "Código de invitación",
     "codePlaceholder": "Introduce el código aquí...",
     "redeemButton": "Unirse",
-    "redeemInfo": "Pega el código que recibiste y conecta con tu entrenador",
-    "codeAccepted": "¡Conectado con tu entrenador correctamente!",
-    "enterCode": "Por favor ingresa un código",
+    "redeemInfo": "Pega el código que recibiste y conecta con tu amigo",
+    "codeAccepted": "¡Conectado con tu amigo correctamente!",    "acceptError": "Error al canjear el código",
+    "selfUseError": "No puedes usar tu propio código",    "enterCode": "Por favor ingresa un código",
     "footerInfo": "Tus códigos de invitación te ayudan a mantenerte conectado con tu comunidad de fitness. Compártelos de forma segura con amigos y entrenadores de confianza."
   },
   "virtualGym": {
@@ -189,6 +189,10 @@
     "online": "En línea",
     "videoPlaceholder": "Vídeo en directo",
     "leaveButton": "Salir de la sala"
+  },
+  "virtualRoom": {
+    "partnerDisconnected": "Tu contrincante se ha desconectado",
+    "partnerLocation": "Haciendo: {{exercise}} - Serie {{set}}/{{total}}"
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",
