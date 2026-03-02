@@ -42,7 +42,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // 🟢 MENÚ PARA ENTRENADORES
+  // MENÚ PARA ENTRENADORES
   const coachNavItems = [
     {
       path: "/dashboard",
@@ -57,7 +57,7 @@ const Layout = ({ children }: LayoutProps) => {
     },
   ];
 
-  // 🟢 MENÚ PARA CLIENTES
+  // MENÚ PARA CLIENTES
   const clientNavItems = [
     {
       path: "/client-home",
