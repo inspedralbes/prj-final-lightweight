@@ -16,7 +16,7 @@ const Dashboard = () => {
   const [currentRoutine, setCurrentRoutine] = useState<{
     id?: number;
     name: string;
-    clientId?: number | null;
+    clientIds: number[];
   } | null>(null);
 
   const [clients, setClients] = useState<{ id: number; username: string }[]>(
@@ -65,7 +65,7 @@ const Dashboard = () => {
       setCurrentRoutine({
         id: routine.id,
         name: routine.name,
-        clientId: routine.clientId,
+        clientIds: routine.clientIds ?? [],
       });
       setIsModalOpen(true);
     }
@@ -88,8 +88,7 @@ const Dashboard = () => {
     try {
       const payload = {
         name: data.name,
-        // Backend currently supports one clientId; send the first selected
-        clientId: data.clientIds[0] ?? undefined,
+        clientIds: data.clientIds,
         exercises: [] as any[],
       };
 
@@ -166,6 +165,9 @@ const Dashboard = () => {
                 name={routine.name}
                 exerciseCount={routine.exercises?.length || 0}
                 createdAt={routine.createdAt || new Date().toISOString()}
+                assignedClients={clients.filter((c) =>
+                  (routine.clientIds || []).includes(c.id),
+                )}
                 onEdit={handleEditClick}
                 onDelete={handleDeleteClick}
               />
@@ -179,9 +181,7 @@ const Dashboard = () => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
         initialName={currentRoutine?.name || ""}
-        initialClientIds={
-          currentRoutine?.clientId ? [currentRoutine.clientId] : []
-        }
+        initialClientIds={currentRoutine?.clientIds ?? []}
         clients={clients}
         isEditing={!!currentRoutine}
       />

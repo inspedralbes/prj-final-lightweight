@@ -30,15 +30,23 @@ export class RoutinesService {
 
   async getClientRoutines(clientId: number) {
     return this.prisma.routine.findMany({
-      where: { clientId: clientId },
-      include: { exercises: { include: { exercise: true } } },
+      where: {
+        assignments: { some: { clientId } },
+      },
+      include: {
+        exercises: { include: { exercise: true } },
+        assignments: { select: { clientId: true } },
+      },
     });
   }
 
   async getGlobalRoutines() {
     return this.prisma.routine.findMany({
-      where: { clientId: null },
-      include: { exercises: { include: { exercise: true } } },
+      where: { assignments: { none: {} } },
+      include: {
+        exercises: { include: { exercise: true } },
+        assignments: { select: { clientId: true } },
+      },
     });
   }
 
@@ -48,28 +56,14 @@ export class RoutinesService {
     coachId: number,
     name: string,
     exercises: ExerciseDto[],
-    clientId?: number,
+    clientIds?: number[],
   ) {
     const routine = await this.prisma.routine.create({
-      data: {
-        coachId,
-        name,
-        clientId,
-      },
+      data: { coachId, name },
     });
 
-    // Si se asigna un cliente, establecer la relación coach-cliente y crear su perfil
-    if (clientId) {
-      await this.prisma.user.update({
-        where: { id: clientId },
-        data: { coachId },
-      });
-      // Crear perfil del cliente si no existe
-      await this.prisma.clientProfile.upsert({
-        where: { clientId },
-        update: {},
-        create: { clientId },
-      });
+    if (clientIds && clientIds.length > 0) {
+      await this.assignClients(routine.id, clientIds, coachId);
     }
 
     await this.upsertExercises(routine.id, exercises);
@@ -81,7 +75,7 @@ export class RoutinesService {
     coachId: number,
     name?: string,
     exercises?: ExerciseDto[],
-    clientId?: number,
+    clientIds?: number[],
   ) {
     const routine = await this.prisma.routine.findUnique({
       where: { id: routineId },
@@ -90,29 +84,19 @@ export class RoutinesService {
     if (routine.coachId !== coachId)
       throw new ForbiddenException('No tienes permiso para editar esta rutina');
 
-    const updateData: Record<string, any> = {};
-    if (name !== undefined) updateData.name = name;
-    if (clientId !== undefined) updateData.clientId = clientId;
-
-    if (Object.keys(updateData).length > 0) {
+    if (name !== undefined) {
       await this.prisma.routine.update({
         where: { id: routineId },
-        data: updateData,
+        data: { name },
       });
     }
 
-    // Si se asigna un nuevo cliente, establecer la relación coach-cliente y crear su perfil
-    if (clientId !== undefined && clientId !== null) {
-      await this.prisma.user.update({
-        where: { id: clientId },
-        data: { coachId },
-      });
-      // Crear perfil del cliente si no existe
-      await this.prisma.clientProfile.upsert({
-        where: { clientId },
-        update: {},
-        create: { clientId },
-      });
+    // Replace all client assignments if clientIds is provided
+    if (clientIds !== undefined) {
+      await this.prisma.routineAssignment.deleteMany({ where: { routineId } });
+      if (clientIds.length > 0) {
+        await this.assignClients(routineId, clientIds, coachId);
+      }
     }
 
     if (exercises !== undefined) {
@@ -126,14 +110,20 @@ export class RoutinesService {
   async getRoutineById(id: number) {
     return this.prisma.routine.findUnique({
       where: { id },
-      include: { exercises: { include: { exercise: true } } },
+      include: {
+        exercises: { include: { exercise: true } },
+        assignments: { select: { clientId: true } },
+      },
     });
   }
 
   async getCoachRoutines(coachId: number) {
     return this.prisma.routine.findMany({
       where: { coachId },
-      include: { exercises: { include: { exercise: true } } },
+      include: {
+        exercises: { include: { exercise: true } },
+        assignments: { select: { clientId: true } },
+      },
     });
   }
 
@@ -153,16 +143,40 @@ export class RoutinesService {
 
   // ─── HELPER ───────────────────────────────────────────────────────────────────
 
+  /** Assigns clients to a routine and ensures coach-client relationship + client profile */
+  private async assignClients(
+    routineId: number,
+    clientIds: number[],
+    coachId: number,
+  ) {
+    for (const clientId of clientIds) {
+      await this.prisma.routineAssignment.upsert({
+        where: { routineId_clientId: { routineId, clientId } },
+        update: {},
+        create: { routineId, clientId },
+      });
+
+      await this.prisma.user.update({
+        where: { id: clientId },
+        data: { coachId },
+      });
+
+      await this.prisma.clientProfile.upsert({
+        where: { clientId },
+        update: {},
+        create: { clientId },
+      });
+    }
+  }
+
   private async upsertExercises(routineId: number, exercises: ExerciseDto[]) {
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
       let exerciseId: number;
 
-      // Si viene exerciseId, usarlo directamente
       if (ex.exerciseId && typeof ex.exerciseId === 'number') {
         exerciseId = ex.exerciseId as number;
       } else {
-        // Buscar o crear por nombre
         let exercise = await this.prisma.exerciseCatalog.findFirst({
           where: { name: ex.name },
         });

@@ -7,6 +7,7 @@ interface RoutineCardProps {
   name: string;
   exerciseCount: number;
   createdAt: string;
+  assignedClients?: { id: number; username: string }[];
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
 }
@@ -16,6 +17,7 @@ const RoutineCard = ({
   name,
   exerciseCount,
   createdAt,
+  assignedClients = [],
   onEdit,
   onDelete,
 }: RoutineCardProps) => {
@@ -30,7 +32,10 @@ const RoutineCard = ({
   });
 
   return (
-    <div className="bg-[#1a1a1a] rounded-xl p-4 md:p-5 border border-transparent hover:border-orange-500/20 transition-all duration-300 group shadow-lg hover:shadow-orange-500/5">
+    <div
+      className="bg-[#1a1a1a] rounded-xl p-4 md:p-5 border border-transparent hover:border-orange-500/20 transition-all duration-300 group shadow-lg hover:shadow-orange-500/5 cursor-pointer"
+      onClick={() => navigate(`/routine/${id}/edit`)}
+    >
       <div className="flex justify-between items-start mb-4">
         <div className="p-2 md:p-3 rounded-lg bg-[#252525] text-orange-500 group-hover:scale-110 transition-transform duration-300">
           <img
@@ -67,10 +72,36 @@ const RoutineCard = ({
         {name}
       </h3>
 
+      {assignedClients.length > 0 && (
+        <div className="flex items-center gap-2 mt-2">
+          {assignedClients.map((c, idx) => {
+            const colors = [
+              "bg-orange-500/20 text-orange-400",
+              "bg-blue-500/20 text-blue-400",
+              "bg-green-500/20 text-green-400",
+              "bg-purple-500/20 text-purple-400",
+            ];
+            const cls = colors[idx % colors.length];
+            return (
+              <div
+                key={c.id}
+                title={c.username}
+                className={`flex items-center gap-2 px-2 py-0.5 rounded-full text-xs border border-[#222] ${cls}`}
+              >
+                <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold">
+                  {c.username.slice(0, 1).toUpperCase()}
+                </div>
+                <span className="text-gray-300">{c.username}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4 text-sm text-gray-500 mt-4">
         <button
-          onClick={() => navigate(`/routine/${id}/edit`)}
-          className="flex items-center gap-1.5 bg-[#0a0a0a] px-2 py-1 rounded text-xs border border-[#2a2a2a] hover:border-orange-500/40 hover:text-orange-400 transition-colors cursor-pointer w-full sm:w-auto justify-center sm:justify-start"
+          // onClick={() => navigate(`/routine/${id}/edit`)}
+          className="flex items-center gap-1.5 bg-[#0a0a0a] px-2 py-1 rounded text-xs border border-[#2a2a2a] transition-colors cursor-pointer w-full sm:w-auto justify-center sm:justify-start"
           title={t("routines.exercises")}
         >
           <span className="font-medium text-gray-300">{exerciseCount}</span>{" "}

@@ -52,7 +52,7 @@ model User {
   coach            User?        @relation("CoachClients", fields: [coachId], references: [id])
   clients          User[]       @relation("CoachClients")
   routinesCreated  Routine[]    @relation("CoachRoutines")
-  routinesAssigned Routine[]    @relation("ClientRoutines")
+  routineAssignments RoutineAssignment[]
   liveSessions     LiveSession[]
   dietPlans        DietPlan[]
   invitationsAsCoach  Invitation[] @relation("CoachInvitations")
@@ -99,20 +99,32 @@ model ExerciseCatalog {
 
 model Routine {
   id        Int      @id @default(autoincrement())
-  coachId   Int?      @map("coach_id")
-  clientId  Int?     @map("client_id")
+  coachId   Int?     @map("coach_id")
   name      String
   isPublic  Boolean  @default(false) @map("is_public")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relaciones
-  coach        User?              @relation("CoachRoutines", fields: [coachId], references: [id])
-  client       User?             @relation("ClientRoutines", fields: [clientId], references: [id])
+  coach        User?               @relation("CoachRoutines", fields: [coachId], references: [id])
   exercises    RoutineExercise[]
   liveSessions LiveSession[]
+  assignments  RoutineAssignment[]
 
   @@map("routines")
+}
+
+model RoutineAssignment {
+  id        Int      @id @default(autoincrement())
+  routineId Int      @map("routine_id")
+  clientId  Int      @map("client_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  client  User    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([routineId, clientId])
+  @@map("routine_assignments")
 }
 
 model RoutineExercise {

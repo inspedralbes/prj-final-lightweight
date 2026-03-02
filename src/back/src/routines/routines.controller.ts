@@ -59,12 +59,12 @@ export class RoutinesController {
   @UseGuards(CoachGuard)
   async create(@Request() req: any, @Body() body: CreateRoutineDto) {
     const coachId = req.user.userId;
-    const { name, exercises, clientId } = body;
+    const { name, exercises, clientIds } = body;
     return this.routinesService.createRoutine(
       coachId,
       name,
       exercises || [],
-      clientId || undefined,
+      clientIds && clientIds.length > 0 ? clientIds : undefined,
     );
   }
 
@@ -76,13 +76,13 @@ export class RoutinesController {
     @Body() body: UpdateRoutineDto,
   ) {
     const coachId = req.user.userId;
-    const { name, exercises, clientId } = body;
+    const { name, exercises, clientIds } = body;
     return this.routinesService.updateRoutine(
       Number(id),
       coachId,
       name,
       exercises,
-      clientId || undefined,
+      clientIds,
     );
   }
 
