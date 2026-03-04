@@ -1,27 +1,24 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
-import ClientHome from "./pages/ClientHome";
-import Clients from "./pages/Clients";
-import Session from "./pages/Session";
-import ExercisesEdit from "./pages/ExercisesEdit";
-import FriendSession from "./pages/FriendSession";
-import CoachClientInvitation from "./pages/CoachClientInvitation";
-import Programs from "./pages/Programs";
-import VirtualGymRoom from "./pages/VirtualGymRoom";
-import SoloGymSession from "./pages/SoloGymSession";
-import ProtectedRoute from "./components/ProtectedRoute";
-import { useAuth } from "./context/AuthContext";
-import { useNotification } from "./context/NotificationContext";
-import NotificationCenter from "./components/NotificationCenter";
+import Login from "@/features/auth/pages/Login";
+import Register from "@/features/auth/pages/Register";
+import ForgotPassword from "@/features/auth/pages/ForgotPassword";
+import CoachDashboard from "@/features/coach/pages/CoachDashboard";
+import ClientDashboard from "@/features/client/pages/ClientDashboard";
+import CoachClientList from "@/features/coach/pages/CoachClientList";
+import RoutineExercisesEdit from "@/features/routines/pages/RoutineExercisesEdit";
+import CoopSessionLobby from "@/features/workout/pages/CoopSessionLobby";
+import ClientMyCoach from "@/features/client/pages/ClientMyCoach";
+import WorkoutRoom from "@/features/workout/pages/WorkoutRoom";
+import SoloWorkoutSession from "@/features/workout/pages/SoloWorkoutSession";
+import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
+import { useAuth } from "@/features/auth/context/AuthContext";
+import { useNotification } from "@/features/notifications/context/NotificationContext";
+import NotificationCenter from "@/features/notifications/components/NotificationCenter";
 
-import { socket } from "./services/socket";
-import { chatService } from "./services/chatService";
-import type { P2PMessage } from "./services/chatService";
+import { socket } from "@/features/workout/services/socket";
+import { chatService } from "@/features/chat/services/chatService";
+import type { P2PMessage } from "@/features/chat/services/chatService";
 
 // Ruta raíz inteligente: redirige según rol o a /login
 const RootRedirect = () => {
@@ -131,14 +128,13 @@ const AppContent = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/session/:code" element={<Session />} />
 
           {/* Rutas protegidas para COACH */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute requiredRole="COACH">
-                <Dashboard />
+                <CoachDashboard />
               </ProtectedRoute>
             }
           />
@@ -146,15 +142,7 @@ const AppContent = () => {
             path="/clients"
             element={
               <ProtectedRoute requiredRole="COACH">
-                <Clients />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/home"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <Home />
+                <CoachClientList />
               </ProtectedRoute>
             }
           />
@@ -162,7 +150,7 @@ const AppContent = () => {
             path="/routine/:id/edit"
             element={
               <ProtectedRoute requiredRole="COACH">
-                <ExercisesEdit />
+                <RoutineExercisesEdit />
               </ProtectedRoute>
             }
           />
@@ -172,7 +160,7 @@ const AppContent = () => {
             path="/client-home"
             element={
               <ProtectedRoute requiredRole="CLIENT">
-                <ClientHome />
+                <ClientDashboard />
               </ProtectedRoute>
             }
           />
@@ -180,7 +168,7 @@ const AppContent = () => {
             path="/clients/invitations"
             element={
               <ProtectedRoute requiredRole="CLIENT">
-                <CoachClientInvitation />
+                <ClientMyCoach />
               </ProtectedRoute>
             }
           />
@@ -188,7 +176,7 @@ const AppContent = () => {
             path="/friend-session"
             element={
               <ProtectedRoute requiredRole="CLIENT">
-                <FriendSession />
+                <CoopSessionLobby />
               </ProtectedRoute>
             }
           />
@@ -196,18 +184,11 @@ const AppContent = () => {
             path="/room/:roomId"
             element={
               <ProtectedRoute requiredRole="CLIENT">
-                <VirtualGymRoom />
+                <WorkoutRoom />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/programs"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <Programs />
-              </ProtectedRoute>
-            }
-          />
+          {/* /programs removed — unused placeholder page deleted */}
 
           {/* Ruta de debug WebSocket */}
           <Route
@@ -231,7 +212,7 @@ const AppContent = () => {
             path="/workout/:id"
             element={
               <ProtectedRoute>
-                <SoloGymSession />
+                <SoloWorkoutSession />
               </ProtectedRoute>
             }
           />
