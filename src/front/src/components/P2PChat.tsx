@@ -227,15 +227,9 @@ const P2PChat: React.FC<P2PChatProps> = ({
         } finally {
             setSending(false);
         }
-      } catch (e) {
-        console.error("[WebRTC] Error adding ICE candidate", e);
-      }
-    });
-
-    pc.ondatachannel = (event) => {
-      console.log("[WebRTC] DataChannel received");
-      setupDataChannel(event.channel);
     };
+    
+
 
     return (
         <div className="flex flex-col h-[400px] w-full bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] overflow-hidden">
@@ -322,39 +316,11 @@ const P2PChat: React.FC<P2PChatProps> = ({
                     </button>
                 </div>
                 {status !== "connected" && socketStatus === "connected" && (
-                    <p className="text-xs text-orange-400 mt-2">📡 Usando fallback a servidor (P2P no disponible)</p>
+                    <p className="text-xs text-orange-400 mt-2">
+                        📡 Usando fallback a servidor (P2P no disponible)
+                    </p>
                 )}
             </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div className="p-3 border-t border-[#2a2a2a] bg-[#1a1a1a]">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="Type a message..."
-            className="flex-1 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-sm text-white focus:border-orange-500 focus:outline-none disabled:opacity-50"
-          />
-          <button
-            onClick={sendMessage}
-            disabled={!inputText.trim() || sending}
-            className="bg-orange-500 hover:bg-orange-600 disabled:bg-orange-900 text-white p-2 rounded-lg transition-colors"
-          >
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-        {status !== "connected" && socketStatus === "connected" && (
-          <p className="text-xs text-orange-400 mt-2">
-            📡 Usando fallback a servidor (P2P no disponible)
-          </p>
-        )}
-      </div>
     </div>
   );
 };
