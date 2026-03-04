@@ -17,7 +17,7 @@ import { UpdateRoutineDto } from './dto/update-routine.dto';
 
 @Controller('routines')
 export class RoutinesController {
-  constructor(private routinesService: RoutinesService) { }
+  constructor(private routinesService: RoutinesService) {}
 
   // ⚠️ IMPORTANTE: Las rutas estáticas SIEMPRE antes que las dinámicas (:id)
   // Si 'global' estuviera DESPUÉS de ':id', NestJS lo trataría como un ID.
@@ -29,8 +29,8 @@ export class RoutinesController {
 
   @Get('clients-options')
   @UseGuards(CoachGuard)
-  async getClientsOptions() {
-    return this.routinesService.getClientsOptions();
+  async getClientsOptions(@Request() req: any) {
+    return this.routinesService.getClientsOptions(req.user.userId);
   }
 
   // Endpoint para CLIENTES: devuelve las rutinas asignadas al usuario autenticado
@@ -59,12 +59,12 @@ export class RoutinesController {
   @UseGuards(CoachGuard)
   async create(@Request() req: any, @Body() body: CreateRoutineDto) {
     const coachId = req.user.userId;
-    const { name, exercises, clientId } = body;
+    const { name, exercises, clientIds } = body;
     return this.routinesService.createRoutine(
       coachId,
       name,
       exercises || [],
-      clientId || undefined,
+      clientIds && clientIds.length > 0 ? clientIds : undefined,
     );
   }
 
@@ -76,13 +76,13 @@ export class RoutinesController {
     @Body() body: UpdateRoutineDto,
   ) {
     const coachId = req.user.userId;
-    const { name, exercises, clientId } = body;
+    const { name, exercises, clientIds } = body;
     return this.routinesService.updateRoutine(
       Number(id),
       coachId,
       name,
       exercises,
-      clientId || undefined,
+      clientIds,
     );
   }
 

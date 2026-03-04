@@ -1,4 +1,8 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateClientDto } from './dto/update-client.dto';
 
@@ -78,6 +82,43 @@ export class ClientsService {
       }
       throw error;
     }
+  }
+
+  async getMyCoach(clientId: number) {
+    const client = await this.prisma.user.findUnique({
+      where: { id: clientId },
+      select: {
+        id: true,
+        username: true,
+        coachId: true,
+        coach: {
+          select: {
+            id: true,
+            username: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!client) {
+      throw new NotFoundException('Client not found');
+    }
+
+    // Verificar que el coach referenciado tenga efectivamente role COACH
+    if (client.coachId !== null && client.coach?.role !== 'COACH') {
+      return {
+        hasCoach: false,
+        coachId: null,
+        coach: null,
+      };
+    }
+
+    return {
+      hasCoach: client.coachId !== null,
+      coachId: client.coachId ?? null,
+      coach: client.coach ?? null,
+    };
   }
 
   async updateClient(

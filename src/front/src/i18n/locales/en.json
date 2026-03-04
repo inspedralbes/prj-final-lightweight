@@ -86,6 +86,7 @@
     "clearAll": "Clear",
     "noRoutines": "No routines yet",
     "noRoutinesHint": "Get started by creating your first training routine.",
+    "assignedTo": "Assigned to",
     "addExercise": "Add Exercise",
     "exerciseName": "Exercise Name",
     "exerciseNamePlaceholder": "e.g. Bench Press",
@@ -153,7 +154,7 @@
   },
   "invitations": {
     "mainTitle": "Invitations",
-    "mainSubtitle": "Manage your invitation codes and connect with coaches",
+    "mainSubtitle": "Manage your invitation codes and connect with friends",
     "generateTitle": "Invite a friend",
     "generateSubtitle": "Share your invitation code with a friend",
     "generateButton": "Generate code",
@@ -166,14 +167,14 @@
     "codeCopied": "Code copied to clipboard",
     "copyFailed": "Failed to copy code",
     "redeemTitle": "Have a code?",
-    "redeemSubtitle": "Enter the code you received from your coach",
+    "redeemSubtitle": "Enter the code you received from your friend",
     "codeInput": "Invitation Code",
     "codePlaceholder": "Enter the code here...",
     "redeemButton": "Join",
-    "redeemInfo": "Paste the code you received and connect with your coach",
-    "codeAccepted": "Successfully connected to your coach!",
+    "redeemInfo": "Paste the code you received and connect with your friend",
+    "codeAccepted": "Successfully connected to your friend!",
     "enterCode": "Please enter a code",
-    "footerInfo": "Your invitation codes help you stay connected with your fitness community. Share them securely with trusted friends and coaches."
+    "footerInfo": "Your invitation codes help you stay connected with your fitness community. Share them securely with trusted friends."
   },
   "virtualGym": {
     "title": "Virtual Gym - Live Session",
