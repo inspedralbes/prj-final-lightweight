@@ -86,4 +86,34 @@ export const clientsService = {
       throw error;
     }
   },
+
+  /** COACH elimina la asociación con un cliente concreto */
+  async unlinkClient(clientId: number): Promise<void> {
+    try {
+      await axios.delete(`${API_BASE_URL}/clients/${clientId}/unlink`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || "Failed to unlink client";
+      throw new Error(message);
+    }
+  },
+
+  /** CLIENTE elimina su propia asociación con el coach */
+  async unlinkFromCoach(): Promise<void> {
+    try {
+      await axios.delete(`${API_BASE_URL}/clients/me/unlink`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || "Failed to unlink from coach";
+      throw new Error(message);
+    }
+  },
 };

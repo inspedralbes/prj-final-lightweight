@@ -2,6 +2,7 @@ import {
   Injectable,
   ForbiddenException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -168,5 +169,45 @@ export class ClientsService {
       }
       throw error;
     }
+  }
+
+  // COACH elimina la asociación con un cliente concreto (pone coachId = null)
+  async unlinkClient(coachId: number, clientId: number): Promise<void> {
+    const client = await this.prisma.user.findUnique({
+      where: { id: clientId },
+    });
+
+    if (!client) {
+      throw new NotFoundException('Client not found');
+    }
+
+    if (client.coachId !== coachId) {
+      throw new ForbiddenException('This client is not associated with you');
+    }
+
+    await this.prisma.user.update({
+      where: { id: clientId },
+      data: { coachId: null },
+    });
+  }
+
+  // CLIENTE elimina su propia asociación con el coach (pone coachId = null)
+  async unlinkFromCoach(clientId: number): Promise<void> {
+    const client = await this.prisma.user.findUnique({
+      where: { id: clientId },
+    });
+
+    if (!client) {
+      throw new NotFoundException('Client not found');
+    }
+
+    if (client.coachId === null) {
+      throw new BadRequestException('You are not linked to any coach');
+    }
+
+    await this.prisma.user.update({
+      where: { id: clientId },
+      data: { coachId: null },
+    });
   }
 }

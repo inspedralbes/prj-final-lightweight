@@ -9,7 +9,8 @@ import ClientHome from "./pages/ClientHome";
 import Clients from "./pages/Clients";
 import Session from "./pages/Session";
 import ExercisesEdit from "./pages/ExercisesEdit";
-import ClientInvitations from "./pages/ClientInvitations";
+import FriendSession from "./pages/FriendSession";
+import CoachClientInvitation from "./pages/CoachClientInvitation";
 import Programs from "./pages/Programs";
 import VirtualGymRoom from "./pages/VirtualGymRoom";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -168,7 +169,15 @@ const AppContent = () => {
             path="/clients/invitations"
             element={
               <ProtectedRoute requiredRole="CLIENT">
-                <ClientInvitations />
+                <CoachClientInvitation />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/friend-session"
+            element={
+              <ProtectedRoute requiredRole="CLIENT">
+                <FriendSession />
               </ProtectedRoute>
             }
           />

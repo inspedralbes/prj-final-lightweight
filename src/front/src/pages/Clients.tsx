@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { clientsService, type Client } from "../services/clientsService";
+import { invitationsService } from "../services/invitationsService";
 import { useTranslation } from "react-i18next";
 import { useToast } from "../hooks/useToast";
 import { Mail, Edit, X, MessageCircle } from "../components/Icons";
+import { UserX, UserPlus, Copy, Check, Loader } from "lucide-react";
 import P2PChat from "../components/P2PChat";
+import { ConfirmModal } from "../components/ConfirmModal";
 
 const Clients = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -15,6 +18,14 @@ const Clients = () => {
   const [editingNotes, setEditingNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  // Confirm unlink
+  const [confirmUnlinkClient, setConfirmUnlinkClient] = useState<Client | null>(null);
+  const [unlinking, setUnlinking] = useState(false);
+  // Invite modal
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [loadingCode, setLoadingCode] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const { t } = useTranslation();
   const toast = useToast();
@@ -39,15 +50,15 @@ const Clients = () => {
     const handleOpenChat = (event: Event) => {
       const customEvent = event as CustomEvent;
       const roomId = customEvent.detail?.roomId;
-      if (roomId && roomId.startsWith('chat_client_')) {
+      if (roomId && roomId.startsWith("chat_client_")) {
         setIsChatOpen(true);
       }
     };
 
-    window.addEventListener('openChat', handleOpenChat);
+    window.addEventListener("openChat", handleOpenChat);
 
     return () => {
-      window.removeEventListener('openChat', handleOpenChat);
+      window.removeEventListener("openChat", handleOpenChat);
     };
   }, []);
 
@@ -72,12 +83,12 @@ const Clients = () => {
         prev.map((c) =>
           c.id === selectedClient.id
             ? {
-              ...c,
-              clientProfile: {
-                ...c.clientProfile,
-                privateNotes: editingNotes,
-              },
-            }
+                ...c,
+                clientProfile: {
+                  ...c.clientProfile,
+                  privateNotes: editingNotes,
+                },
+              }
             : c,
         ),
       );
@@ -97,6 +108,53 @@ const Clients = () => {
     setSelectedClient(null);
   };
 
+  const handleUnlinkClient = async () => {
+    if (!confirmUnlinkClient) return;
+    setUnlinking(true);
+    try {
+      await clientsService.unlinkClient(confirmUnlinkClient.id);
+      toast.success(t("clients.unlinkSuccess") || "Client unlinked successfully");
+      setClients((prev) => prev.filter((c) => c.id !== confirmUnlinkClient.id));
+      setConfirmUnlinkClient(null);
+      if (isModalOpen) handleCloseModal();
+    } catch {
+      toast.error(t("messages.errorOccurred"));
+    } finally {
+      setUnlinking(false);
+    }
+  };
+
+  const handleGenerateInviteCode = async () => {
+    setLoadingCode(true);
+    try {
+      const response = await invitationsService.generateCode();
+      setGeneratedCode(response.code);
+      toast.success(t("coachInvite.codeGenerated") || "Invitation code generated");
+    } catch {
+      toast.error(t("messages.errorOccurred"));
+    } finally {
+      setLoadingCode(false);
+    }
+  };
+
+  const handleCopyCode = async () => {
+    if (!generatedCode) return;
+    try {
+      await navigator.clipboard.writeText(generatedCode);
+      setCopied(true);
+      toast.success(t("coachInvite.codeCopied") || "Code copied");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error(t("coachInvite.copyFailed") || "Failed to copy");
+    }
+  };
+
+  const handleCloseInviteModal = () => {
+    setIsInviteModalOpen(false);
+    setGeneratedCode(null);
+    setCopied(false);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
@@ -113,6 +171,13 @@ const Clients = () => {
             </h1>
             <p className="text-gray-500">{t("home.welcome")}</p>
           </div>
+          <button
+            onClick={() => setIsInviteModalOpen(true)}
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            {t("coachInvite.generateButton") || "Invite client"}
+          </button>
         </div>
 
         {/* Content */}
@@ -160,10 +225,11 @@ const Clients = () => {
                 <div className="mb-4">
                   <p className="text-sm text-gray-400">
                     <span
-                      className={`inline-block px-2 py-1 rounded text-xs font-medium ${client.clientProfile?.personalDataShared
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-gray-500/20 text-gray-400"
-                        }`}
+                      className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                        client.clientProfile?.personalDataShared
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-gray-500/20 text-gray-400"
+                      }`}
                     >
                       {client.clientProfile?.personalDataShared
                         ? t("clients.personalData")
@@ -202,6 +268,13 @@ const Clients = () => {
                     title="Real-time Chat"
                   >
                     <MessageCircle className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setConfirmUnlinkClient(client)}
+                    className="bg-[#2a2a2a] hover:bg-red-900/40 text-red-400 p-2 rounded-lg transition-colors border border-[#3a3a3a]"
+                    title={t("clients.unlinkClient") || "Unlink client"}
+                  >
+                    <UserX className="w-5 h-5" />
                   </button>
                 </div>
               </div>
@@ -288,6 +361,13 @@ const Clients = () => {
               >
                 {savingNotes ? t("common.loading") : t("clients.saveNotes")}
               </button>
+              <button
+                onClick={() => selectedClient && setConfirmUnlinkClient(selectedClient)}
+                className="px-4 py-2 rounded-lg border border-red-800 text-red-400 hover:bg-red-900/30 transition-colors font-medium flex items-center gap-2"
+              >
+                <UserX className="w-4 h-4" />
+                {t("clients.unlinkClient") || "Unlink"}
+              </button>
             </div>
           </div>
         </div>
@@ -302,6 +382,112 @@ const Clients = () => {
             isInitiator={true}
             otherUserId={selectedClient.id}
           />
+        </div>
+      )}
+
+      {/* Confirm Unlink Modal */}
+      {confirmUnlinkClient && (
+        <ConfirmModal
+          title={t("clients.unlinkClient") || "Unlink client"}
+          message={`${t("clients.unlinkConfirmMessage") || "Are you sure you want to remove the association with"} ${confirmUnlinkClient.username}?`}
+          confirmLabel={t("clients.confirmUnlink") || "Yes, unlink"}
+          cancelLabel={t("clients.cancel") || "Cancel"}
+          loading={unlinking}
+          variant="danger"
+          onConfirm={handleUnlinkClient}
+          onCancel={() => setConfirmUnlinkClient(null)}
+        />
+      )}
+
+      {/* Invite Client Modal */}
+      {isInviteModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-[#2a2a2a]">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-500/10 rounded-lg">
+                  <UserPlus className="w-5 h-5 text-orange-500" />
+                </div>
+                <h2 className="text-lg font-bold text-white">
+                  {t("coachInvite.mainTitle") || "Invite a Client"}
+                </h2>
+              </div>
+              <button
+                onClick={handleCloseInviteModal}
+                className="text-gray-500 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-400">
+                {t("coachInvite.generateSubtitle") ||
+                  "Your client will use this code to link their account to yours"}
+              </p>
+
+              {generatedCode ? (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider">
+                    {t("coachInvite.yourCode") || "Invitation code"}
+                  </p>
+                  <div className="bg-zinc-950 border border-zinc-700 rounded-lg p-4 font-mono text-sm text-white break-all select-all hover:border-orange-500/50 transition-colors">
+                    {generatedCode}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleCopyCode}
+                      className="flex-1 py-2 px-3 bg-zinc-700 hover:bg-zinc-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-4 h-4 text-green-400" />
+                          {t("coachInvite.copied") || "Copied!"}
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          {t("coachInvite.copyButton") || "Copy code"}
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => { setGeneratedCode(null); setCopied(false); }}
+                      className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-gray-300 rounded-lg text-sm transition-colors"
+                    >
+                      {t("coachInvite.generateAnother") || "New code"}
+                    </button>
+                  </div>
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                    <p className="text-xs text-green-300">
+                      {t("coachInvite.infoBox") ||
+                        "Share this code with your client. Each code can only be used once."}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={handleGenerateInviteCode}
+                  disabled={loadingCode}
+                  className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {loadingCode ? (
+                    <>
+                      <Loader className="w-4 h-4 animate-spin" />
+                      {t("common.generating") || "Generating..."}
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      {t("coachInvite.generateButton") || "Generate invitation code"}
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </Layout>

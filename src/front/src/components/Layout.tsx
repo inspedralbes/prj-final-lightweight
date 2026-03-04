@@ -8,9 +8,8 @@ import {
   FileText,
   Menu,
   X,
-  User,
 } from "./Icons";
-import { Ticket } from "lucide-react";
+import { Ticket, Link2 } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
@@ -67,6 +66,11 @@ const Layout = ({ children }: LayoutProps) => {
     {
       path: "/clients/invitations",
       label: t("sidebar.invitations") || "Invitations",
+      icon: Link2,
+    },
+    {
+      path: "/friend-session",
+      label: t("sidebar.friendSession") || "Friend Session",
       icon: Ticket,
     },
   ];
