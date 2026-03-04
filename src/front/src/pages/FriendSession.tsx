@@ -83,7 +83,7 @@ export default function FriendSession() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-black p-4 md:p-8">
+      <div className="min-h-screen bg-gradient-to-b p-4 md:p-8">
         {/* Header */}
         <div className="mb-12 flex items-center gap-4">
           <div className="p-3 bg-orange-500/10 rounded-lg">

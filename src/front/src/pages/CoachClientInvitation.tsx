@@ -1,21 +1,29 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader, Link2, CheckCircle, UserX } from "lucide-react";
+import { Loader, CheckCircle, UserX, Bell, UserCheck } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "../hooks/useToast";
 import { useAuth } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
 import Layout from "../components/Layout";
 import { invitationsService } from "../services/invitationsService";
 import { clientsService, type MyCoachInfo } from "../services/clientsService";
+
+interface PendingInvite {
+  id: number;
+  code: string;
+  coachName: string;
+  coachId: number;
+}
 
 export default function CoachClientInvitation() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const toast = useToast();
   const { updateCoachId } = useAuth();
+  const { notifications, removeNotification } = useNotification();
 
-  const [inputCode, setInputCode] = useState("");
-  const [loadingAccept, setLoadingAccept] = useState(false);
   const [linked, setLinked] = useState(false);
 
   // Estado del coach actual
@@ -24,13 +32,42 @@ export default function CoachClientInvitation() {
   const [loadingUnlink, setLoadingUnlink] = useState(false);
   const [confirmUnlink, setConfirmUnlink] = useState(false);
 
+  // Invitaciones pendientes
+  const [pending, setPending] = useState<PendingInvite[]>([]);
+  const [loadingPending, setLoadingPending] = useState(false);
+  const [acceptingId, setAcceptingId] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+
   useEffect(() => {
     clientsService
       .getMe()
-      .then((info) => setCoachInfo(info))
-      .catch(() => setCoachInfo(null))
+      .then((info) => {
+        setCoachInfo(info);
+        if (!info?.hasCoach) loadPending();
+      })
+      .catch(() => {
+        setCoachInfo(null);
+        loadPending();
+      })
       .finally(() => setLoadingCoachInfo(false));
   }, []);
+
+  // Recargar pendientes cuando se acepta un evento externo (desde NotificationCenter)
+  useEffect(() => {
+    const handler = () => loadPending();
+    window.addEventListener("coach-invitation-accepted", handler);
+    return () =>
+      window.removeEventListener("coach-invitation-accepted", handler);
+  }, []);
+
+  const loadPending = () => {
+    setLoadingPending(true);
+    invitationsService
+      .getPendingForMe()
+      .then(setPending)
+      .catch(() => setPending([]))
+      .finally(() => setLoadingPending(false));
+  };
 
   const handleUnlinkFromCoach = async () => {
     setLoadingUnlink(true);
@@ -42,6 +79,7 @@ export default function CoachClientInvitation() {
       toast.success(
         t("invitations.unlinkSuccess") || "Coach association removed",
       );
+      loadPending();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to unlink from coach";
@@ -51,51 +89,52 @@ export default function CoachClientInvitation() {
     }
   };
 
-  const handleAcceptCode = async () => {
-    if (!inputCode.trim()) {
-      toast.error(t("invitations.enterCode") || "Please enter a code");
-      return;
-    }
-
-    setLoadingAccept(true);
+  const handleAcceptInvite = async (inv: PendingInvite) => {
+    setAcceptingId(inv.id);
     try {
-      const response = await invitationsService.acceptInvitationCode(
-        inputCode.trim(),
-      );
-
-      // Actualizar el coachId en el contexto de autenticación
-      if (response.coachId) {
-        updateCoachId(response.coachId);
-      }
-
+      const response = await invitationsService.acceptInvitationCode(inv.code);
+      if (response.coachId) updateCoachId(response.coachId);
+      // Limpiar todas las notificaciones de invitacion del campana
+      notifications
+        .filter((n) => n.type === "invite")
+        .forEach((n) => removeNotification(n.id));
       setLinked(true);
-      setInputCode("");
-      toast.success(
-        t("invitations.codeAccepted") || "Successfully linked to your coach!",
-      );
-
-      // Redirigir al client-home después de 2 segundos
-      setTimeout(() => {
-        navigate("/client-home");
-      }, 2000);
+      setPending([]);
+      // Notificar a Layout para que refresque el badge de invitaciones
+      window.dispatchEvent(new Event("coach-invitation-accepted"));
+      setTimeout(() => navigate("/client-home"), 2000);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to accept invitation code";
+        error instanceof Error ? error.message : "Failed to accept invitation";
       toast.error(message);
     } finally {
-      setLoadingAccept(false);
+      setAcceptingId(null);
+    }
+  };
+
+  const handleRejectInvite = async (id: number) => {
+    setRejectingId(id);
+    try {
+      await invitationsService.rejectInvitation(id);
+      setPending((prev) => prev.filter((i) => i.id !== id));
+      // Notificar a Layout para que refresque el badge
+      window.dispatchEvent(new Event("coach-invitation-accepted"));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to reject invitation";
+      toast.error(message);
+    } finally {
+      setRejectingId(null);
     }
   };
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-black p-4 md:p-8">
+      <div className="min-h-screen bg-gradient-to-b p-4 md:p-8">
         {/* Header */}
         <div className="mb-12 flex items-center gap-4">
           <div className="p-3 bg-orange-500/10 rounded-lg">
-            <Link2 className="w-6 h-6 text-orange-500" />
+            <UserCheck className="w-6 h-6 text-orange-500" />
           </div>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white">
@@ -103,7 +142,7 @@ export default function CoachClientInvitation() {
             </h1>
             <p className="text-gray-400 mt-1">
               {t("invitations.mainSubtitle") ||
-                "Link your account to a coach using an invitation code"}
+                "Review and respond to coach invitations"}
             </p>
           </div>
         </div>
@@ -195,79 +234,80 @@ export default function CoachClientInvitation() {
               </div>
             </div>
           ) : (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 hover:border-orange-500/30 transition-colors">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-white mb-2">
-                  {t("invitations.redeemTitle") || "Enter your invitation code"}
-                </h2>
-                <p className="text-sm text-gray-400">
-                  {t("invitations.redeemSubtitle") ||
-                    "Ask your coach for their invitation code and enter it below to link your account"}
-                </p>
-              </div>
-
-              {/* Input para código */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    {t("invitations.codeInput") || "Invitation Code"}
-                  </label>
-                  <input
-                    type="text"
-                    value={inputCode}
-                    onChange={(e) => setInputCode(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter" && !loadingAccept) {
-                        handleAcceptCode();
-                      }
-                    }}
-                    placeholder={
-                      t("invitations.codePlaceholder") ||
-                      "Paste the code here..."
-                    }
-                    className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/50 transition-all font-mono"
-                  />
+            /* Sin coach → lista de invitaciones pendientes */
+            <div className="space-y-4">
+              {loadingPending ? (
+                <div className="flex justify-center py-16">
+                  <Loader className="w-8 h-8 animate-spin text-orange-500" />
                 </div>
-
-                {/* Botón Vincular */}
-                <button
-                  onClick={handleAcceptCode}
-                  disabled={loadingAccept || !inputCode.trim()}
-                  className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  {loadingAccept ? (
-                    <>
-                      <Loader className="w-5 h-5 animate-spin" />
-                      {t("common.checking") || "Verifying..."}
-                    </>
-                  ) : (
-                    <>
-                      <Link2 className="w-5 h-5" />
-                      {t("invitations.redeemButton") || "Link to coach"}
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Info box */}
-              <div className="mt-6 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                <p className="text-sm text-blue-200">
-                  {t("invitations.redeemInfo") ||
-                    "Your coach will provide you with a unique invitation code. Once linked, they will be able to assign you routines and track your progress."}
-                </p>
-              </div>
+              ) : pending.length > 0 ? (
+                <>
+                  <p className="text-sm text-gray-400 mb-2">
+                    {t("invitations.pendingSubtitle") ||
+                      "You have pending invitations from coaches waiting for your response."}
+                  </p>
+                  {pending.map((inv) => (
+                    <div
+                      key={inv.id}
+                      className="bg-zinc-900 border border-orange-500/30 rounded-lg p-6 flex items-center gap-4"
+                    >
+                      <div className="p-3 bg-orange-500/10 rounded-lg flex-shrink-0">
+                        <UserCheck className="w-6 h-6 text-orange-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-semibold">
+                          {inv.coachName}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {t("invitations.wantsToCoachYou") ||
+                            "wants to be your coach"}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleAcceptInvite(inv)}
+                          disabled={acceptingId === inv.id}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors text-sm"
+                        >
+                          {acceptingId === inv.id ? (
+                            <Loader className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Check className="w-4 h-4" />
+                          )}
+                          {t("invitations.acceptButton") || "Accept"}
+                        </button>
+                        <button
+                          onClick={() => handleRejectInvite(inv.id)}
+                          disabled={
+                            rejectingId === inv.id || acceptingId === inv.id
+                          }
+                          className="flex items-center gap-1.5 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 disabled:opacity-50 text-gray-300 font-semibold rounded-lg transition-colors text-sm"
+                        >
+                          <X className="w-4 h-4" />
+                          {t("invitations.rejectButton") || "Decline"}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                /* Sin invitaciones pendientes */
+                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-12 text-center">
+                  <div className="p-4 bg-zinc-800 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+                    <Bell className="w-8 h-8 text-gray-500" />
+                  </div>
+                  <h2 className="text-xl font-bold text-white mb-2">
+                    {t("invitations.noPendingTitle") ||
+                      "No pending invitations"}
+                  </h2>
+                  <p className="text-sm text-gray-400 max-w-sm mx-auto">
+                    {t("invitations.noPendingSubtitle") ||
+                      "When a coach invites you, their invitation will appear here so you can accept or decline it."}
+                  </p>
+                </div>
+              )}
             </div>
           )}
-
-          {/* Footer Info */}
-          <div className="mt-8">
-            <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-6 text-center">
-              <p className="text-sm text-gray-400">
-                {t("invitations.footerInfo") ||
-                  "Invitation codes are single-use and link your account exclusively to one coach."}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </Layout>

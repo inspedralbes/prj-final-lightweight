@@ -116,4 +116,26 @@ export const clientsService = {
       throw new Error(message);
     }
   },
+
+  /** COACH invita a un cliente por username o email (envía notificación en tiempo real) */
+  async inviteByUser(
+    usernameOrEmail: string,
+  ): Promise<{ invitationCode: string }> {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/clients/invite-by-user`,
+        { usernameOrEmail },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || "Failed to send invitation";
+      throw new Error(message);
+    }
+  },
 };

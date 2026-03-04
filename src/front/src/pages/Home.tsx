@@ -1,10 +1,14 @@
 import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
 
 export default function Home() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { logout } = useAuth();
+  const { clearAll } = useNotification();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -14,7 +18,8 @@ export default function Home() {
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    clearAll();
+    logout();
     navigate("/login");
   };
 

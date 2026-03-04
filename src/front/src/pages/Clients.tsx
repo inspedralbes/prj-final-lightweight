@@ -2,11 +2,10 @@ import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { clientsService, type Client } from "../services/clientsService";
-import { invitationsService } from "../services/invitationsService";
 import { useTranslation } from "react-i18next";
 import { useToast } from "../hooks/useToast";
 import { Mail, Edit, X, MessageCircle } from "../components/Icons";
-import { UserX, UserPlus, Copy, Check, Loader } from "lucide-react";
+import { UserX, UserPlus, Loader, Check } from "lucide-react";
 import P2PChat from "../components/P2PChat";
 import { ConfirmModal } from "../components/ConfirmModal";
 
@@ -25,9 +24,9 @@ const Clients = () => {
   const [unlinking, setUnlinking] = useState(false);
   // Invite modal
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
-  const [loadingCode, setLoadingCode] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [inviteUsername, setInviteUsername] = useState("");
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [inviteSentTo, setInviteSentTo] = useState<string | null>(null);
 
   const { t } = useTranslation();
   const toast = useToast();
@@ -128,37 +127,25 @@ const Clients = () => {
     }
   };
 
-  const handleGenerateInviteCode = async () => {
-    setLoadingCode(true);
+  const handleSendInvite = async () => {
+    if (!inviteUsername.trim()) return;
+    setSendingInvite(true);
     try {
-      const response = await invitationsService.generateCode();
-      setGeneratedCode(response.code);
-      toast.success(
-        t("coachInvite.codeGenerated") || "Invitation code generated",
-      );
-    } catch {
-      toast.error(t("messages.errorOccurred"));
+      await clientsService.inviteByUser(inviteUsername.trim());
+      setInviteSentTo(inviteUsername.trim());
+      setInviteUsername("");
+    } catch (err: any) {
+      const msg = err?.message || t("messages.errorOccurred");
+      toast.error(msg);
     } finally {
-      setLoadingCode(false);
-    }
-  };
-
-  const handleCopyCode = async () => {
-    if (!generatedCode) return;
-    try {
-      await navigator.clipboard.writeText(generatedCode);
-      setCopied(true);
-      toast.success(t("coachInvite.codeCopied") || "Code copied");
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error(t("coachInvite.copyFailed") || "Failed to copy");
+      setSendingInvite(false);
     }
   };
 
   const handleCloseInviteModal = () => {
     setIsInviteModalOpen(false);
-    setGeneratedCode(null);
-    setCopied(false);
+    setInviteUsername("");
+    setInviteSentTo(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -182,7 +169,7 @@ const Clients = () => {
             className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
           >
             <UserPlus className="w-4 h-4" />
-            {t("coachInvite.generateButton") || "Invite client"}
+            {t("coachInvite.inviteButton") || "Invite client"}
           </button>
         </div>
 
@@ -431,72 +418,73 @@ const Clients = () => {
 
             {/* Body */}
             <div className="p-6 space-y-4">
-              <p className="text-sm text-gray-400">
-                {t("coachInvite.generateSubtitle") ||
-                  "Your client will use this code to link their account to yours"}
-              </p>
-
-              {generatedCode ? (
-                <div className="space-y-3">
-                  <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider">
-                    {t("coachInvite.yourCode") || "Invitation code"}
-                  </p>
-                  <div className="bg-zinc-950 border border-zinc-700 rounded-lg p-4 font-mono text-sm text-white break-all select-all hover:border-orange-500/50 transition-colors">
-                    {generatedCode}
+              {inviteSentTo ? (
+                /* Success state */
+                <div className="space-y-4 text-center">
+                  <div className="flex justify-center">
+                    <div className="p-3 bg-green-500/20 rounded-full">
+                      <Check className="w-8 h-8 text-green-400" />
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleCopyCode}
-                      className="flex-1 py-2 px-3 bg-zinc-700 hover:bg-zinc-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="w-4 h-4 text-green-400" />
-                          {t("coachInvite.copied") || "Copied!"}
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4" />
-                          {t("coachInvite.copyButton") || "Copy code"}
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setGeneratedCode(null);
-                        setCopied(false);
-                      }}
-                      className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-gray-300 rounded-lg text-sm transition-colors"
-                    >
-                      {t("coachInvite.generateAnother") || "New code"}
-                    </button>
-                  </div>
-                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-                    <p className="text-xs text-green-300">
-                      {t("coachInvite.infoBox") ||
-                        "Share this code with your client. Each code can only be used once."}
+                  <div>
+                    <p className="text-white font-semibold mb-1">
+                      {t("coachInvite.inviteSent") || "Invitation sent!"}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {t("coachInvite.inviteSentDescription", {
+                        username: inviteSentTo,
+                      }) ||
+                        `If ${inviteSentTo} is online, they'll receive your invitation in real-time.`}
                     </p>
                   </div>
+                  <button
+                    onClick={() => setInviteSentTo(null)}
+                    className="text-sm text-orange-400 hover:text-orange-300 transition-colors"
+                  >
+                    {t("coachInvite.inviteAnother") || "Invite another client"}
+                  </button>
                 </div>
               ) : (
-                <button
-                  onClick={handleGenerateInviteCode}
-                  disabled={loadingCode}
-                  className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  {loadingCode ? (
-                    <>
-                      <Loader className="w-4 h-4 animate-spin" />
-                      {t("common.generating") || "Generating..."}
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4" />
-                      {t("coachInvite.generateButton") ||
-                        "Generate invitation code"}
-                    </>
-                  )}
-                </button>
+                /* Input form */
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-400">
+                    {t("coachInvite.inviteByUserSubtitle") ||
+                      "Enter the username or email of the client you want to invite."}
+                  </p>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                      {t("coachInvite.usernameOrEmail") || "Username or email"}
+                    </label>
+                    <input
+                      type="text"
+                      value={inviteUsername}
+                      onChange={(e) => setInviteUsername(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSendInvite()}
+                      placeholder={
+                        t("coachInvite.usernamePlaceholder") ||
+                        "e.g. john_doe or john@email.com"
+                      }
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSendInvite}
+                    disabled={sendingInvite || !inviteUsername.trim()}
+                    className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    {sendingInvite ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        {t("common.sending") || "Sending..."}
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        {t("coachInvite.sendInvite") || "Send invitation"}
+                      </>
+                    )}
+                  </button>
+                </div>
               )}
             </div>
           </div>

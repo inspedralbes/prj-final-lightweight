@@ -6,10 +6,16 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { InvitationsService } from '../invitations/invitations.service';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class ClientsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private invitationsService: InvitationsService,
+    private eventsGateway: EventsGateway,
+  ) {}
 
   async getClients(coachId: number) {
     try {
@@ -209,5 +215,71 @@ export class ClientsService {
       where: { id: clientId },
       data: { coachId: null },
     });
+  }
+
+  // COACH invita a un cliente por username o email con notificación en tiempo real
+  async inviteByUser(
+    coachId: number,
+    usernameOrEmail: string,
+  ): Promise<{ invitationCode: string }> {
+    // Buscar coach para obtener su nombre
+    const coach = await this.prisma.user.findUnique({
+      where: { id: coachId },
+      select: { id: true, username: true, role: true },
+    });
+    if (!coach || coach.role !== 'COACH') {
+      throw new ForbiddenException('You are not a coach');
+    }
+
+    // Buscar el cliente por username o email
+    const client = await this.prisma.user.findFirst({
+      where: {
+        OR: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+      },
+      select: { id: true, username: true, role: true, coachId: true },
+    });
+
+    if (!client) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (client.role !== 'CLIENT') {
+      throw new BadRequestException('The user is not a client');
+    }
+
+    if (client.coachId !== null) {
+      throw new BadRequestException('This client is already linked to a coach');
+    }
+
+    // Verificar que no exista ya una invitación PENDING de este coach a este cliente
+    const existingPending = await this.prisma.invitation.findFirst({
+      where: {
+        coachId,
+        targetClientId: client.id,
+        status: 'PENDING',
+      },
+    });
+    if (existingPending) {
+      throw new BadRequestException(
+        'You already have a pending invitation for this client',
+      );
+    }
+
+    // Crear la invitación con el targetClientId para poder recuperarla si el cliente no está conectado
+    const invitation = await this.invitationsService.create(
+      coachId,
+      {},
+      client.id,
+    );
+
+    // Emitir el evento de socket si el cliente está conectado
+    this.eventsGateway.emitCoachInvitation(client.id, {
+      coachId: coach.id,
+      coachName: coach.username,
+      invitationCode: invitation.code,
+      invitationId: invitation.id,
+    });
+
+    return { invitationCode: invitation.code };
   }
 }

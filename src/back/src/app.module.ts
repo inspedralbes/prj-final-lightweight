@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { EventsGateway } from './events/events.gateway'; // <--- 1. Importamos el archivo que acabas de crear
+import { EventsModule } from './events/events.module';
 import { EventsDebugController } from './events/events-debug.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -29,11 +29,9 @@ import { ChatModule } from './chat/chat.module';
     RoomModule,
     ClientsModule,
     ChatModule,
+    EventsModule,
   ],
   controllers: [AppController, EventsDebugController],
-  providers: [
-    AppService,
-    EventsGateway, // <--- 2. Lo registramos aquí para que NestJS lo encienda
-  ],
+  providers: [AppService],
 })
 export class AppModule {}

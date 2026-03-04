@@ -34,7 +34,7 @@ const RootRedirect = () => {
 // Componente wrapper que escucha las notificaciones del socket
 const AppContent = () => {
   const [isConnected, setIsConnected] = useState(socket.connected);
-  const { addNotification } = useNotification();
+  const { addNotification, clearAll } = useNotification();
   const { user } = useAuth();
 
   const handleNotificationChatClick = (roomId: string) => {
@@ -102,12 +102,22 @@ const AppContent = () => {
         });
     }
 
+    // Escuchar invitaciones de coach en tiempo real (solo para CLIENTs)
+    // Las invitaciones ahora se gestionan directamente en /clients/invitations
+
     return () => {
       socket.off("connect");
       socket.off("disconnect");
       socket.off("p2p-message-notification");
     };
   }, [addNotification, user]);
+
+  // Limpiar notificaciones al cerrar sesión
+  useEffect(() => {
+    if (!user) {
+      clearAll();
+    }
+  }, [user, clearAll]);
 
   return (
     <>

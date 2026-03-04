@@ -44,7 +44,7 @@ class InvitationsService {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.message || "Failed to generate invitation code"
+        errorData.message || "Failed to generate invitation code",
       );
     }
 
@@ -69,11 +69,42 @@ class InvitationsService {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
-        errorData.message || "Failed to accept invitation code"
-      );
+      throw new Error(errorData.message || "Failed to accept invitation code");
     }
 
+    return response.json();
+  }
+
+  /**
+   * Rechaza una invitación PENDING dirigida al cliente autenticado
+   */
+  async rejectInvitation(id: number): Promise<void> {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`${this.baseUrl}/${id}/reject`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to reject invitation");
+    }
+  }
+
+  /**
+   * Consulta las invitaciones PENDING dirigidas al cliente autenticado
+   * Permite mostrar notificaciones incluso si el cliente no estaba conectado al enviarlas
+   */
+  async getPendingForMe(): Promise<
+    { id: number; code: string; coachName: string; coachId: number }[]
+  > {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`${this.baseUrl}/pending-for-me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return [];
     return response.json();
   }
 }
