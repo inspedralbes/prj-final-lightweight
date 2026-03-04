@@ -19,7 +19,9 @@ const Clients = () => {
   const [savingNotes, setSavingNotes] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   // Confirm unlink
-  const [confirmUnlinkClient, setConfirmUnlinkClient] = useState<Client | null>(null);
+  const [confirmUnlinkClient, setConfirmUnlinkClient] = useState<Client | null>(
+    null,
+  );
   const [unlinking, setUnlinking] = useState(false);
   // Invite modal
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -113,7 +115,9 @@ const Clients = () => {
     setUnlinking(true);
     try {
       await clientsService.unlinkClient(confirmUnlinkClient.id);
-      toast.success(t("clients.unlinkSuccess") || "Client unlinked successfully");
+      toast.success(
+        t("clients.unlinkSuccess") || "Client unlinked successfully",
+      );
       setClients((prev) => prev.filter((c) => c.id !== confirmUnlinkClient.id));
       setConfirmUnlinkClient(null);
       if (isModalOpen) handleCloseModal();
@@ -129,7 +133,9 @@ const Clients = () => {
     try {
       const response = await invitationsService.generateCode();
       setGeneratedCode(response.code);
-      toast.success(t("coachInvite.codeGenerated") || "Invitation code generated");
+      toast.success(
+        t("coachInvite.codeGenerated") || "Invitation code generated",
+      );
     } catch {
       toast.error(t("messages.errorOccurred"));
     } finally {
@@ -362,7 +368,9 @@ const Clients = () => {
                 {savingNotes ? t("common.loading") : t("clients.saveNotes")}
               </button>
               <button
-                onClick={() => selectedClient && setConfirmUnlinkClient(selectedClient)}
+                onClick={() =>
+                  selectedClient && setConfirmUnlinkClient(selectedClient)
+                }
                 className="px-4 py-2 rounded-lg border border-red-800 text-red-400 hover:bg-red-900/30 transition-colors font-medium flex items-center gap-2"
               >
                 <UserX className="w-4 h-4" />
@@ -454,7 +462,10 @@ const Clients = () => {
                       )}
                     </button>
                     <button
-                      onClick={() => { setGeneratedCode(null); setCopied(false); }}
+                      onClick={() => {
+                        setGeneratedCode(null);
+                        setCopied(false);
+                      }}
                       className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-gray-300 rounded-lg text-sm transition-colors"
                     >
                       {t("coachInvite.generateAnother") || "New code"}
@@ -481,7 +492,8 @@ const Clients = () => {
                   ) : (
                     <>
                       <UserPlus className="w-4 h-4" />
-                      {t("coachInvite.generateButton") || "Generate invitation code"}
+                      {t("coachInvite.generateButton") ||
+                        "Generate invitation code"}
                     </>
                   )}
                 </button>
