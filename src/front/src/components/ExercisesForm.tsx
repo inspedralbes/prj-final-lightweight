@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus, Trash2, ChevronUp, ChevronDown } from "./Icons";
 import { useTranslation } from "react-i18next";
 import ExerciseSearchModal from "./ExerciseSearchModal";
@@ -48,6 +48,15 @@ export const ExercisesForm = ({
   );
   const [errors, setErrors] = useState<FormErrors>({});
   const { t } = useTranslation();
+
+  const lastItemRef = useRef<HTMLDivElement | null>(null);
+
+  // when a new exercise is pushed, scroll it into view so user sees the newly added card
+  useEffect(() => {
+    if (lastItemRef.current) {
+      lastItemRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [exercises.length]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -142,6 +151,7 @@ export const ExercisesForm = ({
         <div className="space-y-4">
           {exercises.map((ex, idx) => (
             <div
+              ref={idx === exercises.length - 1 ? lastItemRef : undefined}
               key={idx}
               className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4 md:p-5 hover:border-[#333] transition-colors"
             >
@@ -356,17 +366,45 @@ export const ExercisesForm = ({
           {openSearch !== null && (
             <ExerciseSearchModal
               onClose={() => setOpenSearch(null)}
-              onSelect={(exercise) => {
-                updateExercise(openSearch, {
-                  name: exercise.name,
-                  exerciseId: exercise.id,
-                  level: exercise.level,
-                  category: exercise.category,
-                  forceType: exercise.forceType,
-                  mechanic: exercise.mechanic,
-                  equipment: exercise.equipment,
-                  primaryMuscle: exercise.primaryMuscle,
-                  description: exercise.description,
+              multiSelect={true}
+              onSelectMultiple={(exs) => {
+                if (!exs || exs.length === 0) return;
+                // replace current slot with first selected, insert rest after
+                setExercises((prev) => {
+                  const copy = [...prev];
+                  const first = exs[0];
+                  copy[openSearch] = {
+                    ...copy[openSearch],
+                    name: first.name,
+                    exerciseId: first.id,
+                    level: first.level,
+                    category: first.category,
+                    forceType: first.forceType,
+                    mechanic: first.mechanic,
+                    equipment: first.equipment,
+                    primaryMuscle: first.primaryMuscle,
+                    description: first.description,
+                  };
+                  // insert remaining
+                  if (exs.length > 1) {
+                    const rest = exs.slice(1).map((e) => ({
+                      name: e.name,
+                      exerciseId: e.id,
+                      sets: 3,
+                      reps: 10,
+                      rest: 60,
+                      level: e.level,
+                      category: e.category,
+                      forceType: e.forceType,
+                      mechanic: e.mechanic,
+                      equipment: e.equipment,
+                      primaryMuscle: e.primaryMuscle,
+                      description: e.description,
+                      notes: "",
+                    }));
+                    copy.splice(openSearch + 1, 0, ...rest);
+                  }
+                  return copy;
                 });
                 setOpenSearch(null);
               }}

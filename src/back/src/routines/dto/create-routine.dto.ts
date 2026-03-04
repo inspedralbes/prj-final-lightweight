@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsInt,
   IsArray,
+  ArrayUnique,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ExerciseDto } from './exercise.dto';
@@ -21,6 +22,8 @@ export class CreateRoutineDto {
   exercises?: ExerciseDto[];
 
   @IsOptional()
-  @IsInt()
-  clientId?: number | null;
+  @IsArray()
+  @IsInt({ each: true })
+  @ArrayUnique()
+  clientIds?: number[];
 }

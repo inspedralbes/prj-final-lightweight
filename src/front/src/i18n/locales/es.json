@@ -48,7 +48,8 @@
     "sendReset": "Enviar solicitud",
     "invalidCredentials": "Usuario o contraseña inválidos",
     "acceptTerms": "Acepto los",
-    "termsLink": "Términos y Condiciones"
+    "termsLink": "Términos y Condiciones",
+    "passwordMinLength": "La contraseña debe tener al menos {{count}} caracteres"
   },
   "sidebar": {
     "dashboard": "Panel de control",
@@ -86,6 +87,7 @@
     "clearAll": "Limpiar",
     "noRoutines": "Aún no tienes rutinas",
     "noRoutinesHint": "Empieza creando tu primera rutina de entrenamiento.",
+    "assignedTo": "Asignada a",
     "addExercise": "Agregar ejercicio",
     "exerciseName": "Nombre del ejercicio",
     "exerciseNamePlaceholder": "ej. Press de banca",
@@ -153,7 +155,7 @@
   },
   "invitations": {
     "mainTitle": "Invitaciones",
-    "mainSubtitle": "Gestiona tus códigos de invitación y conecta con entrenadores",
+    "mainSubtitle": "Gestiona tus códigos de invitación y conecta con amigos",
     "generateTitle": "Invitar a un amigo",
     "generateSubtitle": "Comparte tu código de invitación con un amigo",
     "generateButton": "Generar código",
@@ -166,7 +168,7 @@
     "codeCopied": "Código copiado al portapapeles",
     "copyFailed": "Error al copiar el código",
     "redeemTitle": "¿Tienes un código?",
-    "redeemSubtitle": "Ingresa el código que recibiste de tu entrenador",
+    "redeemSubtitle": "Ingresa el código que recibiste de tu amigo",
     "codeInput": "Código de invitación",
     "codePlaceholder": "Introduce el código aquí...",
     "redeemButton": "Unirse",
@@ -175,7 +177,7 @@
     "acceptError": "Error al canjear el código",
     "selfUseError": "No puedes usar tu propio código",
     "enterCode": "Por favor ingresa un código",
-    "footerInfo": "Tus códigos de invitación te ayudan a mantenerte conectado con tu comunidad de fitness. Compártelos de forma segura con amigos y entrenadores de confianza."
+    "footerInfo": "Tus códigos de invitación te ayudan a mantenerte conectado con tu comunidad de fitness. Compártelos de forma segura con tus amigos de confianza."
   },
   "virtualGym": {
     "title": "Gimnasio Virtual - Sesión en directo",

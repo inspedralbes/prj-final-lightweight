@@ -48,7 +48,8 @@
     "sendReset": "Enviar sol\u00b7licitud",
     "invalidCredentials": "Usuari o contrasenya invàlids",
     "acceptTerms": "Accepto els",
-    "termsLink": "Termes i Condicions"
+    "termsLink": "Termes i Condicions",
+    "passwordMinLength": "La contrasenya ha de tenir com a mínim {{count}} caràcters"
   },
   "sidebar": {
     "dashboard": "Panell de control",
@@ -86,6 +87,7 @@
     "clearAll": "Netejar",
     "noRoutines": "Encara no tens rutines",
     "noRoutinesHint": "Comença creant la teva primera rutina d'entrenament.",
+    "assignedTo": "Assignada a",
     "addExercise": "Afegir exercici",
     "exerciseName": "Nom de l'exercici",
     "exerciseNamePlaceholder": "ex. Press de pit",
@@ -153,7 +155,7 @@
   },
   "invitations": {
     "mainTitle": "Invitacions",
-    "mainSubtitle": "Gestiona els teus codis d'invitació i connecta amb entrenadors",
+    "mainSubtitle": "Gestiona els teus codis d'invitació i connecta amb amics",
     "generateTitle": "Convidar a un amic",
     "generateSubtitle": "Comparteix el teu codi d'invitació amb un amic",
     "generateButton": "Generar codi",
@@ -166,7 +168,7 @@
     "codeCopied": "Codi copiat al porta-retalls",
     "copyFailed": "Error al copiar el codi",
     "redeemTitle": "Tens un codi?",
-    "redeemSubtitle": "Introdueix el codi que vas rebre del teu entrenador",
+    "redeemSubtitle": "Introdueix el codi que vas rebre del teu amic",
     "codeInput": "Codi d'invitació",
     "codePlaceholder": "Introdueix el codi aquí...",
     "redeemButton": "Unir-se",
@@ -175,7 +177,7 @@
     "acceptError": "Error al canjear el codi",
     "selfUseError": "No pots utilitzar el teu propi codi",
     "enterCode": "Si us plau introdueix un codi",
-    "footerInfo": "Els teus codis d'invitació t'ajuden a mantenir-te connectat amb la teva comunitat de fitness. Comparteix-los de forma segura amb amics i entrenadors de confiança."
+    "footerInfo": "Els teus codis d'invitació t'ajuden a mantenir-te connectat amb la teva comunitat de fitness. Comparteix-los de forma segura amb els teus amics de confiança."
   },
   "virtualGym": {
     "title": "Gimnàs Virtual - Sessiò en directe",

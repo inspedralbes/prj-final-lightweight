@@ -49,12 +49,8 @@ export default function ForgotPassword() {
           {/* Hard right-edge bleed strip */}
           <div className="absolute right-0 top-0 h-full w-24 bg-gradient-to-r from-transparent to-black z-20" />
           <div className="relative z-30 text-center px-8">
-            <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-400 to-orange-600 mb-4">
-              SUPERA
-              <br />
-              ELS TEUS
-              <br />
-              LÍMITS
+            <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-400 to-orange-600 mb-4 whitespace-pre-line">
+              {t("auth.loginDecorativeTitle")}
             </h1>
             <p className="text-gray-300 text-lg mt-6 max-w-sm">
               {t("auth.forgotPasswordSubtitle")}
