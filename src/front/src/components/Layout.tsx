@@ -8,7 +8,6 @@ import {
   FileText,
   Menu,
   X,
-  User,
 } from "./Icons";
 import { Ticket } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";

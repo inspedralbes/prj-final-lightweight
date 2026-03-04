@@ -188,6 +188,16 @@ const RoutineCard = ({
           {formattedDate}
         </div>
       </div>
+
+      <div className="mt-6">
+        <button
+          onClick={() => navigate(`/workout/${id}`)}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-orange-500/10 active:scale-[0.98]"
+        >
+          <Play className="w-4 h-4 fill-current" />
+          {t("routines.startRoutine")}
+        </button>
+      </div>
     </div>
   );
 };

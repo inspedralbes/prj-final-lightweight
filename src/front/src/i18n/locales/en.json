@@ -64,6 +64,7 @@
   "routines": {
     "title": "My Routines",
     "createNew": "New Routine",
+    "startRoutine": "Start Routine",
     "name": "Name",
     "description": "Description",
     "exercises": "Exercises",
@@ -173,6 +174,8 @@
     "redeemButton": "Join",
     "redeemInfo": "Paste the code you received and connect with your friend",
     "codeAccepted": "Successfully connected to your friend!",
+    "acceptError": "Error accepting invitation code",
+    "selfUseError": "You cannot use your own invitation code",
     "enterCode": "Please enter a code",
     "footerInfo": "Your invitation codes help you stay connected with your fitness community. Share them securely with trusted friends."
   },
@@ -191,6 +194,31 @@
     "online": "Online",
     "videoPlaceholder": "Live video",
     "leaveButton": "Leave room"
+  },
+  "virtualRoom": {
+    "partnerDisconnected": "Your partner has disconnected",
+    "guestDisconnected": "Your partner has disconnected",
+    "hostAbandoned": "The host has abandoned the room",
+    "waitingForGuestToStart": "Waiting for partner to join to start...",
+    "partnerLocation": "Doing: {{exercise}} - Set {{set}}/{{total}}",
+    "sessionCompletedTitle": "Session Completed",
+    "totalTime": "Total Time",
+    "exercisesCompleted": "Exercises",
+    "volumeTotal": "Total Volume",
+    "opponentStatusFinished": "Your partner has already finished",
+    "opponentStatusTraining": "Still training...",
+    "finishConfirm": "Are you sure you want to finish the session?",
+    "finishSessionButton": "Finish Session",
+    "returnPanel": "Return to Panel",
+    "errors": {
+      "onlyNumbers": "Only numbers allowed"
+    },
+    "yourStats": "Your stats",
+    "partnerStats": "Partner statistics",
+    "stillTraining": "Partner is still training...",
+    "statTime": "Time",
+    "statVolume": "Volume",
+    "statExercises": "Exercises"
   },
   "language": {
     "selectLanguage": "Select Language",
