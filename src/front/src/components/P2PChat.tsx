@@ -25,7 +25,6 @@ const P2PChat: React.FC<P2PChatProps> = ({
   isInitiator,
   otherUserId,
 }) => {
-  useTranslation();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
@@ -176,150 +175,191 @@ const P2PChat: React.FC<P2PChatProps> = ({
       socket.emit("offer", { roomId, offer });
     };
 
-        pc.ondatachannel = (event) => {
-            console.log("[WebRTC] DataChannel received");
-            setupDataChannel(event.channel);
-        };
-
-        return () => {
-            console.log("[WebRTC] Cleaning up...");
-            // indicar al servidor que cerramos el chat y salimos de la sala de señalización
-            if (user && user.id) {
-                socket.emit('close-chat', { userId: user.id, roomId });
-            }
-            socket.emit('leave-room', roomId);
-            pc.close();
-            socket.off("offer");
-            socket.off("answer");
-            socket.off("ice-candidate");
-            socket.off("user-joined");
-            socket.off("current-peers");
-        };
-    }, [roomId, isInitiator]);
-
-    const sendMessage = async () => {
-        if (!inputText.trim() || !user) return;
-
-        const text = inputText.trim();
-        setSending(true);
-
-        try {
-            // Guardar en backend y notificar siempre
-            if (otherUserId) {
-                await chatService.sendMessage(otherUserId, text);
-                socket.emit('send-p2p-message', {
-                    senderId: user.id,
-                    receiverId: otherUserId,
-                    text: text,
-                });
-            }
-
-            // Enviar por data channel si está abierto
-            if (dcRef.current && dcRef.current.readyState === "open") {
-                dcRef.current.send(text);
-            }
-
-            setMessages((prev) => [...prev, { text, sender: "me", timestamp: new Date() }]);
-            setInputText("");
-        } catch (error) {
-            console.error("Failed to send message:", error);
-        } finally {
-            setSending(false);
-        }
+    pc.ondatachannel = (event) => {
+      console.log("[WebRTC] DataChannel received");
+      setupDataChannel(event.channel);
     };
-    
+
+    socket.on("user-joined", async (data: { socketId: string; roomId: string }) => {
+      console.log("[WebRTC] Event: user-joined", data);
+      if (isInitiator) {
+        await createOffer();
+      }
+    });
+
+    socket.on("current-peers", async (data: { roomId: string; peers: string[] }) => {
+      console.log("[WebRTC] Event: current-peers", data);
+      if (isInitiator && data.peers && data.peers.length > 0) {
+        await createOffer();
+      }
+    });
+
+    socket.on("offer", async (offer) => {
+      console.log("[WebRTC] Event: offer");
+      if (!isInitiator) {
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit("answer", { roomId, answer });
+      }
+    });
+
+    socket.on("answer", async (answer) => {
+      console.log("[WebRTC] Event: answer");
+      if (isInitiator) {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      }
+    });
+
+    socket.on("ice-candidate", async (candidate) => {
+      console.log("[WebRTC] Event: ice-candidate received from peer");
+      try {
+        if (candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+      } catch (e) {
+        console.error("Error adding received ice candidate", e);
+      }
+    });
+    return () => {
+      console.log("[WebRTC] Cleaning up...");
+      // indicar al servidor que cerramos el chat y salimos de la sala de señalización
+      if (user && user.id) {
+        socket.emit('close-chat', { userId: user.id, roomId });
+      }
+      socket.emit('leave-room', roomId);
+      pc.close();
+      socket.off("offer");
+      socket.off("answer");
+      socket.off("ice-candidate");
+      socket.off("user-joined");
+      socket.off("current-peers");
+    };
+  }, [roomId, isInitiator]);
+
+  const sendMessage = async () => {
+    if (!inputText.trim() || !user) return;
+
+    const text = inputText.trim();
+    setSending(true);
+
+    try {
+      // Guardar en backend y notificar siempre
+      if (otherUserId) {
+        await chatService.sendMessage(otherUserId, text);
+        socket.emit('send-p2p-message', {
+          senderId: user.id,
+          receiverId: otherUserId,
+          text: text,
+        });
+      }
+
+      // Enviar por data channel si está abierto
+      if (dcRef.current && dcRef.current.readyState === "open") {
+        dcRef.current.send(text);
+      }
+
+      setMessages((prev) => [...prev, { text, sender: "me", timestamp: new Date() }]);
+      setInputText("");
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    } finally {
+      setSending(false);
+    }
+  };
 
 
-    return (
-        <div className="flex flex-col h-[400px] w-full bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-3 border-b border-[#2a2a2a] bg-[#1a1a1a]">
-                <div className="flex flex-col">
-                    <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${status === "connected" ? "bg-green-500" : "bg-orange-500"}`} />
-                        <span className="text-sm font-medium text-white">{title}</span>
-                        <span className="text-[10px] text-gray-600 font-mono">({roomId})</span>
-                    </div>
-                    <span className="text-[10px] text-gray-500">
-                        {status === "connected" ? "P2P Directo ✔" : `Signaling: ${socketStatus}`}
-                    </span>
-                </div>
-                <button onClick={() => {
-                    if (user && user.id) {
-                        socket.emit('close-chat', { userId: user.id, roomId });
-                    }
-                    socket.emit('leave-room', roomId);
-                    onClose();
-                }} className="text-gray-400 hover:text-white">
-                    <X className="w-4 h-4" />
-                </button>
+
+  return (
+    <div className="flex flex-col h-[400px] w-full bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between p-3 border-b border-[#2a2a2a] bg-[#1a1a1a]">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${status === "connected" ? "bg-green-500" : "bg-orange-500"}`} />
+            <span className="text-sm font-medium text-white">{title}</span>
+            <span className="text-[10px] text-gray-600 font-mono">({roomId})</span>
+          </div>
+          <span className="text-[10px] text-gray-500">
+            {status === "connected" ? "P2P Directo ✔" : `Signaling: ${socketStatus}`}
+          </span>
+        </div>
+        <button onClick={() => {
+          if (user && user.id) {
+            socket.emit('close-chat', { userId: user.id, roomId });
+          }
+          socket.emit('leave-room', roomId);
+          onClose();
+        }} className="text-gray-400 hover:text-white">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+        {status !== "connected" && (
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
+            <p className="text-gray-500 text-xs italic">
+              {socketStatus === "connected" ? "Esperando al otro usuario..." : "Conectando al servidor..."}
+            </p>
+            {isInitiator && socketStatus === "connected" && (
+              <button
+                onClick={() => {
+                  console.log("[WebRTC] Manual retry...");
+                  socket.emit("join-room", roomId);
+                  socket.emit("user-joined", { roomId });
+                }}
+                className="text-[10px] text-orange-500 underline"
+              >
+                Reintentar Handshake
+              </button>
+            )}
+          </div>
+        )}
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[80%] p-2 rounded-lg text-sm ${msg.sender === "me"
+                ? "bg-orange-500 text-white rounded-tr-none"
+                : "bg-[#2a2a2a] text-gray-200 rounded-tl-none"
+                }`}
+            >
+              {msg.text}
             </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                {status !== "connected" && (
-                    <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
-                        <p className="text-gray-500 text-xs italic">
-                            {socketStatus === "connected" ? "Esperando al otro usuario..." : "Conectando al servidor..."}
-                        </p>
-                        {isInitiator && socketStatus === "connected" && (
-                            <button
-                                onClick={() => {
-                                    console.log("[WebRTC] Manual retry...");
-                                    socket.emit("join-room", roomId);
-                                    socket.emit("user-joined", { roomId });
-                                }}
-                                className="text-[10px] text-orange-500 underline"
-                            >
-                                Reintentar Handshake
-                            </button>
-                        )}
-                    </div>
-                )}
-                {messages.map((msg, i) => (
-                    <div
-                        key={i}
-                        className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}
-                    >
-                        <div
-                            className={`max-w-[80%] p-2 rounded-lg text-sm ${msg.sender === "me"
-                                ? "bg-orange-500 text-white rounded-tr-none"
-                                : "bg-[#2a2a2a] text-gray-200 rounded-tl-none"
-                                }`}
-                        >
-                            {msg.text}
-                        </div>
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input */}
-            <div className="p-3 border-t border-[#2a2a2a] bg-[#1a1a1a]">
-                <div className="flex gap-2">
-                    <input
-                        type="text"
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                        placeholder="Type a message..."
-                        className="flex-1 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-sm text-white focus:border-orange-500 focus:outline-none disabled:opacity-50"
-                    />
-                    <button
-                        onClick={sendMessage}
-                        disabled={!inputText.trim() || sending}
-                        className="bg-orange-500 hover:bg-orange-600 disabled:bg-orange-900 text-white p-2 rounded-lg transition-colors"
-                    >
-                        <ArrowRight className="w-4 h-4" />
-                    </button>
-                </div>
-                {status !== "connected" && socketStatus === "connected" && (
-                    <p className="text-xs text-orange-400 mt-2">
-                        📡 Usando fallback a servidor (P2P no disponible)
-                    </p>
-                )}
-            </div>
+      {/* Input */}
+      <div className="p-3 border-t border-[#2a2a2a] bg-[#1a1a1a]">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+            placeholder="Type a message..."
+            className="flex-1 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-sm text-white focus:border-orange-500 focus:outline-none disabled:opacity-50"
+          />
+          <button
+            onClick={sendMessage}
+            disabled={!inputText.trim() || sending}
+            className="bg-orange-500 hover:bg-orange-600 disabled:bg-orange-900 text-white p-2 rounded-lg transition-colors"
+          >
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+        {status !== "connected" && socketStatus === "connected" && (
+          <p className="text-xs text-orange-400 mt-2">
+            📡 Usando fallback a servidor (P2P no disponible)
+          </p>
+        )}
+      </div>
     </div>
   );
 };
