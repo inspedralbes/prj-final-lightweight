@@ -192,7 +192,27 @@
   },
   "virtualRoom": {
     "partnerDisconnected": "Tu contrincante se ha desconectado",
-    "partnerLocation": "Haciendo: {{exercise}} - Serie {{set}}/{{total}}"
+    "guestDisconnected": "Tu contrincante se ha desconectado",
+    "hostAbandoned": "El anfitrión ha abandonado la sala",
+    "partnerLocation": "Haciendo: {{exercise}} - Serie {{set}}/{{total}}",
+    "sessionCompletedTitle": "Sesión Completada",
+    "totalTime": "Tiempo Total",
+    "exercisesCompleted": "Ejercicios",
+    "volumeTotal": "Volumen Total",
+    "opponentStatusFinished": "Tu compañero ya ha terminado",
+    "opponentStatusTraining": "Todavía está entrenando...",
+    "finishConfirm": "¿Estás seguro de que quieres finalizar la sesión?",
+    "finishSessionButton": "Finalizar Sesión",
+    "returnPanel": "Volver al Panel",
+    "errors": {
+      "onlyNumbers": "Solo se permiten números"
+    },
+    "yourStats": "Tus estadísticas",
+    "partnerStats": "Estadísticas del contrincante",
+    "stillTraining": "El contrincante sigue entrenando...",
+    "statTime": "Tiempo",
+    "statVolume": "Volumen",
+    "statExercises": "Ejercicios"
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",

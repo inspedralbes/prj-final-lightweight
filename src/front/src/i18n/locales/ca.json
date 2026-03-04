@@ -194,7 +194,27 @@
   },
   "virtualRoom": {
     "partnerDisconnected": "El teu contrincant s'ha desconnectat",
-    "partnerLocation": "Fent: {{exercise}} - Sèrie {{set}}/{{total}}"
+    "guestDisconnected": "El teu contrincant s'ha desconnectat",
+    "hostAbandoned": "L'amfitrió ha abandonat la sala",
+    "partnerLocation": "Fent: {{exercise}} - Sèrie {{set}}/{{total}}",
+    "sessionCompletedTitle": "Sessió Completada",
+    "totalTime": "Temps Total",
+    "exercisesCompleted": "Exercicis",
+    "volumeTotal": "Volum Total",
+    "opponentStatusFinished": "El teu contrincant ja ha acabat",
+    "opponentStatusTraining": "Ancora està entrenant...",
+    "finishConfirm": "Segur que vols finalitzar la sessió?",
+    "finishSessionButton": "Finalitzar Sessió",
+    "returnPanel": "Tornar al Panell",
+    "errors": {
+      "onlyNumbers": "Sol es permeten números"
+    },
+    "yourStats": "Les teves estadístiques",
+    "partnerStats": "Estadístiques del contrincant",
+    "stillTraining": "El contrincant segueix entrenant...",
+    "statTime": "Temps",
+    "statVolume": "Volum",
+    "statExercises": "Exercicis"
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",

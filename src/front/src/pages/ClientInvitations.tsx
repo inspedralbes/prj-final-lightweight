@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Copy, Check, Loader, Ticket } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "../hooks/useToast";
-import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
 import { invitationsService } from "../services/invitationsService";
 
@@ -11,7 +10,6 @@ export default function ClientInvitations() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const toast = useToast();
-  const { user } = useAuth();
 
   // Sección A: Generar Código
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
@@ -65,7 +63,7 @@ export default function ClientInvitations() {
 
     setLoadingAccept(true);
     try {
-      const response = await invitationsService.acceptInvitationCode(inputCode);
+      await invitationsService.acceptInvitationCode(inputCode);
       const acceptedCode = inputCode;
       setInputCode("");
       toast.success(

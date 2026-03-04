@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { socket } from "../services/socket";
 import { ArrowRight, X } from "./Icons";
-import { useTranslation } from "react-i18next";
 import { chatService } from "../services/chatService";
 import { useAuth } from "../context/AuthContext";
 
@@ -20,7 +19,6 @@ interface P2PChatProps {
 }
 
 const P2PChat: React.FC<P2PChatProps> = ({ roomId, onClose, title, isInitiator, otherUserId }) => {
-    const { t } = useTranslation();
     const { user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState("");

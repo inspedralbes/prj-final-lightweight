@@ -193,7 +193,27 @@
     "leaveButton": "Leave room"
   },  "virtualRoom": {
     "partnerDisconnected": "Your partner has disconnected",
-    "partnerLocation": "Doing: {{exercise}} - Set {{set}}/{{total}}"
+    "guestDisconnected": "Your partner has disconnected",
+    "hostAbandoned": "The host has abandoned the room",
+    "partnerLocation": "Doing: {{exercise}} - Set {{set}}/{{total}}",
+    "sessionCompletedTitle": "Session Completed",
+    "totalTime": "Total Time",
+    "exercisesCompleted": "Exercises",
+    "volumeTotal": "Total Volume",
+    "opponentStatusFinished": "Your partner has already finished",
+    "opponentStatusTraining": "Still training...",
+    "finishConfirm": "Are you sure you want to finish the session?",
+    "finishSessionButton": "Finish Session",
+    "returnPanel": "Return to Panel",
+    "errors": {
+      "onlyNumbers": "Only numbers allowed"
+    },
+    "yourStats": "Your stats",
+    "partnerStats": "Partner statistics",
+    "stillTraining": "Partner is still training...",
+    "statTime": "Time",
+    "statVolume": "Volume",
+    "statExercises": "Exercises"
   },  "language": {
     "selectLanguage": "Select Language",
     "english": "English",

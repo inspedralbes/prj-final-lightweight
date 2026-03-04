@@ -260,6 +260,18 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return { success: true };
   }
 
+  @SubscribeMessage('sessionFinished')
+  handleSessionFinished(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    payload: { roomId: string; userId: string; finalStats: any },
+  ) {
+    const { roomId, userId, finalStats } = payload;
+    // reenviar al resto de la sala que este usuario terminó.
+    client.to(roomId).emit('partnerFinished', { userId, finalStats });
+    return { success: true };
+  }
+
   @SubscribeMessage('getRoomUsers')
   handleGetRoomUsers(
     @ConnectedSocket() client: Socket,
