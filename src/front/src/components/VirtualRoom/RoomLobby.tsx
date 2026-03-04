@@ -4,7 +4,7 @@ import { Socket } from "socket.io-client";
 import type { Routine } from "../../services/routineService";
 import { routineService } from "../../services/routineService";
 import { useTranslation } from "react-i18next";
-import { Users, Wifi, WifiOff, Play, Timer, Globe, User as UserIcon, Check, X, Loader2, Dumbbell } from "lucide-react";
+import { Users, Wifi, WifiOff, Play, Timer, User as UserIcon, Check, X, Loader2, Dumbbell } from "lucide-react";
 import { useToast } from "../../hooks/useToast";
 
 interface RoomLobbyProps {
@@ -29,20 +29,14 @@ const RoomLobby: FC<RoomLobbyProps> = ({
   const toast = useToast();
 
   const [isRoutineModalOpen, setIsRoutineModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'global' | 'personal'>('global');
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [isLoadingRoutines, setIsLoadingRoutines] = useState(false);
   const [selectedRoutine, setSelectedRoutine] = useState<Routine | null>(null);
 
-  const fetchRoutines = async (type: 'global' | 'personal') => {
+  const fetchRoutines = async () => {
     setIsLoadingRoutines(true);
     try {
-      let data: Routine[] = [];
-      if (type === 'global') {
-        data = await routineService.getGlobalRoutines();
-      } else {
-        data = await routineService.getMyRoutines();
-      }
+      const data = await routineService.getMyRoutines();
       setRoutines(data);
     } catch (error) {
       toast.error(t('virtualRoom.connectionError'));
@@ -54,14 +48,10 @@ const RoomLobby: FC<RoomLobbyProps> = ({
   const handleOpenRoutineModal = () => {
     setSelectedRoutine(null);
     setIsRoutineModalOpen(true);
-    fetchRoutines('global');
+    fetchRoutines();
   };
 
-  const handleTabChange = (newTab: 'global' | 'personal') => {
-    setActiveTab(newTab);
-    fetchRoutines(newTab);
-    setSelectedRoutine(null);
-  };
+  // handleTabChange removed as there is only one tab now
 
   const handleConfirmRoutine = () => {
     if (selectedRoutine) {
@@ -108,16 +98,27 @@ const RoomLobby: FC<RoomLobbyProps> = ({
               </div>
 
               {isHost ? (
-                <button
-                  onClick={handleOpenRoutineModal}
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-orange-500/20 active:scale-95"
-                >
-                  <div className="flex items-center gap-2">
-                    <Play className="fill-current w-5 h-5" />
-                    <Timer className="w-5 h-5" />
-                  </div>
-                  COMENÇAR SESSIÓ
-                </button>
+                <div className="flex flex-col items-end gap-2">
+                  <button
+                    onClick={handleOpenRoutineModal}
+                    disabled={usersInRoom.length < 2}
+                    className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 ${usersInRoom.length < 2
+                      ? "bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700"
+                      : "bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/20"
+                      }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Play className="fill-current w-5 h-5" />
+                      <Timer className="w-5 h-5" />
+                    </div>
+                    {"COMENÇAR SESSIÓ"}
+                  </button>
+                  {usersInRoom.length < 2 && (
+                    <p className="text-[10px] md:text-xs text-orange-500/80 font-medium animate-pulse bg-orange-500/5 px-3 py-1 rounded-full border border-orange-500/10">
+                      {t('virtualRoom.waitingForGuestToStart') || "Esperant que s'uneixi el company per poder començar..."}
+                    </p>
+                  )}
+                </div>
               ) : (
                 <div className="px-6 py-3 bg-zinc-900/50 border border-zinc-800 rounded-xl text-zinc-500 font-medium italic animate-pulse">
                   Esperant que l'amfitrió triï la rutina...
@@ -182,26 +183,12 @@ const RoomLobby: FC<RoomLobbyProps> = ({
               </div>
 
               <div className="flex border-b border-zinc-800 p-2 bg-black/20">
-                <button
-                  onClick={() => handleTabChange('global')}
-                  className={`flex-1 py-3 text-xs font-black uppercase tracking-widest transition-all rounded-xl flex items-center justify-center gap-2 ${activeTab === 'global'
-                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/10'
-                    : 'text-zinc-500 hover:text-zinc-300'
-                    }`}
-                >
-                  <Globe className="w-4 h-4" />
-                  Globals
-                </button>
-                <button
-                  onClick={() => handleTabChange('personal')}
-                  className={`flex-1 py-3 text-xs font-black uppercase tracking-widest transition-all rounded-xl flex items-center justify-center gap-2 ${activeTab === 'personal'
-                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/10'
-                    : 'text-zinc-500 hover:text-zinc-300'
-                    }`}
+                <div
+                  className="flex-1 py-3 text-xs font-black uppercase tracking-widest transition-all rounded-xl flex items-center justify-center gap-2 bg-orange-500 text-white shadow-lg shadow-orange-500/10"
                 >
                   <UserIcon className="w-4 h-4" />
-                  Personals
-                </button>
+                  {"Les meves rutines"}
+                </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-8 bg-zinc-900/50">

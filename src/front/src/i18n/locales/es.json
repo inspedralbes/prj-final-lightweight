@@ -170,8 +170,10 @@
     "codePlaceholder": "Introduce el código aquí...",
     "redeemButton": "Unirse",
     "redeemInfo": "Pega el código que recibiste y conecta con tu amigo",
-    "codeAccepted": "¡Conectado con tu amigo correctamente!",    "acceptError": "Error al canjear el código",
-    "selfUseError": "No puedes usar tu propio código",    "enterCode": "Por favor ingresa un código",
+    "codeAccepted": "¡Conectado con tu amigo correctamente!",
+    "acceptError": "Error al canjear el código",
+    "selfUseError": "No puedes usar tu propio código",
+    "enterCode": "Por favor ingresa un código",
     "footerInfo": "Tus códigos de invitación te ayudan a mantenerte conectado con tu comunidad de fitness. Compártelos de forma segura con amigos y entrenadores de confianza."
   },
   "virtualGym": {
@@ -194,6 +196,7 @@
     "partnerDisconnected": "Tu contrincante se ha desconectado",
     "guestDisconnected": "Tu contrincante se ha desconectado",
     "hostAbandoned": "El anfitrión ha abandonado la sala",
+    "waitingForGuestToStart": "Esperando que se una el compañero para poder empezar...",
     "partnerLocation": "Haciendo: {{exercise}} - Serie {{set}}/{{total}}",
     "sessionCompletedTitle": "Sesión Completada",
     "totalTime": "Tiempo Total",

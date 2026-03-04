@@ -196,6 +196,7 @@
     "partnerDisconnected": "El teu contrincant s'ha desconnectat",
     "guestDisconnected": "El teu contrincant s'ha desconnectat",
     "hostAbandoned": "L'amfitrió ha abandonat la sala",
+    "waitingForGuestToStart": "Esperant que s'uneixi el company per poder començar...",
     "partnerLocation": "Fent: {{exercise}} - Sèrie {{set}}/{{total}}",
     "sessionCompletedTitle": "Sessió Completada",
     "totalTime": "Temps Total",

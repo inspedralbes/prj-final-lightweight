@@ -191,10 +191,12 @@
     "online": "Online",
     "videoPlaceholder": "Live video",
     "leaveButton": "Leave room"
-  },  "virtualRoom": {
+  },
+  "virtualRoom": {
     "partnerDisconnected": "Your partner has disconnected",
     "guestDisconnected": "Your partner has disconnected",
     "hostAbandoned": "The host has abandoned the room",
+    "waitingForGuestToStart": "Waiting for partner to join to start...",
     "partnerLocation": "Doing: {{exercise}} - Set {{set}}/{{total}}",
     "sessionCompletedTitle": "Session Completed",
     "totalTime": "Total Time",
@@ -214,7 +216,8 @@
     "statTime": "Time",
     "statVolume": "Volume",
     "statExercises": "Exercises"
-  },  "language": {
+  },
+  "language": {
     "selectLanguage": "Select Language",
     "english": "English",
     "spanish": "Español",

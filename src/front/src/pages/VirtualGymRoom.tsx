@@ -8,6 +8,8 @@ import SessionSummary from "../components/VirtualRoom/SessionSummary";
 import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
 import io, { Socket } from "socket.io-client";
+import { useToast } from "../hooks/useToast";
+import { useTranslation } from "react-i18next";
 import type { Routine } from "../services/routineService";
 
 interface RoomUser {
@@ -32,6 +34,8 @@ export default function VirtualGymRoom() {
   const location = useLocation();
   const initialIsHost = location.state?.isHost || false;
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const toast = useToast();
 
   // Socket & Connection
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -48,6 +52,7 @@ export default function VirtualGymRoom() {
 
   // Partner syncing state (progress updates)
   const [partnerProgress, setPartnerProgress] = useState<PartnerProgress | null>(null);
+  const [partnerDisconnected, setPartnerDisconnected] = useState(false);
 
   // STRICT STATE SEPARATION: Local user finish state
   const [isLocalFinished, setIsLocalFinished] = useState(false);
@@ -79,10 +84,17 @@ export default function VirtualGymRoom() {
     newSocket.on("joinedRoom", (data: { isHost: boolean, usersInRoom: RoomUser[] }) => {
       setIsHost(data.isHost);
       setUsersInRoom(data.usersInRoom);
+      // Reset disconnection state if someone joins
+      if (data.usersInRoom.length >= 2) {
+        setPartnerDisconnected(false);
+      }
     });
 
     newSocket.on("roomUsersUpdate", (data: { usersInRoom: RoomUser[] }) => {
       setUsersInRoom(data.usersInRoom);
+      if (data.usersInRoom.length >= 2) {
+        setPartnerDisconnected(false);
+      }
     });
 
     // Sincronización de inicio de sesión
@@ -130,8 +142,8 @@ export default function VirtualGymRoom() {
 
     newSocket.on('guestDisconnected', () => {
       if (isHost) {
-        newSocket.disconnect();
-        navigate('/clients/invitations');
+        toast.info(t('virtualRoom.guestDisconnected'));
+        setPartnerDisconnected(true);
       }
     });
 
@@ -158,7 +170,7 @@ export default function VirtualGymRoom() {
     setIsLocalFinished(true);
     setLocalStats(stats);
     setIsSessionActive(false);
-    
+
     // Emit to socket so partner knows this user finished
     if (socket && roomId && user?.id) {
       socket.emit('sessionFinished', { roomId, userId: user.id, finalStats: stats });
@@ -203,7 +215,7 @@ export default function VirtualGymRoom() {
           countdown={countdown}
           isSessionActive={isSessionActive}
           partnerProgress={partnerProgress}
-          partnerDisconnected={false}
+          partnerDisconnected={partnerDisconnected}
           onSessionFinished={handleSessionFinished}
           onLeave={handleLeaveRoom}
         />
