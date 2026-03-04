@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Calendar, Dumbbell, MessageCircle } from "../components/Icons";
+import { Calendar, Dumbbell, MessageCircle, Play } from "../components/Icons";
+import { useNavigate } from "react-router-dom";
 import P2PChat from "../components/P2PChat";
 import Layout from "../components/Layout";
 import { LoadingScreen } from "../components/LoadingScreen";
@@ -13,6 +14,7 @@ const POLL_INTERVAL_MS = 10_000;
 const ClientHome = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   // avoid running component logic when there is no authenticated user
   if (!user) {
@@ -156,12 +158,12 @@ const ClientHome = () => {
                 <p className="text-xs font-medium text-gray-600 mb-5">
                   {routine.createdAt
                     ? new Date(routine.createdAt).toLocaleDateString([], {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })
                     : t("routines.recentlyAssigned") ||
-                      "Asignada recientemente"}
+                    "Asignada recientemente"}
                 </p>
 
                 {/* Lista de Ejercicios Previa */}
@@ -188,6 +190,19 @@ const ClientHome = () => {
                     )}
                   </div>
                 )}
+              </div>
+
+              <div className="mt-6 pt-5 border-t border-[#222]">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/workout/${routine.id}`);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-orange-500/10 active:scale-[0.98]"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  {t("routines.startRoutine")}
+                </button>
               </div>
             </div>
           ))}

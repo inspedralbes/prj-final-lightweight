@@ -63,6 +63,7 @@
   "routines": {
     "title": "Les meves rutines",
     "createNew": "Nova rutina",
+    "startRoutine": "Començar Rutina",
     "name": "Nom",
     "description": "Descripció",
     "exercises": "Exercicis",

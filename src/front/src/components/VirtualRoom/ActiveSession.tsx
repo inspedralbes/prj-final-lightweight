@@ -28,18 +28,19 @@ export interface PartnerProgress {
 }
 
 interface ActiveSessionProps {
-  socket: Socket | null;
+  socket?: Socket | null;
   roomId?: string;
   userId?: string;
-  isHost: boolean;
+  isHost?: boolean;
   selectedRoutine: Routine;
   isCountingDown: boolean;
   countdown: number;
   isSessionActive: boolean;
-  partnerProgress: PartnerProgress | null;
-  partnerDisconnected: boolean;
+  partnerProgress?: PartnerProgress | null;
+  partnerDisconnected?: boolean;
   onSessionFinished: (stats: { time: number; volume: number; exercises: number }) => void;
   onLeave: () => void;
+  isSoloMode?: boolean;
 }
 
 const ActiveSession: FC<ActiveSessionProps> = ({
@@ -55,6 +56,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
   partnerDisconnected,
   onSessionFinished,
   onLeave,
+  isSoloMode,
 }) => {
   const { t } = useTranslation();
   const toast = useToast();
@@ -152,16 +154,18 @@ const ActiveSession: FC<ActiveSessionProps> = ({
         setProgress(100);
         setIsTimerRunning(false);
         toast.success("FELICITATS! Entrenament completat!");
-        socket?.emit("updateProgress", {
-          roomId,
-          userId,
-          progressPercentage: 100,
-          completedExercises: [...completedExercises, currentEx.exerciseId],
-          currentExerciseIndex: updatedExerciseIdx,
-          currentSet: updatedSet,
-          exerciseName: currentEx.exercise.name,
-          totalSets: currentEx.sets,
-        });
+        if (socket && !isSoloMode) {
+          socket.emit("updateProgress", {
+            roomId,
+            userId,
+            progressPercentage: 100,
+            completedExercises: [...completedExercises, currentEx.exerciseId],
+            currentExerciseIndex: updatedExerciseIdx,
+            currentSet: updatedSet,
+            exerciseName: currentEx.exercise.name,
+            totalSets: currentEx.sets,
+          });
+        }
         // Call parent to finish and share stats
         onSessionFinished({
           time,
@@ -188,20 +192,22 @@ const ActiveSession: FC<ActiveSessionProps> = ({
     const newProgress = Math.round((currentTotalCompleted / totalSets) * 100);
     setProgress(newProgress);
 
-    socket?.emit("updateProgress", {
-      roomId,
-      userId,
-      progressPercentage: newProgress,
-      completedExercises: [
-        ...(justFinishedExercise
-          ? [...completedExercises, currentEx.exerciseId]
-          : completedExercises),
-      ],
-      currentExerciseIndex: updatedExerciseIdx,
-      currentSet: updatedSet,
-      exerciseName: currentEx.exercise.name,
-      totalSets: currentEx.sets,
-    });
+    if (socket && !isSoloMode) {
+      socket.emit("updateProgress", {
+        roomId,
+        userId,
+        progressPercentage: newProgress,
+        completedExercises: [
+          ...(justFinishedExercise
+            ? [...completedExercises, currentEx.exerciseId]
+            : completedExercises),
+        ],
+        currentExerciseIndex: updatedExerciseIdx,
+        currentSet: updatedSet,
+        exerciseName: currentEx.exercise.name,
+        totalSets: currentEx.sets,
+      });
+    }
 
     setWeight("");
     setReps("");
@@ -228,7 +234,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
   if (isSessionActive) {
     return (
       <div className="w-full h-full overflow-y-auto p-4 md:p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 max-w-6xl mx-auto">
+        <div className={`grid grid-cols-1 ${isSoloMode ? 'max-w-2xl mx-auto' : 'lg:grid-cols-2 max-w-6xl mx-auto'} gap-4 md:gap-6`}>
           {/* Left column: My training */}
           <div className="space-y-6">
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
@@ -351,169 +357,166 @@ const ActiveSession: FC<ActiveSessionProps> = ({
           </div>
 
           {/* Right column: Room progress */}
-          <div className="space-y-6">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-8">
-                <Activity className="text-orange-500" /> Progrés de la sala
-              </h2>
+          {!isSoloMode && (
+            <div className="space-y-6">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-8">
+                  <Activity className="text-orange-500" /> Progrés de la sala
+                </h2>
 
-              {partnerDisconnected && (
-                <div className="mb-4 text-center text-red-400 font-bold">
-                  {isHost
-                    ? t("virtualRoom.guestDisconnected")
-                    : t("virtualRoom.hostAbandoned")}
-                </div>
-              )}
-
-              {/* Progress circles */}
-              <div className="grid grid-cols-2 gap-6 mb-12">
-                {/* My progress */}
-                <div className="text-center space-y-4">
-                  <div className="relative inline-flex items-center justify-center">
-                    <svg className="w-32 h-32 transform -rotate-90">
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="58"
-                        stroke="currentColor"
-                        strokeWidth="8"
-                        fill="transparent"
-                        className="text-zinc-800"
-                      />
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="58"
-                        stroke="currentColor"
-                        strokeWidth="8"
-                        fill="transparent"
-                        strokeDasharray={364.4}
-                        strokeDashoffset={
-                          364.4 - (364.4 * progress) / 100
-                        }
-                        className="text-orange-500 transition-all duration-500"
-                      />
-                    </svg>
-                    <span className="absolute text-2xl font-black text-white">
-                      {progress}%
-                    </span>
+                {partnerDisconnected && (
+                  <div className="mb-4 text-center text-red-400 font-bold">
+                    {isHost
+                      ? t("virtualRoom.guestDisconnected")
+                      : t("virtualRoom.hostAbandoned")}
                   </div>
-                  <p className="text-sm font-bold text-zinc-400 flex items-center justify-center gap-2">
-                    <Target size={14} className="text-orange-500" /> Jo
-                  </p>
-                </div>
+                )}
 
-                {/* Partner progress */}
-                <div className="text-center space-y-4">
-                  <div className="relative inline-flex items-center justify-center">
-                    <svg className="w-32 h-32 transform -rotate-90">
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="58"
-                        stroke="currentColor"
-                        strokeWidth="8"
-                        fill="transparent"
-                        className="text-zinc-800"
-                      />
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="58"
-                        stroke="currentColor"
-                        strokeWidth="8"
-                        fill="transparent"
-                        strokeDasharray={364.4}
-                        strokeDashoffset={
-                          364.4 -
-                          (364.4 * (partnerProgress?.progressPercentage || 0)) /
-                            100
-                        }
-                        className="text-blue-500 transition-all duration-500"
-                      />
-                    </svg>
-                    <span className="absolute text-2xl font-black text-white">
-                      {partnerProgress?.progressPercentage || 0}%
-                    </span>
-                  </div>
-                  <p className="text-sm font-bold text-zinc-400 flex items-center justify-center gap-2">
-                    <Users size={14} className="text-blue-500" /> Contrincant
-                  </p>
-                  {partnerProgress?.exerciseName &&
-                    partnerProgress.currentSet != null &&
-                    partnerProgress.totalSets != null && (
-                      <p className="text-xs text-zinc-500 mt-1">
-                        {t("virtualRoom.partnerLocation", {
-                          exercise: partnerProgress.exerciseName,
-                          set: partnerProgress.currentSet,
-                          total: partnerProgress.totalSets,
-                        })}
-                      </p>
-                    )}
-                </div>
-              </div>
-
-              {/* Exercise list */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-zinc-500 uppercase mb-4 tracking-widest">
-                  Llista d'exercicis
-                </h4>
-                {selectedRoutine.exercises?.map((ex, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center justify-between p-4 rounded-xl border ${
-                      i === currentExerciseIdx
-                        ? "bg-orange-500/5 border-orange-500/20"
-                        : "bg-black border-zinc-800"
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                          i <= currentExerciseIdx
-                            ? "bg-orange-500 text-white"
-                            : "bg-zinc-800 text-zinc-500"
-                        }`}
-                      >
-                        {i + 1}
-                      </div>
-                      <span
-                        className={`font-bold ${
-                          i === currentExerciseIdx
-                            ? "text-white"
-                            : "text-zinc-500"
-                        }`}
-                      >
-                        {ex.exercise.name}
+                {/* Progress circles */}
+                <div className="grid grid-cols-2 gap-6 mb-12">
+                  {/* My progress */}
+                  <div className="text-center space-y-4">
+                    <div className="relative inline-flex items-center justify-center">
+                      <svg className="w-32 h-32 transform -rotate-90">
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="58"
+                          stroke="currentColor"
+                          strokeWidth="8"
+                          fill="transparent"
+                          className="text-zinc-800"
+                        />
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="58"
+                          stroke="currentColor"
+                          strokeWidth="8"
+                          fill="transparent"
+                          strokeDasharray={364.4}
+                          strokeDashoffset={
+                            364.4 - (364.4 * progress) / 100
+                          }
+                          className="text-orange-500 transition-all duration-500"
+                        />
+                      </svg>
+                      <span className="absolute text-2xl font-black text-white">
+                        {progress}%
                       </span>
                     </div>
-                    <div className="flex gap-2">
-                      <div
-                        className={`p-1 rounded ${
-                          completedExercises.includes(ex.exerciseId)
-                            ? "text-orange-500"
-                            : "text-zinc-800"
+                    <p className="text-sm font-bold text-zinc-400 flex items-center justify-center gap-2">
+                      <Target size={14} className="text-orange-500" /> Jo
+                    </p>
+                  </div>
+
+                  {/* Partner progress */}
+                  <div className="text-center space-y-4">
+                    <div className="relative inline-flex items-center justify-center">
+                      <svg className="w-32 h-32 transform -rotate-90">
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="58"
+                          stroke="currentColor"
+                          strokeWidth="8"
+                          fill="transparent"
+                          className="text-zinc-800"
+                        />
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="58"
+                          stroke="currentColor"
+                          strokeWidth="8"
+                          fill="transparent"
+                          strokeDasharray={364.4}
+                          strokeDashoffset={
+                            364.4 -
+                            (364.4 * (partnerProgress?.progressPercentage || 0)) /
+                            100
+                          }
+                          className="text-blue-500 transition-all duration-500"
+                        />
+                      </svg>
+                      <span className="absolute text-2xl font-black text-white">
+                        {partnerProgress?.progressPercentage || 0}%
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold text-zinc-400 flex items-center justify-center gap-2">
+                      <Users size={14} className="text-blue-500" /> Contrincant
+                    </p>
+                    {partnerProgress?.exerciseName &&
+                      partnerProgress.currentSet != null &&
+                      partnerProgress.totalSets != null && (
+                        <p className="text-xs text-zinc-500 mt-1">
+                          {t("virtualRoom.partnerLocation", {
+                            exercise: partnerProgress.exerciseName,
+                            set: partnerProgress.currentSet,
+                            total: partnerProgress.totalSets,
+                          })}
+                        </p>
+                      )}
+                  </div>
+                </div>
+
+                {/* Exercise list */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-zinc-500 uppercase mb-4 tracking-widest">
+                    Llista d'exercicis
+                  </h4>
+                  {selectedRoutine.exercises?.map((ex, i) => (
+                    <div
+                      key={i}
+                      className={`flex items-center justify-between p-4 rounded-xl border ${i === currentExerciseIdx
+                          ? "bg-orange-500/5 border-orange-500/20"
+                          : "bg-black border-zinc-800"
                         }`}
-                      >
-                        <Check size={20} strokeWidth={3} />
+                    >
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${i <= currentExerciseIdx
+                              ? "bg-orange-500 text-white"
+                              : "bg-zinc-800 text-zinc-500"
+                            }`}
+                        >
+                          {i + 1}
+                        </div>
+                        <span
+                          className={`font-bold ${i === currentExerciseIdx
+                              ? "text-white"
+                              : "text-zinc-500"
+                            }`}
+                        >
+                          {ex.exercise.name}
+                        </span>
                       </div>
-                      <div
-                        className={`p-1 rounded ${
-                          partnerProgress?.completedExercises.includes(
+                      <div className="flex gap-2">
+                        <div
+                          className={`p-1 rounded ${completedExercises.includes(ex.exerciseId)
+                              ? "text-orange-500"
+                              : "text-zinc-800"
+                            }`}
+                        >
+                          <Check size={20} strokeWidth={3} />
+                        </div>
+                        <div
+                          className={`p-1 rounded ${partnerProgress?.completedExercises.includes(
                             ex.exerciseId
                           )
-                            ? "text-blue-500"
-                            : "text-zinc-800"
-                        }`}
-                      >
-                        <Check size={20} strokeWidth={3} />
+                              ? "text-blue-500"
+                              : "text-zinc-800"
+                            }`}
+                        >
+                          <Check size={20} strokeWidth={3} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Leave button */}

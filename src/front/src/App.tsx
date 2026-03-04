@@ -12,6 +12,7 @@ import ExercisesEdit from "./pages/ExercisesEdit";
 import ClientInvitations from "./pages/ClientInvitations";
 import Programs from "./pages/Programs";
 import VirtualGymRoom from "./pages/VirtualGymRoom";
+import SoloGymSession from "./pages/SoloGymSession";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 import { useNotification } from "./context/NotificationContext";
@@ -205,6 +206,14 @@ const AppContent = () => {
                     : "ESTADO: DESCONECTADO 🔴"}
                 </div>
               </div>
+            }
+          />
+          <Route
+            path="/workout/:id"
+            element={
+              <ProtectedRoute>
+                <SoloGymSession />
+              </ProtectedRoute>
             }
           />
         </Routes>

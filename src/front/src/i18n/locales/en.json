@@ -63,6 +63,7 @@
   "routines": {
     "title": "My Routines",
     "createNew": "New Routine",
+    "startRoutine": "Start Routine",
     "name": "Name",
     "description": "Description",
     "exercises": "Exercises",

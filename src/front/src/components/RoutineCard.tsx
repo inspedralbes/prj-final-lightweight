@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Trash2, Edit, Calendar } from "./Icons";
+import { Trash2, Edit, Calendar, Play } from "./Icons";
 import { useTranslation } from "react-i18next";
 
 interface RoutineCardProps {
@@ -30,7 +30,7 @@ const RoutineCard = ({
   });
 
   return (
-    <div className="bg-[#1a1a1a] rounded-xl p-4 md:p-5 border border-transparent hover:border-orange-500/20 transition-all duration-300 group shadow-lg hover:shadow-orange-500/5">
+    <div className="bg-[#1a1a1a] rounded-xl p-4 md:p-5 border border-transparent hover:border-orange-500/20 transition-all duration-300 group shadow-lg hover:shadow-orange-500/5 flex flex-col h-full">
       <div className="flex justify-between items-start mb-4">
         <div className="p-2 md:p-3 rounded-lg bg-[#252525] text-orange-500 group-hover:scale-110 transition-transform duration-300">
           <img
@@ -67,7 +67,7 @@ const RoutineCard = ({
         {name}
       </h3>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4 text-sm text-gray-500 mt-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4 text-sm text-gray-500 mt-4 flex-grow">
         <button
           onClick={() => navigate(`/routine/${id}/edit`)}
           className="flex items-center gap-1.5 bg-[#0a0a0a] px-2 py-1 rounded text-xs border border-[#2a2a2a] hover:border-orange-500/40 hover:text-orange-400 transition-colors cursor-pointer w-full sm:w-auto justify-center sm:justify-start"
@@ -80,6 +80,16 @@ const RoutineCard = ({
           <Calendar className="w-3 h-3 flex-shrink-0" />
           {formattedDate}
         </div>
+      </div>
+
+      <div className="mt-6">
+        <button
+          onClick={() => navigate(`/workout/${id}`)}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-orange-500/10 active:scale-[0.98]"
+        >
+          <Play className="w-4 h-4 fill-current" />
+          {t("routines.startRoutine")}
+        </button>
       </div>
     </div>
   );
