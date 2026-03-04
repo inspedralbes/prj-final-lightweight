@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Copy, Check, Loader, Ticket } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "../hooks/useToast";
-import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
 import { invitationsService } from "../services/invitationsService";
 
@@ -11,7 +10,6 @@ export default function ClientInvitations() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const toast = useToast();
-  const { user } = useAuth();
 
   // Sección A: Generar Código
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
@@ -67,7 +65,7 @@ export default function ClientInvitations() {
 
     setLoadingAccept(true);
     try {
-      const response = await invitationsService.acceptInvitationCode(inputCode);
+      await invitationsService.acceptInvitationCode(inputCode);
       const acceptedCode = inputCode;
       setInputCode("");
       toast.success(
@@ -79,11 +77,21 @@ export default function ClientInvitations() {
         navigate(`/room/${acceptedCode}`, { state: { isHost: false } });
       }, 1500);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to accept invitation code";
+      let message: string;
+      if (error instanceof Error) {
+        // si el backend devolvió un string reconocible, podemos traducirlo
+        if (error.message.includes('own invitation')) {
+          message = t('invitations.selfUseError') || error.message;
+        } else {
+          message = error.message;
+        }
+      } else {
+        message = t(
+          'invitations.acceptError',
+        ) || 'Failed to accept invitation code';
+      }
       toast.error(message);
+      // no redirigimos en caso de error
     } finally {
       setLoadingAccept(false);
     }

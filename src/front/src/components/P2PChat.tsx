@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { socket } from "../services/socket";
 import { ArrowRight, X } from "./Icons";
-import { useTranslation } from "react-i18next";
 import { chatService } from "../services/chatService";
 import { useAuth } from "../context/AuthContext";
 

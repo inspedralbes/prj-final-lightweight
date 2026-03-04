@@ -41,9 +41,24 @@ export class InvitationsService {
       throw new NotFoundException('Invitation code not found');
     }
 
+    // un coach no puede usar su propio código
+    if (invitation.coachId === clientId) {
+      throw new BadRequestException('Cannot accept your own invitation code');
+    }
+
     this.checkExpiry(invitation);
 
-    if (invitation.status !== InvitationStatus.PENDING) {
+    // Si está pendiente, el comportamiento normal es aceptarla.
+    if (invitation.status === InvitationStatus.PENDING) {
+      // continue to transaction below
+    } else if (
+      invitation.status === InvitationStatus.ACCEPTED &&
+      invitation.clientId === clientId
+    ) {
+      // el invitado ya se había unido anteriormente; permitimos reingresar
+      return invitation;
+    } else {
+      // cualquier otro estado (REVOKED/EXPIRED/…)
       throw new BadRequestException(
         `Invitation is not usable (status: ${invitation.status})`,
       );
