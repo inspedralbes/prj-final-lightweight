@@ -366,17 +366,45 @@ export const ExercisesForm = ({
           {openSearch !== null && (
             <ExerciseSearchModal
               onClose={() => setOpenSearch(null)}
-              onSelect={(exercise) => {
-                updateExercise(openSearch, {
-                  name: exercise.name,
-                  exerciseId: exercise.id,
-                  level: exercise.level,
-                  category: exercise.category,
-                  forceType: exercise.forceType,
-                  mechanic: exercise.mechanic,
-                  equipment: exercise.equipment,
-                  primaryMuscle: exercise.primaryMuscle,
-                  description: exercise.description,
+              multiSelect={true}
+              onSelectMultiple={(exs) => {
+                if (!exs || exs.length === 0) return;
+                // replace current slot with first selected, insert rest after
+                setExercises((prev) => {
+                  const copy = [...prev];
+                  const first = exs[0];
+                  copy[openSearch] = {
+                    ...copy[openSearch],
+                    name: first.name,
+                    exerciseId: first.id,
+                    level: first.level,
+                    category: first.category,
+                    forceType: first.forceType,
+                    mechanic: first.mechanic,
+                    equipment: first.equipment,
+                    primaryMuscle: first.primaryMuscle,
+                    description: first.description,
+                  };
+                  // insert remaining
+                  if (exs.length > 1) {
+                    const rest = exs.slice(1).map((e) => ({
+                      name: e.name,
+                      exerciseId: e.id,
+                      sets: 3,
+                      reps: 10,
+                      rest: 60,
+                      level: e.level,
+                      category: e.category,
+                      forceType: e.forceType,
+                      mechanic: e.mechanic,
+                      equipment: e.equipment,
+                      primaryMuscle: e.primaryMuscle,
+                      description: e.description,
+                      notes: "",
+                    }));
+                    copy.splice(openSearch + 1, 0, ...rest);
+                  }
+                  return copy;
                 });
                 setOpenSearch(null);
               }}

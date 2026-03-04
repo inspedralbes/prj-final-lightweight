@@ -14,11 +14,13 @@ interface Exercise {
 }
 
 type Props = {
-  onSelect: (exercise: Exercise) => void;
+  onSelect?: (exercise: Exercise) => void;
+  onSelectMultiple?: (exercises: Exercise[]) => void;
+  multiSelect?: boolean;
   onClose: () => void;
 };
 
-export default function ExerciseSearchModal({ onSelect, onClose }: Props) {
+export default function ExerciseSearchModal({ onSelect, onSelectMultiple, multiSelect = false, onClose }: Props) {
   type Filters = {
     search?: string;
     page: number;
@@ -41,6 +43,7 @@ export default function ExerciseSearchModal({ onSelect, onClose }: Props) {
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(
     null,
   );
+  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
   // No longer need scroll effects - modal is fixed overlay
@@ -365,35 +368,49 @@ export default function ExerciseSearchModal({ onSelect, onClose }: Props) {
               </div>
             ) : (
               <div className="divide-y divide-[#2a2a2a]">
-                {results.map((exercise) => (
-                  <div
-                    key={exercise.id}
-                    onClick={() => setSelectedExercise(exercise)}
-                    className={`p-4 cursor-pointer transition-colors ${
-                      selectedExercise?.id === exercise.id
-                        ? "bg-orange-500/10 border-l-4 border-orange-500"
-                        : "hover:bg-[#1a1a1a] border-l-4 border-transparent"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-white text-sm md:text-base">
-                          {exercise.name}
-                        </h3>
-                        {exercise.category && (
-                          <p className="text-xs text-gray-400 mt-1 capitalize">
-                            {exercise.category}
-                          </p>
+                {results.map((exercise) => {
+                  const isSelected = selectedExercises.some((s) => s.id === exercise.id);
+                  return (
+                    <div
+                      key={exercise.id}
+                      onClick={() => {
+                        if (multiSelect) {
+                          // toggle
+                          setSelectedExercises((prev) =>
+                            prev.some((p) => p.id === exercise.id)
+                              ? prev.filter((p) => p.id !== exercise.id)
+                              : [...prev, exercise],
+                          );
+                        } else {
+                          setSelectedExercise(exercise);
+                        }
+                      }}
+                      className={`p-4 cursor-pointer transition-colors ${
+                        (selectedExercise?.id === exercise.id && !multiSelect) || isSelected
+                          ? "bg-orange-500/10 border-l-4 border-orange-500"
+                          : "hover:bg-[#1a1a1a] border-l-4 border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-white text-sm md:text-base">
+                            {exercise.name}
+                          </h3>
+                          {exercise.category && (
+                            <p className="text-xs text-gray-400 mt-1 capitalize">
+                              {exercise.category}
+                            </p>
+                          )}
+                        </div>
+                        {exercise.level && (
+                          <span className="bg-orange-500/20 text-orange-400 px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap capitalize">
+                            {exercise.level}
+                          </span>
                         )}
                       </div>
-                      {exercise.level && (
-                        <span className="bg-orange-500/20 text-orange-400 px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap capitalize">
-                          {exercise.level}
-                        </span>
-                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -437,15 +454,22 @@ export default function ExerciseSearchModal({ onSelect, onClose }: Props) {
             </button>
             <button
               onClick={() => {
-                if (selectedExercise) {
-                  onSelect(selectedExercise);
-                  onClose();
+                if (multiSelect) {
+                  if (selectedExercises.length > 0 && onSelectMultiple) {
+                    onSelectMultiple(selectedExercises);
+                    onClose();
+                  }
+                } else {
+                  if (selectedExercise && onSelect) {
+                    onSelect(selectedExercise);
+                    onClose();
+                  }
                 }
               }}
-              disabled={!selectedExercise}
+              disabled={multiSelect ? selectedExercises.length === 0 : !selectedExercise}
               className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
             >
-              Select Exercise
+              {multiSelect ? "Select Exercises" : "Select Exercise"}
             </button>
           </div>
         </div>
@@ -567,8 +591,10 @@ export default function ExerciseSearchModal({ onSelect, onClose }: Props) {
             </button>
             <button
               onClick={() => {
-                onSelect(selectedExercise);
-                setSelectedExercise(null);
+                if (selectedExercise && onSelect) {
+                  onSelect(selectedExercise);
+                  setSelectedExercise(null);
+                }
               }}
               className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded text-sm font-medium transition-colors"
             >

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { Trash2, Edit, Calendar } from "./Icons";
 import { useTranslation } from "react-i18next";
 
@@ -25,6 +26,10 @@ const RoutineCard = ({
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [clientsHover, setClientsHover] = useState(false);
+  const { user } = useAuth();
+
+  const canEdit =
+    user && (user.role === "COACH" || (user.role === "CLIENT" && !user.coachId));
 
   // Format date nicely
   const formattedDate = new Date(createdAt).toLocaleDateString("en-US", {
@@ -35,8 +40,12 @@ const RoutineCard = ({
 
   return (
     <div
-      className="bg-[#1a1a1a] rounded-xl p-4 md:p-5 border border-transparent hover:border-orange-500/20 transition-all duration-300 group shadow-lg hover:shadow-orange-500/5 cursor-pointer"
-      onClick={() => navigate(`/routine/${id}/edit`)}
+      className={`bg-[#1a1a1a] rounded-xl p-4 md:p-5 border border-transparent hover:border-orange-500/20 transition-all duration-300 group shadow-lg hover:shadow-orange-500/5 ${
+        canEdit ? "cursor-pointer" : "cursor-default"
+      }`}
+      onClick={() => {
+        if (canEdit) navigate(`/routine/${id}/edit`);
+      }}
     >
       <div className="flex justify-between items-start mb-4">
         <div className="p-2 md:p-3 rounded-lg bg-[#252525] text-orange-500 group-hover:scale-110 transition-transform duration-300">
@@ -46,28 +55,30 @@ const RoutineCard = ({
             className="w-6 h-6 md:w-7 md:h-7 object-contain"
           />
         </div>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(id);
-            }}
-            className="p-1.5 hover:bg-[#333] rounded-md text-gray-400 hover:text-blue-400 transition-colors"
-            title={t("routines.edit")}
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(id);
-            }}
-            className="p-1.5 hover:bg-[#333] rounded-md text-gray-400 hover:text-red-500 transition-colors"
-            title={t("routines.delete")}
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+        {canEdit && (
+          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(id);
+              }}
+              className="p-1.5 hover:bg-[#333] rounded-md text-gray-400 hover:text-blue-400 transition-colors"
+              title={t("routines.edit")}
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(id);
+              }}
+              className="p-1.5 hover:bg-[#333] rounded-md text-gray-400 hover:text-red-500 transition-colors"
+              title={t("routines.delete")}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       <h3 className="text-base md:text-lg font-semibold text-white mb-1 group-hover:text-orange-500 transition-colors truncate">
