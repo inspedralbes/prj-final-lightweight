@@ -7,6 +7,7 @@ import { LoadingScreen } from "../components/LoadingScreen";
 import { ChevronLeft } from "../components/Icons";
 import api from "../utils/api";
 import type { ExerciseItem } from "../components/ExercisesForm";
+import { useAuth } from "../context/AuthContext";
 
 interface RoutineExercise {
   exercise?: {
@@ -35,12 +36,21 @@ export const ExercisesEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuth();
+
+  const canEdit =
+    user && (user.role === "COACH" || (user.role === "CLIENT" && !user.coachId));
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [routineName, setRoutineName] = useState("");
   const [initial, setInitial] = useState<RoutineData | null>(null);
 
   useEffect(() => {
+    if (user && !canEdit) {
+      alert(t("messages.noPermission") || "No tienes permiso para editar esta rutina");
+      navigate("/dashboard");
+      return;
+    }
     const load = async () => {
       try {
         setLoading(true);
@@ -75,6 +85,10 @@ export const ExercisesEdit = () => {
   }, [id, t]);
 
   const handleSubmit = async (payload: { exercises: ExerciseItem[] }) => {
+    if (!canEdit) {
+      alert(t("messages.noPermission") || "No tienes permiso para editar esta rutina");
+      return;
+    }
     try {
       setSubmitting(true);
       // Name is kept as-is; only exercises are edited from this page
