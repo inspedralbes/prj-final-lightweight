@@ -48,7 +48,8 @@
     "sendReset": "Enviar sol\u00b7licitud",
     "invalidCredentials": "Usuari o contrasenya invàlids",
     "acceptTerms": "Accepto els",
-    "termsLink": "Termes i Condicions"
+    "termsLink": "Termes i Condicions",
+    "passwordMinLength": "La contrasenya ha de tenir com a mínim {{count}} caràcters"
   },
   "sidebar": {
     "dashboard": "Panell de control",

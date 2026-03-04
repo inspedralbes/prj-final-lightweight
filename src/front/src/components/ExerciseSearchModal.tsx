@@ -43,6 +43,8 @@ export default function ExerciseSearchModal({ onSelect, onClose }: Props) {
   );
   const [showFilters, setShowFilters] = useState(false);
 
+  // No longer need scroll effects - modal is fixed overlay
+
   // static options (could be fetched from backend)
   const LEVELS = [
     { value: "", label: "Any" },
@@ -134,10 +136,20 @@ export default function ExerciseSearchModal({ onSelect, onClose }: Props) {
   }, [filters]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="border-b border-[#2a2a2a] p-4 md:p-6">
+    <>
+      {/* Overlay that closes modal when clicked outside */}
+      {true && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Search Modal - flows with page, not fixed */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div className="bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col overflow-y-auto pointer-events-auto">
+            {/* Header */}
+          <div className="border-b border-[#2a2a2a] p-4 md:p-6">
           <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
             Search Exercises
           </h2>
@@ -164,65 +176,14 @@ export default function ExerciseSearchModal({ onSelect, onClose }: Props) {
             </div>
           </div>
 
-          {/* Active filters + Clear All */}
-          <div className="mt-3 flex items-center gap-2 flex-wrap">
-            {filters.search && (
-              <button
-                onClick={() => updateFilters({ search: "" })}
-                className="bg-gray-700 text-white px-2 py-1 rounded text-xs"
-              >
-                {filters.search} ✕
-              </button>
-            )}
-            {filters.level && (
-              <button
-                onClick={() => updateFilters({ level: undefined })}
-                className="bg-orange-500 text-white px-2 py-1 rounded text-xs"
-              >
-                {filters.level} ✕
-              </button>
-            )}
-            {filters.category && (
-              <button
-                onClick={() => updateFilters({ category: undefined })}
-                className="bg-gray-700 text-white px-2 py-1 rounded text-xs"
-              >
-                {filters.category} ✕
-              </button>
-            )}
-            {filters.force && (
-              <button
-                onClick={() => updateFilters({ force: undefined })}
-                className="bg-gray-700 text-white px-2 py-1 rounded text-xs"
-              >
-                {filters.force} ✕
-              </button>
-            )}
-            {filters.mechanic && (
-              <button
-                onClick={() => updateFilters({ mechanic: undefined })}
-                className="bg-gray-700 text-white px-2 py-1 rounded text-xs"
-              >
-                {filters.mechanic} ✕
-              </button>
-            )}
-            {filters.equipment && (
-              <button
-                onClick={() => updateFilters({ equipment: undefined })}
-                className="bg-gray-700 text-white px-2 py-1 rounded text-xs"
-              >
-                {filters.equipment} ✕
-              </button>
-            )}
-            {filters.primaryMuscle && (
-              <button
-                onClick={() => updateFilters({ primaryMuscle: undefined })}
-                className="bg-orange-500 text-white px-2 py-1 rounded text-xs"
-              >
-                {filters.primaryMuscle} ✕
-              </button>
-            )}
+          {/* filters moved into scrollable content so header stays compact */}
+          </div>
 
+        {/* Content */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {/* Results list (no inner scrolling) */}
+          <div className="overflow-y-auto flex-1">
+            {/* Active filters + Clear All (moved into scrollable area) */}
             {(filters.search ||
               filters.level ||
               filters.category ||
@@ -230,160 +191,291 @@ export default function ExerciseSearchModal({ onSelect, onClose }: Props) {
               filters.mechanic ||
               filters.equipment ||
               filters.primaryMuscle) && (
-              <button
-                onClick={() => setFilters({ search: "", page: 1, limit: 10 })}
-                className="ml-2 text-xs px-3 py-1 bg-red-600 text-white rounded"
-              >
-                Clear All
-              </button>
-            )}
-          </div>
-
-          {showFilters && (
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
-              <select
-                value={filters.level || ""}
-                onChange={(e) => updateFilters({ level: e.target.value })}
-                className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-white text-sm"
-              >
-                {LEVELS.map((l) => (
-                  <option key={l.value} value={l.value} className="text-black">
-                    {l.label}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={filters.category || ""}
-                onChange={(e) => updateFilters({ category: e.target.value })}
-                className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-white text-sm"
-              >
-                <option value="">Any</option>
-                {CATEGORIES.filter(Boolean).map((c) => (
-                  <option key={c} value={c} className="text-black">
-                    {c}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={filters.force || ""}
-                onChange={(e) => updateFilters({ force: e.target.value })}
-                className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-white text-sm"
-              >
-                <option value="">Any</option>
-                {FORCES.filter(Boolean).map((f) => (
-                  <option key={f} value={f} className="text-black">
-                    {f}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={filters.mechanic || ""}
-                onChange={(e) => updateFilters({ mechanic: e.target.value })}
-                className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-white text-sm"
-              >
-                <option value="">Any</option>
-                {MECHANICS.filter(Boolean).map((m) => (
-                  <option key={m} value={m} className="text-black">
-                    {m}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={filters.equipment || ""}
-                onChange={(e) => updateFilters({ equipment: e.target.value })}
-                className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-white text-sm"
-              >
-                <option value="">Any</option>
-                {EQUIPMENT.filter(Boolean).map((eq) => (
-                  <option key={eq} value={eq} className="text-black">
-                    {eq}
-                  </option>
-                ))}
-              </select>
-
-              {/* Primary muscle chips */}
-              <div className="md:col-span-3">
-                <p className="text-xs text-gray-400 mb-1">Primary muscle</p>
-                <div className="flex flex-wrap gap-2">
-                  {MUSCLES.map((m) => (
-                    <button
-                      key={m}
-                      onClick={() =>
-                        updateFilters({
-                          primaryMuscle:
-                            filters.primaryMuscle === m ? undefined : m,
-                        })
-                      }
-                      className={`px-3 py-1 rounded text-sm ${filters.primaryMuscle === m ? "bg-orange-500 text-white" : "bg-gray-800 text-white"}`}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Results */}
-        <div className="flex-1 overflow-y-auto">
-          {filters.search && (
-            <p className="text-xs text-gray-400 mb-2">
-              Showing results for "{filters.search.trim()}"
-            </p>
-          )}
-          {results.length === 0 ? (
-            <div className="flex items-center justify-center h-32 text-gray-500">
-              {filters.search ? "No exercises found" : "Start typing to search"}
-            </div>
-          ) : (
-            <div className="divide-y divide-[#2a2a2a]">
-              {results.map((exercise) => (
-                <div
-                  key={exercise.id}
-                  onClick={() => setSelectedExercise(exercise)}
-                  className={`p-4 cursor-pointer transition-colors ${
-                    selectedExercise?.id === exercise.id
-                      ? "bg-orange-500/10 border-l-4 border-orange-500"
-                      : "hover:bg-[#1a1a1a] border-l-4 border-transparent"
-                  }`}
+              <div className="p-4 md:p-6 flex items-center gap-2 flex-wrap border-b border-[#2a2a2a]">
+              {filters.search && (
+                <button
+                  onClick={() => updateFilters({ search: "" })}
+                  className="bg-gray-700 text-white px-2 py-1 rounded text-xs"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-white text-sm md:text-base">
-                        {exercise.name}
-                      </h3>
-                      {exercise.category && (
-                        <p className="text-xs text-gray-400 mt-1 capitalize">
-                          {exercise.category}
-                        </p>
-                      )}
-                    </div>
-                    {exercise.level && (
-                      <span className="bg-orange-500/20 text-orange-400 px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap capitalize">
-                        {exercise.level}
-                      </span>
-                    )}
+                  {filters.search} ✕
+                </button>
+              )}
+              {filters.level && (
+                <button
+                  onClick={() => updateFilters({ level: undefined })}
+                  className="bg-orange-500 text-white px-2 py-1 rounded text-xs"
+                >
+                  {filters.level} ✕
+                </button>
+              )}
+              {filters.category && (
+                <button
+                  onClick={() => updateFilters({ category: undefined })}
+                  className="bg-gray-700 text-white px-2 py-1 rounded text-xs"
+                >
+                  {filters.category} ✕
+                </button>
+              )}
+              {filters.force && (
+                <button
+                  onClick={() => updateFilters({ force: undefined })}
+                  className="bg-gray-700 text-white px-2 py-1 rounded text-xs"
+                >
+                  {filters.force} ✕
+                </button>
+              )}
+              {filters.mechanic && (
+                <button
+                  onClick={() => updateFilters({ mechanic: undefined })}
+                  className="bg-gray-700 text-white px-2 py-1 rounded text-xs"
+                >
+                  {filters.mechanic} ✕
+                </button>
+              )}
+              {filters.equipment && (
+                <button
+                  onClick={() => updateFilters({ equipment: undefined })}
+                  className="bg-gray-700 text-white px-2 py-1 rounded text-xs"
+                >
+                  {filters.equipment} ✕
+                </button>
+              )}
+              {filters.primaryMuscle && (
+                <button
+                  onClick={() => updateFilters({ primaryMuscle: undefined })}
+                  className="bg-orange-500 text-white px-2 py-1 rounded text-xs"
+                >
+                  {filters.primaryMuscle} ✕
+                </button>
+              )}
+
+              {(filters.search ||
+                filters.level ||
+                filters.category ||
+                filters.force ||
+                filters.mechanic ||
+                filters.equipment ||
+                filters.primaryMuscle) && (
+                <button
+                  onClick={() => setFilters({ search: "", page: 1, limit: 10 })}
+                  className="ml-2 text-xs px-3 py-1 bg-red-600 text-white rounded"
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+            )}
+
+            {showFilters && (
+              <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-2 border-b border-[#2a2a2a]">
+                <select
+                  value={filters.level || ""}
+                  onChange={(e) => updateFilters({ level: e.target.value })}
+                  className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-white text-sm"
+                >
+                  {LEVELS.map((l) => (
+                    <option key={l.value} value={l.value} className="text-black">
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={filters.category || ""}
+                  onChange={(e) => updateFilters({ category: e.target.value })}
+                  className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-white text-sm"
+                >
+                  <option value="">Any</option>
+                  {CATEGORIES.filter(Boolean).map((c) => (
+                    <option key={c} value={c} className="text-black">
+                      {c}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={filters.force || ""}
+                  onChange={(e) => updateFilters({ force: e.target.value })}
+                  className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-white text-sm"
+                >
+                  <option value="">Any</option>
+                  {FORCES.filter(Boolean).map((f) => (
+                    <option key={f} value={f} className="text-black">
+                      {f}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={filters.mechanic || ""}
+                  onChange={(e) => updateFilters({ mechanic: e.target.value })}
+                  className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-white text-sm"
+                >
+                  <option value="">Any</option>
+                  {MECHANICS.filter(Boolean).map((m) => (
+                    <option key={m} value={m} className="text-black">
+                      {m}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={filters.equipment || ""}
+                  onChange={(e) => updateFilters({ equipment: e.target.value })}
+                  className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-white text-sm"
+                >
+                  <option value="">Any</option>
+                  {EQUIPMENT.filter(Boolean).map((eq) => (
+                    <option key={eq} value={eq} className="text-black">
+                      {eq}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Primary muscle chips */}
+                <div className="md:col-span-3">
+                  <p className="text-xs text-gray-400 mb-1">Primary muscle</p>
+                  <div className="flex flex-wrap gap-2">
+                    {MUSCLES.map((m) => (
+                      <button
+                        key={m}
+                        onClick={() =>
+                          updateFilters({
+                            primaryMuscle:
+                              filters.primaryMuscle === m ? undefined : m,
+                          })
+                        }
+                        className={`px-3 py-1 rounded text-sm ${filters.primaryMuscle === m ? "bg-orange-500 text-white" : "bg-gray-800 text-white"}`}
+                      >
+                        {m}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            )}
+            {filters.search && (
+              <p className="text-xs text-gray-400 mb-2">
+                Showing results for "{filters.search.trim()}"
+              </p>
+            )}
+            {results.length === 0 ? (
+              <div className="flex items-center justify-center h-32 text-gray-500">
+                {filters.search ? "No exercises found" : "Start typing to search"}
+              </div>
+            ) : (
+              <div className="divide-y divide-[#2a2a2a]">
+                {results.map((exercise) => (
+                  <div
+                    key={exercise.id}
+                    onClick={() => setSelectedExercise(exercise)}
+                    className={`p-4 cursor-pointer transition-colors ${
+                      selectedExercise?.id === exercise.id
+                        ? "bg-orange-500/10 border-l-4 border-orange-500"
+                        : "hover:bg-[#1a1a1a] border-l-4 border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-white text-sm md:text-base">
+                          {exercise.name}
+                        </h3>
+                        {exercise.category && (
+                          <p className="text-xs text-gray-400 mt-1 capitalize">
+                            {exercise.category}
+                          </p>
+                        )}
+                      </div>
+                      {exercise.level && (
+                        <span className="bg-orange-500/20 text-orange-400 px-2 py-1 rounded text-xs font-medium ml-2 whitespace-nowrap capitalize">
+                          {exercise.level}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Detail View */}
-        {selectedExercise && (
-          <div className="border-t border-[#2a2a2a] p-4 md:p-6 bg-[#111]">
-            <h3 className="text-lg font-bold text-white mb-3">
-              {selectedExercise.name}
-            </h3>
+        {/* Footer */}
+        <div className="border-t border-[#2a2a2a] p-4 md:p-6 flex justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                updateFilters(
+                  { page: Math.max((filters.page || 1) - 1, 1) },
+                  false,
+                );
+                setSelectedExercise(null);
+              }}
+              disabled={filters.page === 1}
+              className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-400">Page {filters.page}</span>
+            <button
+              onClick={() => {
+                updateFilters({ page: (filters.page || 1) + 1 }, false);
+                setSelectedExercise(null);
+              }}
+              disabled={results.length < (filters.limit || 10)}
+              className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
+            >
+              Next
+            </button>
+          </div>
 
-            {/* Info Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-xs">
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                if (selectedExercise) {
+                  onSelect(selectedExercise);
+                  onClose();
+                }
+              }}
+              disabled={!selectedExercise}
+              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
+            >
+              Select Exercise
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Exercise Detail Modal - opens when exercise is clicked */}
+    {selectedExercise && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
+            {/* Detail Header */}
+            <div className="sticky top-0 bg-[#0a0a0a] border-b border-[#2a2a2a] p-4 md:p-6 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-white">
+                {selectedExercise.name}
+                </h3>
+              <button
+                onClick={() => setSelectedExercise(null)}
+                className="text-gray-400 hover:text-white transition"
+                aria-label="Close detail view"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Detail Content */}
+            <div className="p-4 md:p-6 flex-1">
+              {/* Info Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-xs">
               {selectedExercise.level && (
                 <div className="bg-[#1a1a1a] rounded p-2">
                   <p className="text-gray-500 font-medium">Level</p>
@@ -456,7 +548,7 @@ export default function ExerciseSearchModal({ onSelect, onClose }: Props) {
                 <p className="text-xs text-gray-500 font-medium mb-2">
                   Instructions
                 </p>
-                <div className="bg-[#1a1a1a] rounded p-3 max-h-32 overflow-y-auto">
+                <div className="bg-[#1a1a1a] rounded p-3">
                   <p className="text-sm text-gray-300 whitespace-pre-wrap">
                     {selectedExercise.description}
                   </p>
@@ -464,59 +556,28 @@ export default function ExerciseSearchModal({ onSelect, onClose }: Props) {
               </div>
             )}
           </div>
-        )}
 
-        {/* Footer */}
-        <div className="border-t border-[#2a2a2a] p-4 md:p-6 flex justify-between gap-3">
-          <div className="flex items-center gap-2">
+          {/* Action Buttons */}
+          <div className="sticky bottom-0 border-t border-[#2a2a2a] bg-[#0a0a0a] p-4 md:p-6 flex gap-3">
             <button
-              onClick={() => {
-                updateFilters(
-                  { page: Math.max((filters.page || 1) - 1, 1) },
-                  false,
-                );
-                setSelectedExercise(null);
-              }}
-              disabled={filters.page === 1}
-              className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
-            >
-              Previous
-            </button>
-            <span className="text-sm text-gray-400">Page {filters.page}</span>
-            <button
-              onClick={() => {
-                updateFilters({ page: (filters.page || 1) + 1 }, false);
-                setSelectedExercise(null);
-              }}
-              disabled={results.length < (filters.limit || 10)}
-              className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
-            >
-              Next
-            </button>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
+              onClick={() => setSelectedExercise(null)}
               className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-medium transition-colors"
             >
-              Cancel
+              Back
             </button>
             <button
               onClick={() => {
-                if (selectedExercise) {
-                  onSelect(selectedExercise);
-                  onClose();
-                }
+                onSelect(selectedExercise);
+                setSelectedExercise(null);
               }}
-              disabled={!selectedExercise}
-              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded text-sm font-medium transition-colors"
             >
               Select Exercise
             </button>
           </div>
         </div>
       </div>
-    </div>
+    )}
+    </>
   );
 }
