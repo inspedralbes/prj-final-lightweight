@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Trash2, Edit, Calendar } from "./Icons";
+import { Trash2, Edit, Calendar, Play } from "./Icons";
 import { useTranslation } from "react-i18next";
 
 interface RoutineCardProps {
@@ -29,7 +29,8 @@ const RoutineCard = ({
   const { user } = useAuth();
 
   const canEdit =
-    user && (user.role === "COACH" || (user.role === "CLIENT" && !user.coachId));
+    user &&
+    (user.role === "COACH" || (user.role === "CLIENT" && !user.coachId));
 
   // Format date nicely
   const formattedDate = new Date(createdAt).toLocaleDateString("en-US", {
@@ -189,15 +190,7 @@ const RoutineCard = ({
         </div>
       </div>
 
-      <div className="mt-6">
-        <button
-          onClick={() => navigate(`/workout/${id}`)}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-orange-500/10 active:scale-[0.98]"
-        >
-          <Play className="w-4 h-4 fill-current" />
-          {t("routines.startRoutine")}
-        </button>
-      </div>
+      <div className="mt-6"></div>
     </div>
   );
 };

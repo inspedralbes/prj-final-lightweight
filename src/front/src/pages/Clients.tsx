@@ -162,7 +162,6 @@ const Clients = () => {
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
               {t("clients.title")}
             </h1>
-            <p className="text-gray-500">{t("home.welcome")}</p>
           </div>
           <button
             onClick={() => setIsInviteModalOpen(true)}

@@ -28,7 +28,8 @@ const Dashboard = () => {
   const toast = useToast();
   const { user } = useAuth();
   const canEdit =
-    user && (user.role === "COACH" || (user.role === "CLIENT" && !user.coachId));
+    user &&
+    (user.role === "COACH" || (user.role === "CLIENT" && !user.coachId));
 
   const fetchRoutines = async () => {
     try {
@@ -60,7 +61,9 @@ const Dashboard = () => {
 
   const handleCreateClick = () => {
     if (!canEdit) {
-      alert(t("messages.noPermission") || "No tienes permiso para crear rutinas");
+      alert(
+        t("messages.noPermission") || "No tienes permiso para crear rutinas",
+      );
       return;
     }
     setCurrentRoutine(null);
