@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { socket } from "@/features/workout/services/socket";
-import { ArrowRight, X } from "../../../shared/components/Icons";
+import { ArrowRight, X } from "@/shared/components/Icons";
 import { chatService } from "@/features/chat/services/chatService";
 import { useAuth } from "@/features/auth/context/AuthContext";
-import { useTranslation } from "react-i18next";
 
 interface Message {
   text: string;
@@ -15,31 +14,21 @@ interface P2PChatProps {
   roomId: string;
   onClose: () => void;
   title: string;
-  isInitiator?: boolean;
-  otherUserId?: number;
+  otherUserId: number;
 }
 
 const P2PChat: React.FC<P2PChatProps> = ({
   roomId,
   onClose,
   title,
-  isInitiator,
   otherUserId,
 }) => {
-  useTranslation();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
-  const [status, setStatus] = useState<
-    "connecting" | "connected" | "disconnected"
-  >("connecting");
-  const [socketStatus, setSocketStatus] = useState(
-    socket.connected ? "connected" : "disconnected",
-  );
+  // starts in "connecting" while we wait for partner info; offline only if socket truly disconnects
+  const [status, setStatus] = useState<"connected" | "connecting" | "offline">("connecting");
   const [sending, setSending] = useState(false);
-
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const dcRef = useRef<RTCDataChannel | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToEnd = () => {
@@ -50,43 +39,34 @@ const P2PChat: React.FC<P2PChatProps> = ({
     scrollToEnd();
   }, [messages]);
 
+  // keep track of underlying socket state so we can show offline indicator
   useEffect(() => {
-    const handleConnect = () => setSocketStatus("connected");
-    const handleDisconnect = () => setSocketStatus("disconnected");
-    socket.on("connect", handleConnect);
-    socket.on("disconnect", handleDisconnect);
-
-    // Mensajes P2P recibidos por socket (fallback)
-    const handleP2PMessage = (data: any) => {
-      if (data && data.text) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: data.text,
-            sender: "them",
-            timestamp: new Date(data.timestamp),
-          },
-        ]);
-        // marcar en el servidor como leído si viene el ID
-        if (data.messageId) {
-          chatService
-            .markAsRead([data.messageId])
-            .catch((e) =>
-              console.error("Error marking incoming message read:", e),
-            );
-        }
+    const handleDisconnect = () => setStatus("offline");
+    const handleConnect = () => {
+      setStatus("connecting");
+      // if we reconnect, notify and re-check with partner
+      if (user && otherUserId) {
+        socket.emit("open-chat", {
+          userId: user.id,
+          roomId,
+          otherUserId,
+        });
+        socket.emit("get-chat-status", {
+          roomId,
+          userId: user.id,
+          otherUserId,
+        });
       }
     };
-    socket.on("p2p-message", handleP2PMessage);
-
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect", handleConnect);
     return () => {
-      socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
-      socket.off("p2p-message", handleP2PMessage);
+      socket.off("connect", handleConnect);
     };
-  }, []);
+  }, [roomId, otherUserId, user]);
 
-  // Cargar la conversación previa y marcar mensajes no leídos como leídos
+  // Cargar la conversación previa
   useEffect(() => {
     if (otherUserId && user) {
       chatService
@@ -116,80 +96,85 @@ const P2PChat: React.FC<P2PChatProps> = ({
   }, [otherUserId, user]);
 
   useEffect(() => {
-    console.log(
-      `[WebRTC] Setting up PC for room: ${roomId} (Initiator: ${isInitiator})`,
-    );
+    console.log("[P2PChat] mounting, socket.connected=", socket.connected);
+    if (!user || !otherUserId) return;
 
-    // Notificar al otro usuario que estamos en el chat
-    socket.emit("chat-notification", {
+    // Notificar que abrimos el chat
+    socket.emit("open-chat", {
+      userId: user.id,
       roomId,
-      message: "Alguien ha abierto el chat contigo",
+      otherUserId,
     });
 
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    // Pedir estado inicial
+    socket.emit("get-chat-status", {
+      roomId,
+      userId: user.id,
+      otherUserId,
     });
-    pcRef.current = pc;
 
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        console.log("[WebRTC] Sending ICE candidate");
-        socket.emit("ice-candidate", { roomId, candidate: event.candidate });
+    // Escuchar eventos en tiempo real
+    const handleChatPartnerStatus = (data: {
+      roomId: string;
+      userId: number;
+      status: "connected" | "connecting" | "disconnected";
+    }) => {
+      console.log("[P2PChat] chat-partner-status received", data);
+      if (data.roomId === roomId) {
+        setStatus(data.status === "connected" ? "connected" : "connecting");
       }
     };
 
-    const setupDataChannel = (channel: RTCDataChannel) => {
-      console.log(`[WebRTC] DataChannel setup: ${channel.label}`);
-      dcRef.current = channel;
-      channel.onopen = () => {
-        console.log("[WebRTC] DataChannel OPEN");
-        setStatus("connected");
-      };
-      channel.onclose = () => {
-        console.log("[WebRTC] DataChannel CLOSED");
-        setStatus("disconnected");
-      };
-      channel.onmessage = (event) => {
-        console.log("[WebRTC] Message received:", event.data);
+    const handleChatStatus = (data: {
+      roomId: string;
+      status: "connected" | "connecting";
+      otherUserConnected: boolean;
+    }) => {
+      console.log("[P2PChat] chat-status reply", data);
+      if (data.roomId === roomId) {
+        setStatus(data.status);
+      }
+    };
+
+    const handleP2PMessage = (data: any) => {
+      console.log("[P2PChat] p2p-message received", data);
+      if (data && data.text) {
         setMessages((prev) => [
           ...prev,
-          { text: event.data, sender: "them", timestamp: new Date() },
+          {
+            text: data.text,
+            sender: "them",
+            timestamp: new Date(data.timestamp || Date.now()),
+          },
         ]);
-      };
+        // Marcar como leído si viene el ID
+        if (data.messageId) {
+          chatService
+            .markAsRead([data.messageId])
+            .catch((e) =>
+              console.error("Error marking incoming message read:", e),
+            );
+        }
+      }
     };
 
-    if (isInitiator) {
-      console.log("[WebRTC] Creating DataChannel as initiator");
-      const dc = pc.createDataChannel("chat");
-      setupDataChannel(dc);
-    }
-
-    socket.emit("join-room", roomId);
-
-    // Indicar al servidor que este usuario tiene abierto este chat
-    if (user && user.id) {
-      socket.emit("open-chat", { userId: user.id, roomId });
-    }
-    pc.ondatachannel = (event) => {
-      console.log("[WebRTC] DataChannel received");
-      setupDataChannel(event.channel);
-    };
+    socket.on("chat-partner-status", handleChatPartnerStatus);
+    socket.on("chat-status", handleChatStatus);
+    socket.on("p2p-message", handleP2PMessage);
 
     return () => {
-      console.log("[WebRTC] Cleaning up...");
-      // indicar al servidor que cerramos el chat y salimos de la sala de señalización
-      if (user && user.id) {
-        socket.emit("close-chat", { userId: user.id, roomId });
-      }
-      socket.emit("leave-room", roomId);
-      pc.close();
-      socket.off("offer");
-      socket.off("answer");
-      socket.off("ice-candidate");
-      socket.off("user-joined");
-      socket.off("current-peers");
+      socket.off("chat-partner-status", handleChatPartnerStatus);
+      socket.off("chat-status", handleChatStatus);
+      socket.off("p2p-message", handleP2PMessage);
+
+      // Notificar que cerramos el chat
+      socket.emit("close-chat", {
+        userId: user.id,
+        roomId,
+        otherUserId,
+      });
     };
-  }, [roomId, isInitiator]);
+  }, [roomId, otherUserId, user]);
 
   const sendMessage = async () => {
     if (!inputText.trim() || !user) return;
@@ -198,21 +183,17 @@ const P2PChat: React.FC<P2PChatProps> = ({
     setSending(true);
 
     try {
-      // Guardar en backend y notificar siempre
-      if (otherUserId) {
-        await chatService.sendMessage(otherUserId, text);
-        socket.emit("send-p2p-message", {
-          senderId: user.id,
-          receiverId: otherUserId,
-          text: text,
-        });
-      }
+      // Enviar el mensaje
+      await chatService.sendMessage(otherUserId, text);
 
-      // Enviar por data channel si está abierto
-      if (dcRef.current && dcRef.current.readyState === "open") {
-        dcRef.current.send(text);
-      }
+      // Emitir por WebSocket
+      socket.emit("send-p2p-message", {
+        senderId: user.id,
+        receiverId: otherUserId,
+        text: text,
+      });
 
+      // Agregar mensaje localmente
       setMessages((prev) => [
         ...prev,
         { text, sender: "me", timestamp: new Date() },
@@ -225,32 +206,29 @@ const P2PChat: React.FC<P2PChatProps> = ({
     }
   };
 
+  const getStatusColor = () => {
+    if (status === "connected") return "bg-green-500";
+    if (status === "connecting") return "bg-orange-500";
+    return "bg-gray-500";
+  };
+
+  const getStatusText = () => {
+    if (status === "connected") return "En línea";
+    if (status === "connecting") return "No conectado";
+    return "Desconectado";
+  };
+
   return (
     <div className="flex flex-col h-[400px] w-full bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-[#2a2a2a] bg-[#1a1a1a]">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-2 h-2 rounded-full ${status === "connected" ? "bg-green-500" : "bg-orange-500"}`}
-            />
-            <span className="text-sm font-medium text-white">{title}</span>
-            <span className="text-[10px] text-gray-600 font-mono">
-              ({roomId})
-            </span>
-          </div>
-          <span className="text-[10px] text-gray-500">
-            {status === "connected"
-              ? "P2P Directo ✔"
-              : `Signaling: ${socketStatus}`}
-          </span>
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} />
+          <span className="text-sm font-medium text-white">{title}</span>
+          <span className="text-[10px] text-gray-500">{getStatusText()}</span>
         </div>
         <button
           onClick={() => {
-            if (user && user.id) {
-              socket.emit("close-chat", { userId: user.id, roomId });
-            }
-            socket.emit("leave-room", roomId);
             onClose();
           }}
           className="text-gray-400 hover:text-white"
@@ -261,26 +239,9 @@ const P2PChat: React.FC<P2PChatProps> = ({
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-        {status !== "connected" && (
+        {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
-            <p className="text-gray-500 text-xs italic">
-              {socketStatus === "connected"
-                ? "Esperando al otro usuario..."
-                : "Conectando al servidor..."}
-            </p>
-            {isInitiator && socketStatus === "connected" && (
-              <button
-                onClick={() => {
-                  console.log("[WebRTC] Manual retry...");
-                  socket.emit("join-room", roomId);
-                  socket.emit("user-joined", { roomId });
-                }}
-                className="text-[10px] text-orange-500 underline"
-              >
-                Reintentar Handshake
-              </button>
-            )}
+            <p className="text-gray-500 text-sm">Inicia la conversación</p>
           </div>
         )}
         {messages.map((msg, i) => (
@@ -310,8 +271,8 @@ const P2PChat: React.FC<P2PChatProps> = ({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="Type a message..."
-            className="flex-1 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-sm text-white focus:border-orange-500 focus:outline-none disabled:opacity-50"
+            placeholder="Escribe un mensaje..."
+            className="flex-1 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-orange-500 focus:outline-none disabled:opacity-50"
           />
           <button
             onClick={sendMessage}
@@ -321,11 +282,6 @@ const P2PChat: React.FC<P2PChatProps> = ({
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
-        {status !== "connected" && socketStatus === "connected" && (
-          <p className="text-xs text-orange-400 mt-2">
-            📡 Usando fallback a servidor (P2P no disponible)
-          </p>
-        )}
       </div>
     </div>
   );

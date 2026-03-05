@@ -155,14 +155,13 @@ const ClientHome = () => {
       )}
 
       {/* Chat Overlay */}
-      {isChatOpen && user && (
+      {isChatOpen && user && user.coachId && (
         <div className="fixed bottom-24 right-6 z-50 w-80 md:w-96 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
           <P2PChat
             roomId={`chat_client_${user.id}`}
             title="Chat con mi Entrenador"
             onClose={() => setIsChatOpen(false)}
-            isInitiator={false}
-            otherUserId={user.coachId || undefined}
+            otherUserId={user.coachId}
           />
         </div>
       )}

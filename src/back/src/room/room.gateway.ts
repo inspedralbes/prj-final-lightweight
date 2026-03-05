@@ -21,7 +21,11 @@ interface RoomUser {
 @Injectable()
 @WebSocketGateway({
   cors: {
-    origin: [process.env.FRONTEND_URL || 'http://localhost:5173'],
+    origin: [
+      process.env.FRONTEND_URL || '',
+      'http://localhost:5173',
+      'http://localhost:5174',
+    ].filter((v) => !!v) as string[],
     credentials: true,
     methods: ['GET', 'POST'],
   },
