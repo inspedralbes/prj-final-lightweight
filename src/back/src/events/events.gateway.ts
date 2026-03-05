@@ -6,6 +6,7 @@ import {
   OnGatewayDisconnect,
   SubscribeMessage,
   ConnectedSocket,
+  MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Inject } from '@nestjs/common';
@@ -20,7 +21,8 @@ dotenv.config();
   },
 })
 export class EventsGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -53,14 +55,16 @@ export class EventsGateway
   @SubscribeMessage('register-user')
   handleRegisterUser(
     @ConnectedSocket() client: Socket,
-    userId: number,
+    @MessageBody() userId: number,
   ) {
     const id = Number(userId);
     if (!Number.isNaN(id)) {
       this.userSockets.set(id, client.id);
       console.log(`[Auth] Usuario ${id} registrado con socket ${client.id}`);
     } else {
-      console.warn(`[Auth] register-user received invalid userId: ${userId} from socket ${client.id}`);
+      console.warn(
+        `[Auth] register-user received invalid userId: ${userId} from socket ${client.id}`,
+      );
     }
   }
 
@@ -92,9 +96,12 @@ export class EventsGateway
   @SubscribeMessage('join-room')
   handleJoinRoom(client: Socket, roomId: string) {
     client.join(roomId);
-    console.log(`[Signaling] Cliente ${client.id} se unió a la sala: ${roomId}`);
+    console.log(
+      `[Signaling] Cliente ${client.id} se unió a la sala: ${roomId}`,
+    );
     // Obtener lista de sockets ya presentes (excepto el que acaba de entrar)
-    const clientsInRoom = this.server.sockets.adapter.rooms.get(roomId) || new Set<string>();
+    const clientsInRoom =
+      this.server.sockets.adapter.rooms.get(roomId) || new Set<string>();
     const others = Array.from(clientsInRoom).filter((id) => id !== client.id);
     // responder al remitente con los existentes
     client.emit('current-peers', { roomId, peers: others });
@@ -111,19 +118,32 @@ export class EventsGateway
   }
 
   @SubscribeMessage('offer')
-  handleOffer(client: Socket, { roomId, offer }: { roomId: string; offer: any }) {
-    console.log(`[Signaling] Reenviando OFFER en sala ${roomId} de ${client.id}`);
+  handleOffer(
+    client: Socket,
+    { roomId, offer }: { roomId: string; offer: any },
+  ) {
+    console.log(
+      `[Signaling] Reenviando OFFER en sala ${roomId} de ${client.id}`,
+    );
     client.to(roomId).emit('offer', offer);
   }
 
   @SubscribeMessage('answer')
-  handleAnswer(client: Socket, { roomId, answer }: { roomId: string; answer: any }) {
-    console.log(`[Signaling] Reenviando ANSWER en sala ${roomId} de ${client.id}`);
+  handleAnswer(
+    client: Socket,
+    { roomId, answer }: { roomId: string; answer: any },
+  ) {
+    console.log(
+      `[Signaling] Reenviando ANSWER en sala ${roomId} de ${client.id}`,
+    );
     client.to(roomId).emit('answer', answer);
   }
 
   @SubscribeMessage('ice-candidate')
-  handleIceCandidate(client: Socket, { roomId, candidate }: { roomId: string; candidate: any }) {
+  handleIceCandidate(
+    client: Socket,
+    { roomId, candidate }: { roomId: string; candidate: any },
+  ) {
     console.log(`[Signaling] Reenviando ICE en sala ${roomId} de ${client.id}`);
     client.to(roomId).emit('ice-candidate', candidate);
   }
@@ -131,12 +151,16 @@ export class EventsGateway
   @SubscribeMessage('send-p2p-message')
   async handleSendP2PMessage(
     @ConnectedSocket() client: Socket,
-    { receiverId, text, senderId }: { receiverId: any; text: string; senderId: any },
+    {
+      receiverId,
+      text,
+      senderId,
+    }: { receiverId: any; text: string; senderId: any },
   ) {
     const recvId = Number(receiverId);
     const sendId = Number(senderId);
     console.log(`[Chat P2P] Mensaje de ${sendId} a ${recvId}: ${text}`);
-    
+
     try {
       // Guardar el mensaje en la BD
       const message = await this.chatService.sendMessage(sendId, recvId, text);
@@ -146,7 +170,9 @@ export class EventsGateway
       const receiverSocketId = this.userSockets.get(recvId);
       const roomId = `chat_client_${recvId}`;
       const receiverOpenRooms = this.userOpenChats.get(recvId);
-      const receiverHasThisChatOpen = receiverOpenRooms ? receiverOpenRooms.has(roomId) : false;
+      const receiverHasThisChatOpen = receiverOpenRooms
+        ? receiverOpenRooms.has(roomId)
+        : false;
 
       if (receiverSocketId) {
         // enviar siempre el mensaje real-time para que aparezca en la ventana si está abierta
@@ -174,5 +200,27 @@ export class EventsGateway
       client.emit('error', { message: 'Failed to send message' });
     }
   }
-}
 
+  // Emite una invitación de coach a cliente vía WebSocket
+  emitCoachInvitation(
+    clientId: number,
+    payload: {
+      coachId: number;
+      coachName: string;
+      invitationCode: string;
+      invitationId: number;
+    },
+  ) {
+    const socketId = this.userSockets.get(clientId);
+    if (socketId) {
+      this.server.to(socketId).emit('coach-invitation', payload);
+      console.log(
+        `[CoachInvitation] Sent invite to client ${clientId} (socket ${socketId})`,
+      );
+    } else {
+      console.warn(
+        `[CoachInvitation] Client ${clientId} is not connected — invitation not delivered in real time`,
+      );
+    }
+  }
+}

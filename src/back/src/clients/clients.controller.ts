@@ -1,7 +1,9 @@
 import {
   Controller,
   Get,
+  Post,
   Put,
+  Delete,
   Param,
   Body,
   UseGuards,
@@ -30,6 +32,47 @@ export class ClientsController {
     } catch (error) {
       throw new HttpException(
         'Failed to fetch clients',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // POST /clients/invite-by-user — COACH invita a un cliente por username o email
+  // IMPORTANTE: ruta estática ANTES de la dinámica :id
+  @Post('invite-by-user')
+  async inviteByUser(
+    @Body() body: { usernameOrEmail: string },
+    @Request() req,
+    @Res() res: Response,
+  ) {
+    try {
+      const coachId = req.user.userId;
+      const result = await this.clientsService.inviteByUser(
+        coachId,
+        body.usernameOrEmail,
+      );
+      res.status(HttpStatus.CREATED).json(result);
+    } catch (error) {
+      if (error.message === 'User not found') {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+      if (error.message === 'The user is not a client') {
+        throw new HttpException(
+          'The user is not a client',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      if (error.message === 'This client is already linked to a coach') {
+        throw new HttpException(
+          'This client is already linked to a coach',
+          HttpStatus.CONFLICT,
+        );
+      }
+      if (error instanceof ForbiddenException) {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      throw new HttpException(
+        'Failed to send invitation',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -108,6 +151,50 @@ export class ClientsController {
       }
       throw new HttpException(
         'Failed to update client',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // DELETE /clients/me/unlink — CLIENTE elimina su asociación con el coach
+  // IMPORTANTE: ruta estática ANTES de :id/unlink
+  @Delete('me/unlink')
+  async unlinkFromCoach(@Request() req, @Res() res: Response) {
+    try {
+      const clientId = req.user.userId;
+      await this.clientsService.unlinkFromCoach(clientId);
+      res.status(HttpStatus.NO_CONTENT).send();
+    } catch (error) {
+      if (error.message === 'You are not linked to any coach') {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException(
+        'Failed to unlink from coach',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // DELETE /clients/:id/unlink — COACH elimina la asociación con un cliente
+  @Delete(':id/unlink')
+  async unlinkClient(
+    @Param('id') clientId: string,
+    @Request() req,
+    @Res() res: Response,
+  ) {
+    try {
+      const coachId = req.user.userId;
+      await this.clientsService.unlinkClient(coachId, parseInt(clientId));
+      res.status(HttpStatus.NO_CONTENT).send();
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      }
+      if (error.message === 'Client not found') {
+        throw new HttpException('Client not found', HttpStatus.NOT_FOUND);
+      }
+      throw new HttpException(
+        'Failed to unlink client',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
