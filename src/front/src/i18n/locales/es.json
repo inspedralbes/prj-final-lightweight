@@ -17,7 +17,10 @@
     "optional": "opcional",
     "user": "Usuario",
     "search": "Buscar…",
-    "noResults": "Sin resultados"
+    "noResults": "Sin resultados",
+    "close": "Cerrar",
+    "seeMore": "Ver más",
+    "seeLess": "Ver menos"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -97,6 +100,7 @@
     "manageExercises": "Gestiona y reordena los ejercicios de esta rutina.",
     "recentlyAssigned": "Asignada recientemente",
     "moreExercises": "+{{count}} más",
+    "viewAll": "Ver todos los ejercicios",
     "series": "Series",
     "reps": "Repeticiones",
     "weight": "Peso (kg)",

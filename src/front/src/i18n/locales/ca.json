@@ -17,7 +17,10 @@
     "optional": "opcional",
     "user": "Usuari",
     "search": "Cerca…",
-    "noResults": "Sense resultats"
+    "noResults": "Sense resultats",
+    "close": "Tancar",
+    "seeMore": "Veure més",
+    "seeLess": "Veure menys"
   },
   "auth": {
     "login": "Iniciar sessió",
@@ -97,6 +100,7 @@
     "manageExercises": "Gestiona i reordena els exercicis d'aquesta rutina.",
     "recentlyAssigned": "Assignada recentment",
     "moreExercises": "+{{count}} més",
+    "viewAll": "Veure tots els exercicis",
     "series": "Sèries",
     "reps": "Repeticions",
     "weight": "Pes (kg)",
