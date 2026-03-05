@@ -57,13 +57,26 @@ export const ExercisesForm = ({
   const lastItemRef = useRef<HTMLDivElement | null>(null);
 
   // when a new exercise is pushed, scroll it into view so user sees the newly added card
+  // NOTE: skip the initial mount to avoid scrolling when the form is opened (e.g. edit modal)
+  const hasMountedRef = useRef(false);
+  const prevLengthRef = useRef<number>(exercises.length);
+
   useEffect(() => {
-    if (lastItemRef.current) {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      prevLengthRef.current = exercises.length;
+      return;
+    }
+
+    // Only scroll when the list grows (a new exercise was added)
+    if (exercises.length > prevLengthRef.current && lastItemRef.current) {
       lastItemRef.current.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
       });
     }
+
+    prevLengthRef.current = exercises.length;
   }, [exercises.length]);
 
   const validateForm = (): boolean => {
