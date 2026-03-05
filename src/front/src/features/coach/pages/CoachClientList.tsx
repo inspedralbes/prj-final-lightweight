@@ -374,13 +374,11 @@ const Clients = () => {
             roomId={`chat_client_${selectedClient.id}`}
             title={`Chat con ${selectedClient.username}`}
             onClose={() => setIsChatOpen(false)}
-            isInitiator={true}
             otherUserId={selectedClient.id}
           />
         </div>
       )}
 
-      {/* Confirm Unlink Modal */}
       {confirmUnlinkClient && (
         <ConfirmModal
           title={t("clients.unlinkClient") || "Unlink client"}
