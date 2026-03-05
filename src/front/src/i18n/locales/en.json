@@ -262,6 +262,7 @@
     "guestDisconnected": "Your partner has disconnected",
     "hostAbandoned": "The host has abandoned the room",
     "waitingForGuestToStart": "Waiting for partner to join to start...",
+    "waitingForParticipants": "Waiting for more participants to join to start...",
     "partnerLocation": "Doing: {{exercise}} - Set {{set}}/{{total}}",
     "sessionCompletedTitle": "Session Completed",
     "totalTime": "Total Time",
@@ -273,14 +274,24 @@
     "finishSessionButton": "Finish Session",
     "returnPanel": "Return to Panel",
     "errors": {
-      "onlyNumbers": "Only numbers allowed"
+      "onlyNumbers": "Only numbers allowed",
+      "roomFull": "The room is full",
+      "sessionStarted": "The session has already started"
     },
     "yourStats": "Your stats",
     "partnerStats": "Partner statistics",
     "stillTraining": "Partner is still training...",
     "statTime": "Time",
     "statVolume": "Volume",
-    "statExercises": "Exercises"
+    "statExercises": "Exercises",
+    "maxParticipants": "Max participants",
+    "hostBadge": "Host",
+    "guestBadge": "Guest",
+    "notifications": {
+      "userDisconnected": "{{user}} has disconnected",
+      "userJoined": "{{user}} has joined",
+      "userFinished": "{{user}} has finished"
+    }
   },
   "language": {
     "selectLanguage": "Select Language",

@@ -4,7 +4,7 @@ import { Socket } from "socket.io-client";
 import type { Routine } from "@/features/routines/services/routineService";
 import { routineService } from "@/features/routines/services/routineService";
 import { useTranslation } from "react-i18next";
-import { Users, Wifi, WifiOff, Play, Timer, User as UserIcon, Check, X, Loader2, Dumbbell } from "lucide-react";
+import { Users, Wifi, WifiOff, Play, Timer, User as UserIcon, Check, X, Loader2, Dumbbell, Minus, Plus } from "lucide-react";
 import { useToast } from "@/shared/hooks/useToast";
 
 interface RoomLobbyProps {
@@ -13,6 +13,8 @@ interface RoomLobbyProps {
   isHost: boolean;
   isConnected: boolean;
   usersInRoom: Array<{ id: string; username: string }>;
+  maxUsers: number;
+  onSetMaxUsers: (maxUsers: number) => void;
   onLeave: () => void;
   onStartSession: (routine: Routine) => void;
 }
@@ -22,6 +24,8 @@ const RoomLobby: FC<RoomLobbyProps> = ({
   isHost,
   isConnected,
   usersInRoom,
+  maxUsers,
+  onSetMaxUsers,
   onLeave,
   onStartSession,
 }) => {
@@ -60,7 +64,6 @@ const RoomLobby: FC<RoomLobbyProps> = ({
   };
 
   return (
-    <>
       <div className="w-full h-full overflow-y-auto p-4 md:p-6">
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 mb-6">
@@ -99,10 +102,31 @@ const RoomLobby: FC<RoomLobbyProps> = ({
 
               {isHost ? (
                 <div className="flex flex-col items-end gap-2">
+                  {/* Selector de límite de participantes */}
+                  <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl">
+                    <span className="text-sm text-zinc-400 font-medium">{t('virtualRoom.maxParticipants', 'Límit participants')}:</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onSetMaxUsers(Math.max(2, maxUsers - 1))}
+                        disabled={maxUsers <= 2}
+                        className="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                      >
+                        <Minus className="w-4 h-4 text-zinc-400" />
+                      </button>
+                      <span className="text-lg font-bold text-white min-w-[2rem] text-center">{maxUsers}</span>
+                      <button
+                        onClick={() => onSetMaxUsers(Math.min(10, maxUsers + 1))}
+                        disabled={maxUsers >= 10}
+                        className="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                      >
+                        <Plus className="w-4 h-4 text-zinc-400" />
+                      </button>
+                    </div>
+                  </div>
                   <button
                     onClick={handleOpenRoutineModal}
-                    disabled={usersInRoom.length < 2}
-                    className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 ${usersInRoom.length < 2
+                    disabled={usersInRoom.length < maxUsers}
+                    className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 ${usersInRoom.length < maxUsers
                       ? "bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700"
                       : "bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/20"
                       }`}
@@ -113,9 +137,9 @@ const RoomLobby: FC<RoomLobbyProps> = ({
                     </div>
                     {"COMENÇAR SESSIÓ"}
                   </button>
-                  {usersInRoom.length < 2 && (
+                  {usersInRoom.length < maxUsers && (
                     <p className="text-[10px] md:text-xs text-orange-500/80 font-medium animate-pulse bg-orange-500/5 px-3 py-1 rounded-full border border-orange-500/10">
-                      {t('virtualRoom.waitingForGuestToStart') || "Esperant que s'uneixi el company per poder començar..."}
+                      {t('virtualRoom.waitingForParticipants', 'Esperant que s\'uneixin més participants per poder començar...')}
                     </p>
                   )}
                 </div>
@@ -132,9 +156,10 @@ const RoomLobby: FC<RoomLobbyProps> = ({
               <p className="text-xs text-gray-500 uppercase font-black tracking-widest mb-1">Codi de la sala</p>
               <span className="text-2xl md:text-3xl text-white font-bold font-mono">{roomId}</span>
             </div>
-            <div className="flex gap-2 w-full md:w-auto">
-              <div className="px-3 py-2 bg-zinc-800 rounded-lg text-white text-xs font-bold">
-                {usersInRoom.length} en línia
+              <div className="flex flex-col gap-2 w-full md:w-auto">
+                <div className="px-3 py-2 bg-zinc-800 rounded-lg text-white text-xs font-bold">
+                  {usersInRoom.length}/{maxUsers} en línia
+                </div>
               </div>
               <div className="px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-lg text-orange-500 text-xs font-black uppercase flex items-center">
                 {isHost ? 'Amfitrió' : 'Convidat'}
@@ -147,6 +172,29 @@ const RoomLobby: FC<RoomLobbyProps> = ({
               </button>
             </div>
           </div>
+          {/* participantes grid */}
+          {usersInRoom.length > 0 && (
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
+              {usersInRoom.map((u) => (
+                <div
+                  key={u.id}
+                  className="bg-zinc-800/50 rounded-xl border border-zinc-700/50 p-4 flex items-center gap-4"
+                >
+                  <UserIcon className="w-8 h-8 text-zinc-400" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-medium truncate">{u.username}</p>
+                  </div>
+                  <span
+                    className={`text-xs font-bold px-2 py-1 rounded-full ${
+                      u.isHost ? 'bg-orange-500 text-white' : 'bg-zinc-700 text-zinc-300'
+                    }`}
+                  >
+                    {u.isHost ? t('virtualRoom.hostBadge', 'Amfitrió') : t('virtualRoom.guestBadge', 'Convidat')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="max-w-4xl mx-auto py-6 text-center space-y-6">
@@ -255,7 +303,6 @@ const RoomLobby: FC<RoomLobbyProps> = ({
           </div>
         )}
       </div>
-    </>
   );
 };
 

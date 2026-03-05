@@ -262,6 +262,7 @@
     "guestDisconnected": "El teu contrincant s'ha desconnectat",
     "hostAbandoned": "L'amfitrió ha abandonat la sala",
     "waitingForGuestToStart": "Esperant que s'uneixi el company per poder començar...",
+    "waitingForParticipants": "Esperant que s'uneixin més participants per poder començar...",
     "partnerLocation": "Fent: {{exercise}} - Sèrie {{set}}/{{total}}",
     "sessionCompletedTitle": "Sessió Completada",
     "totalTime": "Temps Total",
@@ -273,14 +274,24 @@
     "finishSessionButton": "Finalitzar Sessió",
     "returnPanel": "Tornar al Panell",
     "errors": {
-      "onlyNumbers": "Sol es permeten números"
+      "onlyNumbers": "Sol es permeten números",
+      "roomFull": "La sala està plena",
+      "sessionStarted": "La sessió ja ha començat"
     },
     "yourStats": "Les teves estadístiques",
     "partnerStats": "Estadístiques del contrincant",
     "stillTraining": "El contrincant segueix entrenant...",
     "statTime": "Temps",
     "statVolume": "Volum",
-    "statExercises": "Exercicis"
+    "statExercises": "Exercicis",
+    "maxParticipants": "Límit participants",
+    "hostBadge": "Amfitrió",
+    "guestBadge": "Convidat",
+    "notifications": {
+      "userDisconnected": "{{user}} s'ha desconnectat",
+      "userJoined": "{{user}} s'ha unit",
+      "userFinished": "{{user}} ha acabat"
+    }
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",

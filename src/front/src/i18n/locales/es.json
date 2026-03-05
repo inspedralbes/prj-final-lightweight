@@ -262,6 +262,7 @@
     "guestDisconnected": "Tu contrincante se ha desconectado",
     "hostAbandoned": "El anfitrión ha abandonado la sala",
     "waitingForGuestToStart": "Esperando que se una el compañero para poder empezar...",
+    "waitingForParticipants": "Esperando que se unan más participantes para poder empezar...",
     "partnerLocation": "Haciendo: {{exercise}} - Serie {{set}}/{{total}}",
     "sessionCompletedTitle": "Sesión Completada",
     "totalTime": "Tiempo Total",
@@ -273,14 +274,24 @@
     "finishSessionButton": "Finalizar Sesión",
     "returnPanel": "Volver al Panel",
     "errors": {
-      "onlyNumbers": "Solo se permiten números"
+      "onlyNumbers": "Solo se permiten números",
+      "roomFull": "La sala está llena",
+      "sessionStarted": "La sesión ya ha empezado"
     },
     "yourStats": "Tus estadísticas",
     "partnerStats": "Estadísticas del contrincante",
     "stillTraining": "El contrincante sigue entrenando...",
     "statTime": "Tiempo",
     "statVolume": "Volumen",
-    "statExercises": "Ejercicios"
+    "statExercises": "Ejercicios",
+    "maxParticipants": "Límite participantes",
+    "hostBadge": "Anfitrión",
+    "guestBadge": "Invitado",
+    "notifications": {
+      "userDisconnected": "{{user}} se ha desconectado",
+      "userJoined": "{{user}} se ha unido",
+      "userFinished": "{{user}} ha terminado"
+    }
   },
   "language": {
     "selectLanguage": "Seleccionar idioma",

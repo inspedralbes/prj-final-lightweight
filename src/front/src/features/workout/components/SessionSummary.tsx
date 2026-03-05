@@ -20,6 +20,12 @@ interface SessionSummaryProps {
   // Flag indicating if partner has finished
   isPartnerFinished?: boolean;
 
+  // All finished users for group mode
+  finishedUsers?: Map<string, { username: string; stats: FinalStats }>;
+
+  // detailed log for local user
+  exerciseLog?: Array<{ name: string; sets: { reps: number; weight: number }[] }>;
+
   socket?: Socket | null;
   onLeave: () => void;
   isSoloMode?: boolean;
@@ -29,6 +35,7 @@ const SessionSummary: FC<SessionSummaryProps> = ({
   localStats,
   partnerStats,
   isPartnerFinished,
+  finishedUsers = new Map(),
   socket,
   onLeave,
   isSoloMode
@@ -70,10 +77,71 @@ const SessionSummary: FC<SessionSummaryProps> = ({
                 </div>
               </div>
             )}
+
+            {/* detailed log accordion */}
+            {exerciseLog && exerciseLog.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {exerciseLog.map((ex, idx) => (
+                  <details key={idx} className="bg-zinc-800/40 rounded-lg">
+                    <summary className="px-4 py-2 cursor-pointer text-white font-medium">
+                      {ex.name}
+                    </summary>
+                    <div className="px-4 py-2">
+                      {ex.sets.map((s, si) => (
+                        <p key={si} className="text-sm text-zinc-300">
+                          Sèrie {si + 1}: {s.reps} reps x {s.weight} kg
+                        </p>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Partner stats column */}
-          {!isSoloMode && (
+          {/* Group leaderboard */}
+          {!isSoloMode && finishedUsers.size > 1 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-white text-center">Podi i Classificació</h2>
+              {(() => {
+                const sortedUsers = Array.from(finishedUsers.entries()).map(([id, data]) => ({ id, ...data })).sort((a, b) => a.stats.time - b.stats.time);
+                const top3 = sortedUsers.slice(0, 3);
+                const rest = sortedUsers.slice(3);
+
+                return (
+                  <div className="space-y-4">
+                    {/* Podio */}
+                    <div className="flex justify-center gap-4">
+                      {top3.map((user, index) => (
+                        <div key={user.id} className={`text-center p-4 rounded-xl ${index === 0 ? 'bg-yellow-500/10 border border-yellow-500/20' : index === 1 ? 'bg-gray-400/10 border border-gray-400/20' : 'bg-orange-500/10 border border-orange-500/20'}`}>
+                          <div className={`text-2xl font-black ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-400' : 'text-orange-400'}`}>
+                            {index + 1}
+                          </div>
+                          <p className="text-sm font-bold text-white">{user.username}</p>
+                          <p className="text-xs text-zinc-400">{user.stats.time}s</p>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Resto */}
+                    {rest.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-bold text-zinc-400 uppercase">Altres participants</h4>
+                        {rest.map((user, _) => (
+                          <div key={user.id} className="flex justify-between items-center p-3 bg-zinc-800/50 rounded-lg">
+                            <span className="text-white font-medium">{user.username}</span>
+                            <span className="text-zinc-400 text-sm">{user.stats.time}s</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Partner stats column (fallback for 1vs1) */}
+          {!isSoloMode && finishedUsers.size <= 1 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-white text-center">{t('virtualRoom.partnerStats')}</h2>
 

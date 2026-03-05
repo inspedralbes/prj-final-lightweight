@@ -8,9 +8,7 @@ import {
   Play,
   RefreshCcw,
   Activity,
-  Target,
   Check,
-  Users,
   LogOut,
 } from "lucide-react";
 import { useToast } from "@/shared/hooks/useToast";
@@ -27,6 +25,11 @@ export interface PartnerProgress {
   totalSets?: number;
 }
 
+export interface ExerciseLog {
+  name: string;
+  sets: Array<{ reps: number; weight: number }>;
+}
+
 interface ActiveSessionProps {
   socket?: Socket | null;
   roomId?: string;
@@ -38,7 +41,9 @@ interface ActiveSessionProps {
   isSessionActive: boolean;
   partnerProgress?: PartnerProgress | null;
   partnerDisconnected?: boolean;
-  onSessionFinished: (stats: { time: number; volume: number; exercises: number }) => void;
+  usersInRoom?: Array<{ id: string; username: string }>;
+  allUserProgress?: Map<string, PartnerProgress>;
+  onSessionFinished: (stats: { time: number; volume: number; exercises: number }, log: ExerciseLog[]) => void;
   onLeave: () => void;
   isSoloMode?: boolean;
 }
@@ -54,6 +59,8 @@ const ActiveSession: FC<ActiveSessionProps> = ({
   isSessionActive,
   partnerProgress,
   partnerDisconnected,
+  usersInRoom = [],
+  allUserProgress = new Map(),
   onSessionFinished,
   onLeave,
   isSoloMode,
@@ -69,6 +76,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
   const [progress, setProgress] = useState(0);
   const [completedExercises, setCompletedExercises] = useState<number[]>([]);
   const [volumeTotal, setVolumeTotal] = useState(0);
+  const [exerciseLog, setExerciseLog] = useState<ExerciseLog[]>([]);
 
   // Timer
   const [time, setTime] = useState(0);
@@ -167,11 +175,14 @@ const ActiveSession: FC<ActiveSessionProps> = ({
           });
         }
         // Call parent to finish and share stats
-        onSessionFinished({
-          time,
-          volume: volumeTotal + k * r,
-          exercises: completedExercises.length + 1,
-        });
+        onSessionFinished(
+          {
+            time,
+            volume: volumeTotal + k * r,
+            exercises: completedExercises.length + 1,
+          },
+          exerciseLog
+        );
         return;
       }
     }
@@ -208,6 +219,17 @@ const ActiveSession: FC<ActiveSessionProps> = ({
         totalSets: currentEx.sets,
       });
     }
+
+    // register this set to log for summary
+    setExerciseLog((prev) => {
+      const log = [...prev];
+      const exName = currentEx.exercise.name;
+      if (!log[updatedExerciseIdx]) {
+        log[updatedExerciseIdx] = { name: exName, sets: [] };
+      }
+      log[updatedExerciseIdx].sets.push({ reps: Number(reps) || 0, weight: Number(weight) || 0 });
+      return log;
+    });
 
     setWeight("");
     setReps("");
@@ -334,11 +356,14 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                   <button
                     onClick={() => {
                       if (progress === 100) {
-                        onSessionFinished({
-                          time,
-                          volume: volumeTotal,
-                          exercises: completedExercises.length,
-                        });
+                        onSessionFinished(
+                          {
+                            time,
+                            volume: volumeTotal,
+                            exercises: completedExercises.length,
+                          },
+                          exerciseLog
+                        );
                       } else {
                         completeSet();
                       }
@@ -372,91 +397,41 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                   </div>
                 )}
 
-                {/* Progress circles */}
-                <div className="grid grid-cols-2 gap-6 mb-12">
-                  {/* My progress */}
-                  <div className="text-center space-y-4">
-                    <div className="relative inline-flex items-center justify-center">
-                      <svg className="w-32 h-32 transform -rotate-90">
-                        <circle
-                          cx="64"
-                          cy="64"
-                          r="58"
-                          stroke="currentColor"
-                          strokeWidth="8"
-                          fill="transparent"
-                          className="text-zinc-800"
-                        />
-                        <circle
-                          cx="64"
-                          cy="64"
-                          r="58"
-                          stroke="currentColor"
-                          strokeWidth="8"
-                          fill="transparent"
-                          strokeDasharray={364.4}
-                          strokeDashoffset={
-                            364.4 - (364.4 * progress) / 100
-                          }
-                          className="text-orange-500 transition-all duration-500"
-                        />
-                      </svg>
-                      <span className="absolute text-2xl font-black text-white">
-                        {progress}%
-                      </span>
-                    </div>
-                    <p className="text-sm font-bold text-zinc-400 flex items-center justify-center gap-2">
-                      <Target size={14} className="text-orange-500" /> Jo
-                    </p>
-                  </div>
+                {/* Leaderboard */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-bold text-zinc-400 uppercase mb-4 tracking-widest">
+                    Classificació en directe
+                  </h4>
+                  <div className="max-h-[400px] overflow-y-auto space-y-2">
+                    {(() => {
+                      const userList = usersInRoom.map(u => {
+                        const isMe = String(u.id) === String(userId);
+                        const userProgress = isMe ? progress : (allUserProgress.get(u.id)?.progressPercentage || 0);
+                        return { ...u, progress: userProgress, isMe };
+                      }).sort((a, b) => b.progress - a.progress);
 
-                  {/* Partner progress */}
-                  <div className="text-center space-y-4">
-                    <div className="relative inline-flex items-center justify-center">
-                      <svg className="w-32 h-32 transform -rotate-90">
-                        <circle
-                          cx="64"
-                          cy="64"
-                          r="58"
-                          stroke="currentColor"
-                          strokeWidth="8"
-                          fill="transparent"
-                          className="text-zinc-800"
-                        />
-                        <circle
-                          cx="64"
-                          cy="64"
-                          r="58"
-                          stroke="currentColor"
-                          strokeWidth="8"
-                          fill="transparent"
-                          strokeDasharray={364.4}
-                          strokeDashoffset={
-                            364.4 -
-                            (364.4 * (partnerProgress?.progressPercentage || 0)) /
-                            100
-                          }
-                          className="text-blue-500 transition-all duration-500"
-                        />
-                      </svg>
-                      <span className="absolute text-2xl font-black text-white">
-                        {partnerProgress?.progressPercentage || 0}%
-                      </span>
-                    </div>
-                    <p className="text-sm font-bold text-zinc-400 flex items-center justify-center gap-2">
-                      <Users size={14} className="text-blue-500" /> Contrincant
-                    </p>
-                    {partnerProgress?.exerciseName &&
-                      partnerProgress.currentSet != null &&
-                      partnerProgress.totalSets != null && (
-                        <p className="text-xs text-zinc-500 mt-1">
-                          {t("virtualRoom.partnerLocation", {
-                            exercise: partnerProgress.exerciseName,
-                            set: partnerProgress.currentSet,
-                            total: partnerProgress.totalSets,
-                          })}
-                        </p>
-                      )}
+                      return userList.map((u, _) => (
+                        <div key={u.id} className={`flex items-center gap-3 p-3 rounded-lg ${u.isMe ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-zinc-800/50'}`}>
+                          <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold text-white">
+                            {u.username.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium truncate ${u.isMe ? 'text-orange-400' : 'text-zinc-300'}`}>
+                              {u.isMe ? 'Jo' : u.username} {u.isMe && '(Tu)'}
+                            </p>
+                            <div className="w-full bg-zinc-700 rounded-full h-2 mt-1">
+                              <div
+                                className={`h-2 rounded-full transition-all duration-500 ${u.isMe ? 'bg-orange-500' : 'bg-blue-500'}`}
+                                style={{ width: `${u.progress}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                          <span className={`text-sm font-bold ${u.isMe ? 'text-orange-400' : 'text-zinc-400'}`}>
+                            {u.progress}%
+                          </span>
+                        </div>
+                      ));
+                    })()}
                   </div>
                 </div>
 
