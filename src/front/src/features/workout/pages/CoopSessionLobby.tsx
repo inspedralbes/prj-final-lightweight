@@ -44,13 +44,30 @@ export default function FriendSession() {
   const handleCopyCode = async () => {
     if (!generatedCode) return;
 
+    const copyViaExecCommand = () => {
+      const textarea = document.createElement("textarea");
+      textarea.value = generatedCode;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return ok;
+    };
+
     try {
-      await navigator.clipboard.writeText(generatedCode);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(generatedCode);
+      } else {
+        const ok = copyViaExecCommand();
+        if (!ok) throw new Error("execCommand failed");
+      }
       setCopied(true);
       toast.success(
         t("friendSession.codeCopied") || "Code copied to clipboard",
       );
-
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast.error(t("friendSession.copyFailed") || "Failed to copy code");
@@ -61,6 +78,13 @@ export default function FriendSession() {
   const handleJoinSession = async () => {
     if (!inputCode.trim()) {
       toast.error(t("friendSession.enterCode") || "Please enter a code");
+      return;
+    }
+
+    if (generatedCode && inputCode.trim() === generatedCode) {
+      toast.error(
+        t("friendSession.selfUseError") || "You cannot join your own session",
+      );
       return;
     }
 
