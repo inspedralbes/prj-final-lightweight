@@ -328,6 +328,87 @@ export class EventsGateway
     }
   }
 
+  // ─── Video-call signaling ──────────────────────────────────────────────────
+
+  @SubscribeMessage('video-call-invite')
+  handleVideoCallInvite(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    payload: {
+      callerId: number;
+      calleeId: number;
+      callerName: string;
+      roomId: string;
+    },
+  ) {
+    const calleeSocketId = this.userSockets.get(Number(payload.calleeId));
+    if (calleeSocketId) {
+      this.server.to(calleeSocketId).emit('video-call-invite', payload);
+      // Confirm to caller that the invite was delivered
+      client.emit('video-call-delivered', {
+        callerId: payload.callerId,
+        calleeId: payload.calleeId,
+      });
+      console.log(
+        `[VideoCall] Invite delivered from ${payload.callerId} to ${payload.calleeId}`,
+      );
+    } else {
+      // Callee is not connected — tell caller explicitly
+      client.emit('video-call-unavailable', {
+        callerId: payload.callerId,
+        calleeId: payload.calleeId,
+      });
+      console.log(
+        `[VideoCall] Callee ${payload.calleeId} offline — notified caller ${payload.callerId}`,
+      );
+    }
+  }
+
+  @SubscribeMessage('video-call-accept')
+  handleVideoCallAccept(
+    @ConnectedSocket() _client: Socket,
+    @MessageBody()
+    payload: { callerId: number; calleeId: number; roomId: string },
+  ) {
+    const callerSocketId = this.userSockets.get(Number(payload.callerId));
+    if (callerSocketId) {
+      this.server.to(callerSocketId).emit('video-call-accept', payload);
+      console.log(
+        `[VideoCall] Accept from callee ${payload.calleeId} to caller ${payload.callerId}`,
+      );
+    }
+  }
+
+  @SubscribeMessage('video-call-reject')
+  handleVideoCallReject(
+    @ConnectedSocket() _client: Socket,
+    @MessageBody()
+    payload: { callerId: number; calleeId: number },
+  ) {
+    const callerSocketId = this.userSockets.get(Number(payload.callerId));
+    if (callerSocketId) {
+      this.server.to(callerSocketId).emit('video-call-reject', payload);
+      console.log(
+        `[VideoCall] Reject from callee ${payload.calleeId} to caller ${payload.callerId}`,
+      );
+    }
+  }
+
+  @SubscribeMessage('video-call-end')
+  handleVideoCallEnd(
+    @ConnectedSocket() _client: Socket,
+    @MessageBody()
+    payload: { fromUserId: number; toUserId: number },
+  ) {
+    const toSocketId = this.userSockets.get(Number(payload.toUserId));
+    if (toSocketId) {
+      this.server.to(toSocketId).emit('video-call-end', payload);
+      console.log(
+        `[VideoCall] End from ${payload.fromUserId} to ${payload.toUserId}`,
+      );
+    }
+  }
+
   // Emite una invitación de coach a cliente vía WebSocket
   emitCoachInvitation(
     clientId: number,
