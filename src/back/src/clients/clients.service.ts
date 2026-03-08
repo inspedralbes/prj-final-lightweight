@@ -191,6 +191,11 @@ export class ClientsService {
       throw new ForbiddenException('This client is not associated with you');
     }
 
+    // Remove all routine assignments from this coach to this client
+    await this.prisma.routineAssignment.deleteMany({
+      where: { clientId, routine: { coachId } },
+    });
+
     await this.prisma.user.update({
       where: { id: clientId },
       data: { coachId: null },
@@ -210,6 +215,13 @@ export class ClientsService {
     if (client.coachId === null) {
       throw new BadRequestException('You are not linked to any coach');
     }
+
+    const coachId = client.coachId;
+
+    // Remove all routine assignments from this coach to this client
+    await this.prisma.routineAssignment.deleteMany({
+      where: { clientId, routine: { coachId } },
+    });
 
     await this.prisma.user.update({
       where: { id: clientId },

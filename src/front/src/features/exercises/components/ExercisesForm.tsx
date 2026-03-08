@@ -144,6 +144,21 @@ export const ExercisesForm = ({
     await onSubmit({ exercises: cleanExercises });
   };
 
+  // IDs of exercises already in the routine, used to seed the search modal
+  const currentExerciseObjects = exercises
+    .filter((e) => e.exerciseId)
+    .map((e) => ({
+      id: e.exerciseId as number,
+      name: e.name,
+      level: e.level,
+      category: e.category,
+      forceType: e.forceType,
+      mechanic: e.mechanic,
+      equipment: e.equipment,
+      primaryMuscle: e.primaryMuscle,
+      description: e.description,
+    }));
+
   const [openSearch, setOpenSearch] = useState<number | null>(null);
 
   return (
@@ -388,44 +403,49 @@ export const ExercisesForm = ({
             <ExerciseSearchModal
               onClose={() => setOpenSearch(null)}
               multiSelect={true}
-              onSelectMultiple={(exs) => {
-                if (!exs || exs.length === 0) return;
-                // replace current slot with first selected, insert rest after
+              initialSelected={currentExerciseObjects}
+              onSelectMultiple={(selected) => {
+                if (!selected) return;
                 setExercises((prev) => {
-                  const copy = [...prev];
-                  const first = exs[0];
-                  copy[openSearch] = {
-                    ...copy[openSearch],
-                    name: first.name,
-                    exerciseId: first.id,
-                    level: first.level,
-                    category: first.category,
-                    forceType: first.forceType,
-                    mechanic: first.mechanic,
-                    equipment: first.equipment,
-                    primaryMuscle: first.primaryMuscle,
-                    description: first.description,
-                  };
-                  // insert remaining
-                  if (exs.length > 1) {
-                    const rest = exs.slice(1).map((e) => ({
-                      name: e.name,
-                      exerciseId: e.id,
+                  // Build a map of existing configs keyed by exerciseId
+                  const existingById = new Map(
+                    prev
+                      .filter((e) => e.exerciseId)
+                      .map((e) => [e.exerciseId as number, e]),
+                  );
+                  return selected.map((ex) => {
+                    const existing = existingById.get(ex.id);
+                    if (existing) {
+                      // Preserve sets / reps / rest / notes for already-assigned exercises
+                      return {
+                        ...existing,
+                        name: ex.name,
+                        level: ex.level,
+                        category: ex.category,
+                        forceType: ex.forceType,
+                        mechanic: ex.mechanic,
+                        equipment: ex.equipment,
+                        primaryMuscle: ex.primaryMuscle,
+                        description: ex.description,
+                      };
+                    }
+                    // New exercise: use sensible defaults
+                    return {
+                      name: ex.name,
+                      exerciseId: ex.id,
                       sets: 3,
                       reps: 10,
                       rest: 60,
-                      level: e.level,
-                      category: e.category,
-                      forceType: e.forceType,
-                      mechanic: e.mechanic,
-                      equipment: e.equipment,
-                      primaryMuscle: e.primaryMuscle,
-                      description: e.description,
                       notes: "",
-                    }));
-                    copy.splice(openSearch + 1, 0, ...rest);
-                  }
-                  return copy;
+                      level: ex.level,
+                      category: ex.category,
+                      forceType: ex.forceType,
+                      mechanic: ex.mechanic,
+                      equipment: ex.equipment,
+                      primaryMuscle: ex.primaryMuscle,
+                      description: ex.description,
+                    };
+                  });
                 });
                 setOpenSearch(null);
               }}

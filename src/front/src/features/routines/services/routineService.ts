@@ -2,7 +2,7 @@ import api from "@/shared/utils/api";
 
 export interface Routine {
   id: number;
-  coachId: number;
+  coachId: number | null;
   clientIds: number[];
   name: string;
   createdAt?: string;

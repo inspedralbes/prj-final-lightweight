@@ -8,12 +8,12 @@ import {
   Users,
   ClipboardList,
 } from "lucide-react";
+import { socket } from "@/features/workout/services/socket";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useNotification } from "@/features/notifications/context/NotificationContext";
 import { invitationsService } from "@/shared/services/invitationsService";
-import { socket } from "@/features/workout/services/socket";
 
 export interface LayoutProps {
   children: React.ReactNode;
@@ -24,7 +24,7 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const { t } = useTranslation();
   const { user, logout } = useAuth();
-  const { clearAll } = useNotification();
+  const { clearAll, unreadCount } = useNotification();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [username, setUsername] = useState<string>("");
   const [pendingInvitesCount, setPendingInvitesCount] = useState(0);
@@ -66,6 +66,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   const handleLogout = () => {
     clearAll();
+    socket.disconnect(); // stop receiving messages / notifications after logout
     logout();
     navigate("/login");
   };
@@ -78,11 +79,13 @@ const Layout = ({ children }: LayoutProps) => {
       path: "/dashboard",
       label: t("sidebar.dashboard") || "Panel de control",
       icon: LayoutDashboard,
+      badge: 0,
     },
     {
       path: "/clients",
       label: t("sidebar.clients") || "Clientes",
       icon: Users,
+      badge: unreadCount,
     },
   ];
 
@@ -92,7 +95,7 @@ const Layout = ({ children }: LayoutProps) => {
       path: "/client-home",
       label: t("routines.title") || "Mis rutinas",
       icon: ClipboardList,
-      badge: 0,
+      badge: unreadCount,
     },
     {
       path: "/clients/invitations",
