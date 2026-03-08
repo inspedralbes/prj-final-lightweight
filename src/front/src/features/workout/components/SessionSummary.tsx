@@ -47,8 +47,8 @@ const SessionSummary: FC<SessionSummaryProps> = ({
   }, [isPartnerFinished, partnerStats]);
 
   return (
-    <div className="w-full h-full bg-gradient-to-b from-zinc-900 to-zinc-950 flex items-center justify-center overflow-y-auto p-4">
-      <div className="w-full max-w-4xl bg-zinc-900/40 border border-zinc-800 rounded-2xl p-8 backdrop-blur-sm">
+    <div className="w-full h-full flex items-center justify-center overflow-y-auto p-4">
+      <div className="w-full max-w-4xl bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-xl">
         <h1 className="text-4xl font-black text-white text-center mb-8">
           {t("virtualRoom.sessionCompletedTitle")}
         </h1>

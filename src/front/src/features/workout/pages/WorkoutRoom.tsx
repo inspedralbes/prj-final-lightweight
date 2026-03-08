@@ -275,9 +275,7 @@ export default function VirtualGymRoom() {
   // Render within Layout (wraps with Sidebar and header)
   return (
     <Layout>
-      <div className="w-full h-full flex flex-col bg-gradient-to-b from-zinc-950 via-zinc-950 to-black">
-        {renderContent()}
-      </div>
+      <div className="w-full h-full flex flex-col">{renderContent()}</div>
     </Layout>
   );
 }

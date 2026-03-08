@@ -218,6 +218,11 @@ const ActiveSession: FC<ActiveSessionProps> = ({
     setProgress(newProgress);
 
     if (socket && !isSoloMode) {
+      // When we moved to a new exercise, broadcast the NEW exercise name/sets
+      const emitEx =
+        justFinishedExercise && updatedExerciseIdx !== currentExerciseIdx
+          ? selectedRoutine.exercises?.[updatedExerciseIdx]
+          : currentEx;
       socket.emit("updateProgress", {
         roomId,
         userId,
@@ -229,8 +234,8 @@ const ActiveSession: FC<ActiveSessionProps> = ({
         ],
         currentExerciseIndex: updatedExerciseIdx,
         currentSet: updatedSet,
-        exerciseName: currentEx.exercise.name,
-        totalSets: currentEx.sets,
+        exerciseName: emitEx?.exercise.name ?? currentEx.exercise.name,
+        totalSets: emitEx?.sets ?? currentEx.sets,
       });
     }
 
