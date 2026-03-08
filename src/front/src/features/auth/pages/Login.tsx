@@ -28,12 +28,12 @@ export default function Login() {
       const user = res.data?.user;
 
       if (token && user) {
-        login({ 
-          id: user.id, 
-          username: user.username, 
-          role: user.role, 
+        login({
+          id: user.id,
+          username: user.username,
+          role: user.role,
           token,
-          coachId: user.coachId
+          coachId: user.coachId,
         });
         api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
@@ -62,7 +62,15 @@ export default function Login() {
   return (
     <>
       <AuthPageHeader />
-      <div className="h-screen w-full flex overflow-hidden bg-zinc-950 text-white">
+      <div
+        className="h-screen w-full flex overflow-hidden text-white"
+        style={{
+          backgroundImage: "url('/background.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
         {/* Columna Izquierda - Decorativa */}
         <div
           className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col items-center justify-center"
@@ -88,7 +96,7 @@ export default function Login() {
         </div>
 
         {/* Columna Derecha - Formulario */}
-        <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-6 pt-20 bg-black overflow-y-auto">
+        <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-6 pt-20 bg-black/80 lg:bg-black overflow-y-auto">
           <div className="w-full max-w-md">
             {/* Títulos */}
             <div className="mb-8">

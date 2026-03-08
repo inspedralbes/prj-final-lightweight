@@ -341,5 +341,21 @@
     "english": "English",
     "spanish": "Español",
     "catalan": "Català"
+  },
+  "videoCall": {
+    "startCall": "Iniciar videotruoada",
+    "incomingCall": "Trucada entrant de {{name}}",
+    "calling": "Trucant a {{name}}...",
+    "accept": "Acceptar",
+    "reject": "Rebutjar",
+    "endCall": "Finalitzar trucada",
+    "connecting": "Connectant...",
+    "cameraError": "No s'ha pogut accedir a la càmera/micròfon",
+    "httpsRequired": "La videollamada requereix una connexió segura (HTTPS)",
+    "callEnded": "Trucada finalitzada",
+    "mute": "Silenciar",
+    "unmute": "Activar micròfon",
+    "userOffline": "{{name}} no està connectat/ada",
+    "callMissed": "{{name}} no ha respost"
   }
 }

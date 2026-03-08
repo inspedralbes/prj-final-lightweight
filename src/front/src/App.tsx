@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Login from "@/features/auth/pages/Login";
 import Register from "@/features/auth/pages/Register";
 import ForgotPassword from "@/features/auth/pages/ForgotPassword";
@@ -15,6 +16,9 @@ import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useNotification } from "@/features/notifications/context/NotificationContext";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
+import VideoCallModal from "@/features/chat/components/VideoCallModal";
+import { VideoCamera } from "@/shared/components/Icons";
+import { useRingtone } from "@/shared/hooks/useRingtone";
 
 import { socket } from "@/features/workout/services/socket";
 import { chatService } from "@/features/chat/services/chatService";
@@ -34,6 +38,51 @@ const AppContent = () => {
   const [isConnected, setIsConnected] = useState(socket.connected);
   const { addNotification, clearAll } = useNotification();
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const ringtone = useRingtone();
+
+  // ── Global incoming-call state ────────────────────────────────────────────
+  type IncomingCall = {
+    callerId: number;
+    callerName: string;
+    callRoomId: string;
+  };
+  const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
+  const [calleeActiveCall, setCalleeActiveCall] = useState<{
+    callRoomId: string;
+    callerId: number;
+  } | null>(null);
+
+  // Play / stop ringtone based on incoming call state
+  useEffect(() => {
+    if (incomingCall) ringtone.play();
+    else ringtone.stop();
+  }, [incomingCall]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const acceptIncomingCall = () => {
+    if (!incomingCall || !user) return;
+    socket.emit("video-call-accept", {
+      callerId: incomingCall.callerId,
+      calleeId: user.id,
+      roomId: incomingCall.callRoomId,
+    });
+    setCalleeActiveCall({
+      callRoomId: incomingCall.callRoomId,
+      callerId: incomingCall.callerId,
+    });
+    setIncomingCall(null);
+  };
+
+  const rejectIncomingCall = () => {
+    if (!incomingCall || !user) return;
+    socket.emit("video-call-reject", {
+      callerId: incomingCall.callerId,
+      calleeId: user.id,
+    });
+    setIncomingCall(null);
+  };
+
+  const handleCalleeCallEnd = () => setCalleeActiveCall(null);
 
   const handleNotificationChatClick = (roomId: string) => {
     console.log("[Notification] Opening chat for room:", roomId);
@@ -59,6 +108,45 @@ const AppContent = () => {
       }
     });
     socket.on("disconnect", () => setIsConnected(false));
+
+    // ── Global video-call-invite listener (always alive) ─────────────────
+    socket.on(
+      "video-call-invite",
+      (payload: {
+        callerId: number;
+        calleeId: number;
+        callerName: string;
+        roomId: string;
+      }) => {
+        if (!user || Number(payload.calleeId) !== Number(user.id)) return;
+        console.log(
+          "[VideoCall] Global incoming call from",
+          payload.callerName,
+        );
+        setIncomingCall({
+          callerId: payload.callerId,
+          callerName: payload.callerName,
+          callRoomId: payload.roomId,
+        });
+      },
+    );
+
+    // Dismiss incoming popup if caller cancelled before we answered
+    socket.on(
+      "video-call-end",
+      (payload: { fromUserId: number; toUserId: number }) => {
+        if (!user || Number(payload.toUserId) !== Number(user.id)) return;
+        setIncomingCall((prev) => {
+          if (prev && Number(prev.callerId) === Number(payload.fromUserId)) {
+            console.log(
+              "[VideoCall] Caller cancelled — dismissing incoming popup",
+            );
+            return null;
+          }
+          return prev;
+        });
+      },
+    );
 
     // Escuchar notificaciones de chat P2P con preview de mensaje
     socket.on("p2p-message-notification", (data: any) => {
@@ -132,6 +220,8 @@ const AppContent = () => {
       socket.off("connect");
       socket.off("disconnect");
       socket.off("p2p-message-notification");
+      socket.off("video-call-invite");
+      socket.off("video-call-end");
     };
   }, [addNotification, user]);
 
@@ -249,6 +339,49 @@ const AppContent = () => {
         onChatClick={handleNotificationChatClick}
         position={user?.role === "CLIENT" ? "top-right" : "bottom-right"}
       />
+
+      {/* ── Global incoming video call popup ──────────────────────────────── */}
+      {incomingCall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-8 flex flex-col items-center gap-5 shadow-2xl mx-4 max-w-xs w-full">
+            <div className="w-16 h-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+              <VideoCamera className="w-8 h-8 text-orange-500 animate-pulse" />
+            </div>
+            <div className="text-center">
+              <p className="text-white font-semibold text-lg">
+                {incomingCall.callerName}
+              </p>
+              <p className="text-gray-400 text-sm">
+                {t("videoCall.incomingCall", { name: incomingCall.callerName })}
+              </p>
+            </div>
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={rejectIncomingCall}
+                className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium transition-colors"
+              >
+                {t("videoCall.reject")}
+              </button>
+              <button
+                onClick={acceptIncomingCall}
+                className="flex-1 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+              >
+                {t("videoCall.accept")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── VideoCallModal for callee after accepting ─────────────────────── */}
+      {calleeActiveCall && (
+        <VideoCallModal
+          roomId={calleeActiveCall.callRoomId}
+          isInitiator={false}
+          otherUserId={calleeActiveCall.callerId}
+          onEnd={handleCalleeCallEnd}
+        />
+      )}
     </>
   );
 };

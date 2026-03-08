@@ -341,5 +341,21 @@
     "english": "English",
     "spanish": "Español",
     "catalan": "Català"
+  },
+  "videoCall": {
+    "startCall": "Start video call",
+    "incomingCall": "Incoming call from {{name}}",
+    "calling": "Calling {{name}}...",
+    "accept": "Accept",
+    "reject": "Reject",
+    "endCall": "End call",
+    "connecting": "Connecting...",
+    "cameraError": "Could not access camera/microphone",
+    "httpsRequired": "Video calls require a secure connection (HTTPS)",
+    "callEnded": "Call ended",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "userOffline": "{{name}} is not connected",
+    "callMissed": "{{name}} did not answer"
   }
 }
