@@ -1,7 +1,7 @@
 # LightWeight 🏋️
 
 > **Aplicació web per a entrenadors personals i els seus clients.**  
-> Gestiona rutines, assigna entrenaments i entrena en temps real — tot des d'un sol lloc.
+> Gestiona rutines, assigna entrenaments, xateja i fes videollamades — tot des d'un sol lloc.
 
 ---
 
