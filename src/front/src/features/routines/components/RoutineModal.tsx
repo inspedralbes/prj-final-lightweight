@@ -541,7 +541,10 @@ const RoutineModal = ({
             </button>
             <button
               type="button"
-              onClick={doSubmit}
+              onClick={(e) => {
+                e.stopPropagation();
+                doSubmit();
+              }}
               disabled={isSubmitting || !formName.trim()}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all shadow-lg disabled:cursor-not-allowed ${
                 isEditing
