@@ -1,8 +1,12 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 /**
  * Plays a looping phone-ring tone using Web Audio API.
  * No external asset files required.
+ *
+ * iOS Safari requires AudioContext to be created/resumed during a user gesture.
+ * We pre-unlock the context on any touchstart/click so it is ready when an
+ * incoming call arrives (which is NOT a user gesture).
  *
  * Pattern: two beeps (480 Hz + 440 Hz, 400 ms each)
  *          then 2 s silence → repeat every 3 s.
@@ -11,14 +15,35 @@ export function useRingtone() {
   const ctxRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Pre-unlock AudioContext on first user interaction (iOS requirement).
+  // We keep the context alive (never close it) so it stays unlocked.
+  useEffect(() => {
+    const unlock = () => {
+      try {
+        if (!ctxRef.current) {
+          ctxRef.current = new AudioContext();
+        }
+        if (ctxRef.current.state === "suspended") {
+          ctxRef.current.resume().catch(() => {});
+        }
+      } catch {
+        // AudioContext unavailable — ignore
+      }
+    };
+    document.addEventListener("touchstart", unlock, { passive: true });
+    document.addEventListener("click", unlock, { passive: true });
+    return () => {
+      document.removeEventListener("touchstart", unlock);
+      document.removeEventListener("click", unlock);
+    };
+  }, []);
+
+  // Only clear the interval on stop — do NOT close the AudioContext so iOS
+  // keeps it in the unlocked state for the next ring.
   const stop = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
-    }
-    if (ctxRef.current) {
-      ctxRef.current.close().catch(() => {});
-      ctxRef.current = null;
     }
   }, []);
 
@@ -44,14 +69,25 @@ export function useRingtone() {
     });
   }, []);
 
-  const play = useCallback(() => {
+  const play = useCallback(async () => {
     stop();
     try {
-      const ctx = new AudioContext();
-      ctxRef.current = ctx;
+      // Create context if it was never unlocked yet
+      if (!ctxRef.current) {
+        ctxRef.current = new AudioContext();
+      }
+      const ctx = ctxRef.current;
+      // Resume if suspended (mandatory on iOS after page load)
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
       playBurst(ctx);
-      intervalRef.current = setInterval(() => {
-        if (ctxRef.current) playBurst(ctxRef.current);
+      intervalRef.current = setInterval(async () => {
+        if (!ctxRef.current) return;
+        if (ctxRef.current.state === "suspended") {
+          await ctxRef.current.resume().catch(() => {});
+        }
+        playBurst(ctxRef.current);
       }, 3000);
     } catch {
       // AudioContext unavailable (SSR / test env) — silently ignore
