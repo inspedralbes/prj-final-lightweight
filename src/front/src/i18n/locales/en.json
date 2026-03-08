@@ -93,6 +93,8 @@
     "clearAll": "Clear",
     "noRoutines": "No routines yet",
     "noRoutinesHint": "Get started by creating your first training routine.",
+    "soloHint": "Create your first routine to start training.",
+    "confirmDelete": "Are you sure you want to delete this routine? This action cannot be undone.",
     "assignedTo": "Assigned to",
     "addExercise": "Add Exercise",
     "exerciseName": "Exercise Name",

@@ -29,7 +29,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    // Devolvemos el role de la BD (fuente de verdad), no el del token
-    return { userId: user.id, username: user.username, role: user.role };
+    // Devolvemos el role y coachId de la BD (fuente de verdad), no el del token
+    return {
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+      coachId: user.coachId,
+    };
   }
 }

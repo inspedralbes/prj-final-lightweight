@@ -93,6 +93,8 @@
     "clearAll": "Netejar",
     "noRoutines": "Encara no tens rutines",
     "noRoutinesHint": "Comença creant la teva primera rutina d'entrenament.",
+    "soloHint": "Crea la teva primera rutina per començar a entrenar.",
+    "confirmDelete": "Segur que vols eliminar aquesta rutina? Aquesta acció no es pot desfer.",
     "assignedTo": "Assignada a",
     "addExercise": "Afegir exercici",
     "exerciseName": "Nom de l'exercici",

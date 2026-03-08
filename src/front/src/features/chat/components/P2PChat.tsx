@@ -27,7 +27,9 @@ const P2PChat: React.FC<P2PChatProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   // starts in "connecting" while we wait for partner info; offline only if socket truly disconnects
-  const [status, setStatus] = useState<"connected" | "connecting" | "offline">("connecting");
+  const [status, setStatus] = useState<"connected" | "connecting" | "offline">(
+    "connecting",
+  );
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -183,10 +185,7 @@ const P2PChat: React.FC<P2PChatProps> = ({
     setSending(true);
 
     try {
-      // Enviar el mensaje
-      await chatService.sendMessage(otherUserId, text);
-
-      // Emitir por WebSocket
+      // Enviar por WebSocket (el handler del backend persiste en BD y entrega al receptor)
       socket.emit("send-p2p-message", {
         senderId: user.id,
         receiverId: otherUserId,

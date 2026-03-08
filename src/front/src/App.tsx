@@ -149,7 +149,7 @@ const AppContent = () => {
           <Route
             path="/routine/:id/edit"
             element={
-              <ProtectedRoute requiredRole="COACH">
+              <ProtectedRoute>
                 <RoutineExercisesEdit />
               </ProtectedRoute>
             }

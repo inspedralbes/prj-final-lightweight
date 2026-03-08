@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Calendar, MessageCircle } from "@/shared/components/Icons";
+import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RoutineCard from "@/features/routines/components/RoutineCard";
+import RoutineModal from "@/features/routines/components/RoutineModal";
 import P2PChat from "@/features/chat/components/P2PChat";
 import Layout from "@/shared/layout/Layout";
 import { LoadingScreen } from "@/shared/components/LoadingScreen";
@@ -13,6 +15,7 @@ import {
 } from "@/features/routines/services/routineService";
 import { myCoachService } from "@/features/client/services/myCoachService";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { ConfirmModal } from "@/shared/components/ConfirmModal";
 
 const POLL_INTERVAL_MS = 10_000;
 
@@ -37,6 +40,12 @@ const ClientHome = () => {
   // null = todavía verificando; true/false = confirmado por backend
   const [hasCoach, setHasCoach] = useState<boolean | null>(null);
   const toast = useToast();
+
+  // Solo mode: modal & confirm state
+  const isSoloMode = !user.coachId && hasCoach === false;
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // Verificar asignación de coach directamente en el backend al montar
   useEffect(() => {
@@ -65,6 +74,54 @@ const ClientHome = () => {
     },
     [t, toast],
   );
+
+  // ── Solo mode handlers ──────────────────────────────────────────────────────
+  const handleOpenCreate = () => {
+    setEditingRoutine(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (id: number) => {
+    const r = routines.find((r) => r.id === id) ?? null;
+    setEditingRoutine(r);
+    setIsModalOpen(true);
+  };
+
+  const handleModalSubmit = async ({
+    name,
+  }: {
+    name: string;
+    clientIds: number[];
+  }) => {
+    try {
+      if (editingRoutine) {
+        await routineService.update(editingRoutine.id, { name });
+        toast.success(t("messages.routineSaved"));
+      } else {
+        await routineService.create({ name });
+        toast.success(t("messages.routineSaved"));
+      }
+      setIsModalOpen(false);
+      setEditingRoutine(null);
+      fetchClientRoutines(false);
+    } catch {
+      toast.error(t("messages.errorOccurred"));
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deletingId === null) return;
+    try {
+      await routineService.delete(deletingId);
+      toast.success(t("messages.routineDeleted"));
+      fetchClientRoutines(false);
+    } catch {
+      toast.error(t("messages.errorOccurred"));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+  // ───────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     fetchClientRoutines(true);
@@ -113,6 +170,16 @@ const ClientHome = () => {
             )}
           </div>
         </div>
+        {/* Solo mode: create button */}
+        {isSoloMode && (
+          <button
+            onClick={handleOpenCreate}
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-orange-500/20 shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            {t("routines.createNew")}
+          </button>
+        )}
       </div>
 
       {/* Grid de Tarjetas de Rutinas */}
@@ -125,9 +192,21 @@ const ClientHome = () => {
             {t("routines.noRoutines") || "No tienes rutinas asignadas"}
           </h3>
           <p className="text-gray-500 text-sm md:text-base max-w-sm">
-            {t("sessions.noSessions") ||
-              "Tu entrenador todavía no te ha asignado ninguna tabla de ejercicios."}
+            {isSoloMode
+              ? t("routines.soloHint") ||
+                "Crea tu primera rutina para empezar a entrenar."
+              : t("sessions.noSessions") ||
+                "Tu entrenador todavía no te ha asignado ninguna tabla de ejercicios."}
           </p>
+          {isSoloMode && (
+            <button
+              onClick={handleOpenCreate}
+              className="mt-5 flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold px-4 py-2.5 rounded-xl transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              {t("routines.createNew")}
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
@@ -139,6 +218,8 @@ const ClientHome = () => {
               createdAt={routine.createdAt}
               exercises={routine.exercises}
               onStart={(id) => navigate(`/workout/${id}`)}
+              onEdit={isSoloMode ? handleOpenEdit : undefined}
+              onDelete={isSoloMode ? (id) => setDeletingId(id) : undefined}
             />
           ))}
         </div>
@@ -164,6 +245,36 @@ const ClientHome = () => {
             otherUserId={user.coachId}
           />
         </div>
+      )}
+
+      {/* Solo mode: create/edit modal */}
+      {isSoloMode && (
+        <RoutineModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingRoutine(null);
+          }}
+          onSubmit={handleModalSubmit}
+          initialName={editingRoutine?.name ?? ""}
+          initialClientIds={[]}
+          clients={[]}
+          isEditing={editingRoutine !== null}
+          hideClientSelector={true}
+        />
+      )}
+
+      {/* Solo mode: confirm delete */}
+      {deletingId !== null && (
+        <ConfirmModal
+          title={t("routines.delete") || "Eliminar rutina"}
+          message={
+            t("routines.confirmDelete") ||
+            "¿Seguro que quieres eliminar esta rutina? Esta acción no se puede deshacer."
+          }
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeletingId(null)}
+        />
       )}
     </Layout>
   );

@@ -93,6 +93,8 @@
     "clearAll": "Limpiar",
     "noRoutines": "Aún no tienes rutinas",
     "noRoutinesHint": "Empieza creando tu primera rutina de entrenamiento.",
+    "soloHint": "Crea tu primera rutina para empezar a entrenar.",
+    "confirmDelete": "¿Seguro que quieres eliminar esta rutina? Esta acción no se puede deshacer.",
     "assignedTo": "Asignada a",
     "addExercise": "Agregar ejercicio",
     "exerciseName": "Nombre del ejercicio",

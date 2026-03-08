@@ -39,7 +39,9 @@ export const ExercisesEdit = () => {
   const { user } = useAuth();
 
   const canEdit =
-    user && (user.role === "COACH" || (user.role === "CLIENT" && !user.coachId));
+    user &&
+    (user.role === "COACH" || (user.role === "CLIENT" && !user.coachId));
+  const backPath = user?.role === "CLIENT" ? "/client-home" : "/dashboard";
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [routineName, setRoutineName] = useState("");
@@ -47,8 +49,11 @@ export const ExercisesEdit = () => {
 
   useEffect(() => {
     if (user && !canEdit) {
-      alert(t("messages.noPermission") || "No tienes permiso para editar esta rutina");
-      navigate("/dashboard");
+      alert(
+        t("messages.noPermission") ||
+          "No tienes permiso para editar esta rutina",
+      );
+      navigate(backPath);
       return;
     }
     const load = async () => {
@@ -86,7 +91,10 @@ export const ExercisesEdit = () => {
 
   const handleSubmit = async (payload: { exercises: ExerciseItem[] }) => {
     if (!canEdit) {
-      alert(t("messages.noPermission") || "No tienes permiso para editar esta rutina");
+      alert(
+        t("messages.noPermission") ||
+          "No tienes permiso para editar esta rutina",
+      );
       return;
     }
     try {
@@ -96,7 +104,7 @@ export const ExercisesEdit = () => {
         name: routineName,
         exercises: payload.exercises,
       });
-      navigate("/dashboard");
+      navigate(backPath);
     } catch (err) {
       console.error(err);
       alert(t("messages.errorOccurred"));
@@ -130,7 +138,7 @@ export const ExercisesEdit = () => {
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(backPath)}
               className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a1a1a] transition-colors"
               title={t("sidebar.dashboard")}
             >

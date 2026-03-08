@@ -70,6 +70,8 @@ const RoutineCard = ({
   }, [showExercisesModal]);
 
   const isClientMode = !!onStart;
+  // Solo client: has both onStart and management callbacks
+  const isSoloClient = isClientMode && (!!onEdit || !!onDelete);
 
   const formattedDate = createdAt
     ? new Date(createdAt).toLocaleDateString([], {
@@ -80,8 +82,13 @@ const RoutineCard = ({
     : null;
 
   const handleCardClick = () => {
+    if (isSoloClient) {
+      // Solo client: go directly to exercise editor, same as coach
+      navigate(`/routine/${id}/edit`);
+      return;
+    }
     if (isClientMode) {
-      // Open the exercises modal; Start button uses stopPropagation.
+      // Client with coach: open exercises read-only modal
       setShowExercisesModal(true);
       return;
     }
@@ -99,9 +106,36 @@ const RoutineCard = ({
           <div className="p-2.5 bg-[#1a1a1a] group-hover:bg-orange-500/10 rounded-xl transition-colors border border-[#2a2a2a] group-hover:border-orange-500/20">
             <ClipboardList className="w-5 h-5 text-orange-500 opacity-80 group-hover:opacity-100 transition-opacity" />
           </div>
-          <span className="whitespace-nowrap shrink-0 text-xs font-medium text-gray-500 bg-[#1a1a1a] border border-[#2a2a2a] px-2.5 py-1 rounded-full">
-            {exercises.length} {t("routines.exercises")}
-          </span>
+          <div className="flex items-center gap-1.5">
+            {/* Solo client management icons — top-right overlay */}
+            {isSoloClient && onEdit && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(id);
+                }}
+                title={t("routines.edit")}
+                className="p-1.5 rounded-lg text-gray-600 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+              >
+                <Edit className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {isSoloClient && onDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(id);
+                }}
+                title={t("routines.delete")}
+                className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <span className="whitespace-nowrap shrink-0 text-xs font-medium text-gray-500 bg-[#1a1a1a] border border-[#2a2a2a] px-2.5 py-1 rounded-full">
+              {exercises.length} {t("routines.exercises")}
+            </span>
+          </div>
         </div>
 
         {/* Body */}
@@ -214,7 +248,7 @@ const RoutineCard = ({
           )}
         </div>
 
-        {/* Footer — client mode: Start button */}
+        {/* Footer — client mode: Start button only */}
         {isClientMode && (
           <div className="mt-6 pt-5 border-t border-[#222]">
             <button
@@ -346,10 +380,22 @@ const RoutineCard = ({
               </div>
 
               {/* Footer */}
-              <div className="flex justify-end px-5 py-4 border-t border-[#222]">
+              <div className="flex justify-between items-center px-5 py-4 border-t border-[#222] gap-3">
+                {onEdit && (
+                  <button
+                    onClick={() => {
+                      setShowExercisesModal(false);
+                      navigate(`/routine/${id}/edit`);
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-orange-400 hover:text-orange-300 text-sm font-medium transition-colors"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    {t("routines.manageExercises")}
+                  </button>
+                )}
                 <button
                   onClick={() => setShowExercisesModal(false)}
-                  className="px-4 py-2 rounded-xl bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] text-gray-300 hover:text-white text-sm font-medium transition-colors"
+                  className="ml-auto px-4 py-2 rounded-xl bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] text-gray-300 hover:text-white text-sm font-medium transition-colors"
                 >
                   {t("common.close")}
                 </button>
