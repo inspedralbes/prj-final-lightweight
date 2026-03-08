@@ -216,6 +216,7 @@
     "codeAccepted": "Connectat amb el teu amic correctament!",
     "acceptError": "Error al canjear el codi",
     "selfUseError": "No pots utilitzar el teu propi codi",
+    "invalidCode": "El codi de sessió no és vàlid o no existeix",
     "enterCode": "Si us plau introdueix un codi",
     "footerInfo": "Els codis de sessió et permeten entrenar en directe amb un amic al gimnàs virtual. Comparteix-los només amb persones de confiança."
   },

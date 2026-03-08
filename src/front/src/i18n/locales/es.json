@@ -216,6 +216,7 @@
     "codeAccepted": "¡Conectado con tu amigo correctamente!",
     "acceptError": "Error al canjear el código",
     "selfUseError": "No puedes usar tu propio código",
+    "invalidCode": "El código de sesión no es válido o no existe",
     "enterCode": "Por favor ingresa un código",
     "footerInfo": "Tus códigos de invitación te ayudan a mantenerte conectado con tu comunidad de fitness. Compártelos de forma segura con tus amigos de confianza."
   },

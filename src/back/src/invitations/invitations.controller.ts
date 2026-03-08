@@ -53,4 +53,11 @@ export class InvitationsController {
   getPendingForMe(@Req() req) {
     return this.invitationsService.getPendingForClient(req.user.userId);
   }
+
+  // GET /invitations/validate-session/:code — Valida si un código de sala existe y está disponible
+  @UseGuards(JwtAuthGuard)
+  @Get('validate-session/:code')
+  validateSessionCode(@Param('code') code: string) {
+    return this.invitationsService.validateSessionCode(code);
+  }
 }

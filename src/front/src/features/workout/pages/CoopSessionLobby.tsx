@@ -91,6 +91,14 @@ export default function FriendSession() {
     setLoadingAccept(true);
     try {
       const joinCode = inputCode.trim();
+      const isValid = await invitationsService.validateSessionCode(joinCode);
+      if (!isValid) {
+        toast.error(
+          t("friendSession.invalidCode") ||
+            "Session code is invalid or does not exist",
+        );
+        return;
+      }
       setInputCode("");
       toast.success(t("friendSession.codeAccepted") || "Joining session...");
       setTimeout(() => {

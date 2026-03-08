@@ -216,6 +216,7 @@
     "codeAccepted": "Successfully connected to your friend!",
     "acceptError": "Error accepting invitation code",
     "selfUseError": "You cannot use your own invitation code",
+    "invalidCode": "The session code is invalid or does not exist",
     "enterCode": "Please enter a code",
     "footerInfo": "Session codes let you train live with a friend in the virtual gym. Share them only with people you trust."
   },
