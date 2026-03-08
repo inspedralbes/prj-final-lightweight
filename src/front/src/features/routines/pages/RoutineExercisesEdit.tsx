@@ -38,29 +38,37 @@ export const ExercisesEdit = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
 
-  const canEdit =
-    user &&
-    (user.role === "COACH" || (user.role === "CLIENT" && !user.coachId));
   const backPath = user?.role === "CLIENT" ? "/client-home" : "/dashboard";
+  const [canEdit, setCanEdit] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [routineName, setRoutineName] = useState("");
   const [initial, setInitial] = useState<RoutineData | null>(null);
 
   useEffect(() => {
-    if (user && !canEdit) {
-      alert(
-        t("messages.noPermission") ||
-          "No tienes permiso para editar esta rutina",
-      );
-      navigate(backPath);
-      return;
-    }
     const load = async () => {
       try {
         setLoading(true);
         const res = await api.get(`/routines/${id}`);
         const r = res.data;
+
+        // Determine edit permission based on the routine itself:
+        // COACHes can edit their own routines; CLIENTs can edit routines they
+        // created themselves (coachId === null), regardless of whether they
+        // now have a coach assigned.
+        const allowed =
+          user &&
+          (user.role === "COACH" ||
+            (user.role === "CLIENT" && r.coachId === null));
+        setCanEdit(!!allowed);
+        if (!allowed) {
+          alert(
+            t("messages.noPermission") ||
+              "No tienes permiso para editar esta rutina",
+          );
+          navigate(backPath);
+          return;
+        }
         const exercises = (r.exercises || []).map((ex: RoutineExercise) => ({
           name: ex.exercise?.name ?? "",
           exerciseId: ex.exercise?.id,
@@ -87,7 +95,7 @@ export const ExercisesEdit = () => {
       }
     };
     if (id) load();
-  }, [id, t]);
+  }, [id, user, t]);
 
   const handleSubmit = async (payload: { exercises: ExerciseItem[] }) => {
     if (!canEdit) {

@@ -23,6 +23,8 @@ interface RoutineCardProps {
   onDelete?: (id: number) => void;
   /** Client mode: navigate to workout */
   onStart?: (id: number) => void;
+  /** Client mode: true = created by client, false = assigned by coach */
+  isOwnRoutine?: boolean;
 }
 
 const AVATAR_COLORS = [
@@ -41,6 +43,7 @@ const RoutineCard = ({
   onEdit,
   onDelete,
   onStart,
+  isOwnRoutine,
 }: RoutineCardProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -143,6 +146,23 @@ const RoutineCard = ({
           <h3 className="text-lg md:text-xl font-bold text-gray-100 mb-1.5 line-clamp-2 group-hover:text-orange-400 transition-colors">
             {name}
           </h3>
+          {/* Source badge — only in client mode when context is mixed */}
+          {isClientMode && isOwnRoutine !== undefined && (
+            <span
+              className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full mb-2 border ${
+                isOwnRoutine
+                  ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
+                  : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${isOwnRoutine ? "bg-orange-400" : "bg-blue-400"}`}
+              />
+              {isOwnRoutine
+                ? t("routines.badgeMine")
+                : t("routines.badgeCoach")}
+            </span>
+          )}
           {formattedDate && (
             <p className="text-xs font-medium text-gray-600 mb-4">
               {formattedDate}

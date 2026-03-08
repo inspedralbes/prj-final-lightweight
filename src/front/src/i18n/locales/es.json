@@ -95,6 +95,11 @@
     "noRoutinesHint": "Empieza creando tu primera rutina de entrenamiento.",
     "soloHint": "Crea tu primera rutina para empezar a entrenar.",
     "confirmDelete": "¿Seguro que quieres eliminar esta rutina? Esta acción no se puede deshacer.",
+    "badgeMine": "Creada por mí",
+    "badgeCoach": "Creada por el entrenador",
+    "sectionMine": "Mis rutinas",
+    "sectionCoach": "Rutinas de mi entrenador",
+    "filterAll": "Todas",
     "assignedTo": "Asignada a",
     "addExercise": "Agregar ejercicio",
     "exerciseName": "Nombre del ejercicio",
@@ -146,7 +151,8 @@
     "userAlreadyExists": "Este usuario ya existe",
     "resetEmailSent": "Correo de recuperación enviado",
     "routineNotFound": "Rutina no encontrada",
-    "clientUpdated": "Cliente actualizado correctamente"
+    "clientUpdated": "Cliente actualizado correctamente",
+    "noPermission": "No tienes permiso para editar esta rutina"
   },
   "clients": {
     "title": "Mis clientes",

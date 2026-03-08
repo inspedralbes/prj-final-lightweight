@@ -43,6 +43,22 @@ const ClientHome = () => {
 
   // Solo mode: modal & confirm state
   const isSoloMode = !user.coachId && hasCoach === false;
+
+  // Routine filter — only relevant when client has both self-created and coach-assigned
+  const soloRoutines = routines.filter((r) => r.coachId === null);
+  const coachRoutines = routines.filter((r) => r.coachId !== null);
+  const hasMixedRoutines = soloRoutines.length > 0 && coachRoutines.length > 0;
+
+  type RoutineFilter = "all" | "coach" | "mine";
+  const [routineFilter, setRoutineFilter] = useState<RoutineFilter>("all");
+
+  const filteredRoutines =
+    !hasMixedRoutines || routineFilter === "all"
+      ? routines
+      : routineFilter === "coach"
+        ? coachRoutines
+        : soloRoutines;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -209,20 +225,82 @@ const ClientHome = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-          {routines.map((routine) => (
-            <RoutineCard
-              key={routine.id}
-              id={routine.id}
-              name={routine.name}
-              createdAt={routine.createdAt}
-              exercises={routine.exercises}
-              onStart={(id) => navigate(`/workout/${id}`)}
-              onEdit={isSoloMode ? handleOpenEdit : undefined}
-              onDelete={isSoloMode ? (id) => setDeletingId(id) : undefined}
-            />
-          ))}
-        </div>
+        <>
+          {/* Filter pills — only when both types of routines exist */}
+          {hasMixedRoutines && (
+            <div className="flex items-center gap-2 mb-6 flex-wrap">
+              {(
+                [
+                  { key: "all", label: t("routines.filterAll") },
+                  {
+                    key: "coach",
+                    label: t("routines.badgeCoach"),
+                    dot: "bg-blue-400",
+                    active: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+                    inactive:
+                      "bg-[#1a1a1a] text-gray-400 border-[#2a2a2a] hover:border-blue-500/30 hover:text-blue-300",
+                  },
+                  {
+                    key: "mine",
+                    label: t("routines.badgeMine"),
+                    dot: "bg-orange-400",
+                    active:
+                      "bg-orange-500/15 text-orange-300 border-orange-500/30",
+                    inactive:
+                      "bg-[#1a1a1a] text-gray-400 border-[#2a2a2a] hover:border-orange-500/30 hover:text-orange-300",
+                  },
+                ] as const
+              ).map((f) => {
+                const isActive = routineFilter === f.key;
+                const activeClass =
+                  f.key === "all"
+                    ? isActive
+                      ? "bg-[#1a1a1a] text-white border-[#444]"
+                      : "bg-[#1a1a1a] text-gray-500 border-[#2a2a2a] hover:text-gray-300 hover:border-[#444]"
+                    : isActive
+                      ? f.active
+                      : f.inactive;
+                return (
+                  <button
+                    key={f.key}
+                    onClick={() => setRoutineFilter(f.key)}
+                    className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                      activeClass
+                    }`}
+                  >
+                    {f.key !== "all" && (
+                      <span className={`w-1.5 h-1.5 rounded-full ${f.dot}`} />
+                    )}
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Flat grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+            {filteredRoutines.map((routine) => (
+              <RoutineCard
+                key={routine.id}
+                id={routine.id}
+                name={routine.name}
+                createdAt={routine.createdAt}
+                exercises={routine.exercises}
+                onStart={(id) => navigate(`/workout/${id}`)}
+                onEdit={routine.coachId === null ? handleOpenEdit : undefined}
+                onDelete={
+                  routine.coachId === null
+                    ? (id) => setDeletingId(id)
+                    : undefined
+                }
+                isOwnRoutine={
+                  hasMixedRoutines ? routine.coachId === null : undefined
+                }
+              />
+            ))}
+          </div>
+        </>
       )}
       {/* Floating Chat Button — solo visible si el backend confirma coach asignado */}
       {hasCoach === true && (
@@ -247,22 +325,20 @@ const ClientHome = () => {
         </div>
       )}
 
-      {/* Solo mode: create/edit modal */}
-      {isSoloMode && (
-        <RoutineModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setEditingRoutine(null);
-          }}
-          onSubmit={handleModalSubmit}
-          initialName={editingRoutine?.name ?? ""}
-          initialClientIds={[]}
-          clients={[]}
-          isEditing={editingRoutine !== null}
-          hideClientSelector={true}
-        />
-      )}
+      {/* Create/edit own-routine modal */}
+      <RoutineModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingRoutine(null);
+        }}
+        onSubmit={handleModalSubmit}
+        initialName={editingRoutine?.name ?? ""}
+        initialClientIds={[]}
+        clients={[]}
+        isEditing={editingRoutine !== null}
+        hideClientSelector={true}
+      />
 
       {/* Solo mode: confirm delete */}
       {deletingId !== null && (
