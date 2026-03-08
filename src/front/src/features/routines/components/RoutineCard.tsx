@@ -115,7 +115,7 @@ const RoutineCard = ({
                   onEdit(id);
                 }}
                 title={t("routines.edit")}
-                className="p-1.5 rounded-lg text-gray-600 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                className="p-1.5 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors"
               >
                 <Edit className="w-3.5 h-3.5" />
               </button>
@@ -127,7 +127,7 @@ const RoutineCard = ({
                   onDelete(id);
                 }}
                 title={t("routines.delete")}
-                className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                className="p-1.5 rounded-lg text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
