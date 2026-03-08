@@ -56,12 +56,11 @@ export class RoutinesController {
   }
 
   @Post('create')
-  @UseGuards(CoachGuard)
+  @UseGuards(JwtAuthGuard)
   async create(@Request() req: any, @Body() body: CreateRoutineDto) {
-    const coachId = req.user.userId;
     const { name, exercises, clientIds } = body;
     return this.routinesService.createRoutine(
-      coachId,
+      req.user,
       name,
       exercises || [],
       clientIds && clientIds.length > 0 ? clientIds : undefined,
@@ -69,17 +68,16 @@ export class RoutinesController {
   }
 
   @Put(':id/edit')
-  @UseGuards(CoachGuard)
+  @UseGuards(JwtAuthGuard)
   async edit(
     @Request() req: any,
     @Param('id') id: string,
     @Body() body: UpdateRoutineDto,
   ) {
-    const coachId = req.user.userId;
     const { name, exercises, clientIds } = body;
     return this.routinesService.updateRoutine(
       Number(id),
-      coachId,
+      req.user,
       name,
       exercises,
       clientIds,
@@ -87,9 +85,8 @@ export class RoutinesController {
   }
 
   @Delete(':id')
-  @UseGuards(CoachGuard)
+  @UseGuards(JwtAuthGuard)
   async delete(@Request() req: any, @Param('id') id: string) {
-    const coachId = req.user.userId;
-    return this.routinesService.deleteRoutine(Number(id), coachId);
+    return this.routinesService.deleteRoutine(Number(id), req.user);
   }
 }

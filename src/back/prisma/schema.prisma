@@ -166,7 +166,7 @@ model Invitation {
 
 model LiveSession {
   id          Int           @id @default(autoincrement())
-  coachId     Int           @map("coach_id")
+  coachId     Int?          @map("coach_id")
   routineId   Int           @map("routine_id")
   sessionCode String        @unique @map("session_code")
   status      SessionStatus @default(PENDING)
@@ -174,7 +174,7 @@ model LiveSession {
   completedAt DateTime?     @map("completed_at")
 
   // Relaciones
-  coach        User              @relation(fields: [coachId], references: [id])
+  coach        User?             @relation(fields: [coachId], references: [id])
   routine      Routine           @relation(fields: [routineId], references: [id], onDelete: Cascade)
   participants LiveParticipant[]
   events       WorkoutEvent[]

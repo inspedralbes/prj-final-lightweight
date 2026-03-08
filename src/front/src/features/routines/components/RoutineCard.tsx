@@ -23,6 +23,8 @@ interface RoutineCardProps {
   onDelete?: (id: number) => void;
   /** Client mode: navigate to workout */
   onStart?: (id: number) => void;
+  /** Client mode: true = created by client, false = assigned by coach */
+  isOwnRoutine?: boolean;
 }
 
 const AVATAR_COLORS = [
@@ -41,6 +43,7 @@ const RoutineCard = ({
   onEdit,
   onDelete,
   onStart,
+  isOwnRoutine,
 }: RoutineCardProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -70,6 +73,8 @@ const RoutineCard = ({
   }, [showExercisesModal]);
 
   const isClientMode = !!onStart;
+  // Solo client: has both onStart and management callbacks
+  const isSoloClient = isClientMode && (!!onEdit || !!onDelete);
 
   const formattedDate = createdAt
     ? new Date(createdAt).toLocaleDateString([], {
@@ -80,8 +85,13 @@ const RoutineCard = ({
     : null;
 
   const handleCardClick = () => {
+    if (isSoloClient) {
+      // Solo client: go directly to exercise editor, same as coach
+      navigate(`/routine/${id}/edit`);
+      return;
+    }
     if (isClientMode) {
-      // Open the exercises modal; Start button uses stopPropagation.
+      // Client with coach: open exercises read-only modal
       setShowExercisesModal(true);
       return;
     }
@@ -99,9 +109,36 @@ const RoutineCard = ({
           <div className="p-2.5 bg-[#1a1a1a] group-hover:bg-orange-500/10 rounded-xl transition-colors border border-[#2a2a2a] group-hover:border-orange-500/20">
             <ClipboardList className="w-5 h-5 text-orange-500 opacity-80 group-hover:opacity-100 transition-opacity" />
           </div>
-          <span className="whitespace-nowrap shrink-0 text-xs font-medium text-gray-500 bg-[#1a1a1a] border border-[#2a2a2a] px-2.5 py-1 rounded-full">
-            {exercises.length} {t("routines.exercises")}
-          </span>
+          <div className="flex items-center gap-1.5">
+            {/* Solo client management icons — top-right overlay */}
+            {isSoloClient && onEdit && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(id);
+                }}
+                title={t("routines.edit")}
+                className="p-1.5 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors"
+              >
+                <Edit className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {isSoloClient && onDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(id);
+                }}
+                title={t("routines.delete")}
+                className="p-1.5 rounded-lg text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <span className="whitespace-nowrap shrink-0 text-xs font-medium text-gray-500 bg-[#1a1a1a] border border-[#2a2a2a] px-2.5 py-1 rounded-full">
+              {exercises.length} {t("routines.exercises")}
+            </span>
+          </div>
         </div>
 
         {/* Body */}
@@ -109,6 +146,23 @@ const RoutineCard = ({
           <h3 className="text-lg md:text-xl font-bold text-gray-100 mb-1.5 line-clamp-2 group-hover:text-orange-400 transition-colors">
             {name}
           </h3>
+          {/* Source badge — only in client mode when context is mixed */}
+          {isClientMode && isOwnRoutine !== undefined && (
+            <span
+              className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full mb-2 border ${
+                isOwnRoutine
+                  ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
+                  : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${isOwnRoutine ? "bg-orange-400" : "bg-blue-400"}`}
+              />
+              {isOwnRoutine
+                ? t("routines.badgeMine")
+                : t("routines.badgeCoach")}
+            </span>
+          )}
           {formattedDate && (
             <p className="text-xs font-medium text-gray-600 mb-4">
               {formattedDate}
@@ -139,6 +193,13 @@ const RoutineCard = ({
                   {t("routines.viewAll")}
                 </p>
               )}
+            </div>
+          )}
+          {isClientMode && exercises.length === 0 && (
+            <div className="pt-4 border-t border-[#222] mt-2">
+              <p className="text-xs text-gray-600 italic">
+                {t("routines.noExercises")}
+              </p>
             </div>
           )}
 
@@ -214,7 +275,7 @@ const RoutineCard = ({
           )}
         </div>
 
-        {/* Footer — client mode: Start button */}
+        {/* Footer — client mode: Start button only */}
         {isClientMode && (
           <div className="mt-6 pt-5 border-t border-[#222]">
             <button
@@ -299,6 +360,14 @@ const RoutineCard = ({
 
               {/* Body */}
               <div className="overflow-y-auto flex-1 p-4 space-y-2">
+                {exercises.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-10 gap-2">
+                    <ClipboardList className="w-8 h-8 text-gray-700" />
+                    <p className="text-sm text-gray-500 italic">
+                      {t("routines.noExercises")}
+                    </p>
+                  </div>
+                )}
                 {exercises.map((re, i) => {
                   const exName = re.exercise?.name ?? re.name;
                   const exDesc = re.exercise?.description;
@@ -346,10 +415,22 @@ const RoutineCard = ({
               </div>
 
               {/* Footer */}
-              <div className="flex justify-end px-5 py-4 border-t border-[#222]">
+              <div className="flex justify-between items-center px-5 py-4 border-t border-[#222] gap-3">
+                {onEdit && (
+                  <button
+                    onClick={() => {
+                      setShowExercisesModal(false);
+                      navigate(`/routine/${id}/edit`);
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-orange-400 hover:text-orange-300 text-sm font-medium transition-colors"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    {t("routines.manageExercises")}
+                  </button>
+                )}
                 <button
                   onClick={() => setShowExercisesModal(false)}
-                  className="px-4 py-2 rounded-xl bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] text-gray-300 hover:text-white text-sm font-medium transition-colors"
+                  className="ml-auto px-4 py-2 rounded-xl bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] text-gray-300 hover:text-white text-sm font-medium transition-colors"
                 >
                   {t("common.close")}
                 </button>

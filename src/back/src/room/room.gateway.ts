@@ -21,11 +21,7 @@ interface RoomUser {
 @Injectable()
 @WebSocketGateway({
   cors: {
-    origin: [
-      process.env.FRONTEND_URL || '',
-      'http://localhost:5173',
-      'http://localhost:5174',
-    ].filter((v) => !!v) as string[],
+    origin: true, // nginx restricts external access; allow any origin at WS level
     credentials: true,
     methods: ['GET', 'POST'],
   },
@@ -84,7 +80,10 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
             data: { status: InvitationStatus.REVOKED },
           });
         } catch (e) {
-          console.warn('[Room] no se pudo actualizar invitación al cerrar sala', e);
+          console.warn(
+            '[Room] no se pudo actualizar invitación al cerrar sala',
+            e,
+          );
         }
         // limpiar cualquier progreso almacenado
         this.roomLastProgress.delete(roomId);
@@ -105,7 +104,13 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('joinRoom')
   handleJoinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { roomId: string; userId: string; username?: string; isHost?: boolean },
+    @MessageBody()
+    payload: {
+      roomId: string;
+      userId: string;
+      username?: string;
+      isHost?: boolean;
+    },
   ) {
     console.log('📥 [Room] joinRoom recibido:', payload);
     const { roomId, userId, username, isHost: requestedIsHost } = payload;
@@ -146,7 +151,10 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       }
 
-      console.log(`📤 [Room] Emitiendo roomUsersUpdate a sala ${roomId}:`, users);
+      console.log(
+        `📤 [Room] Emitiendo roomUsersUpdate a sala ${roomId}:`,
+        users,
+      );
       this.server.to(roomId).emit('roomUsersUpdate', {
         usersInRoom: users,
       });
@@ -172,7 +180,13 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('exerciseCompleted')
   handleExerciseCompleted(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { roomId: string; userId: string; exerciseId: number; progress: number },
+    @MessageBody()
+    payload: {
+      roomId: string;
+      userId: string;
+      exerciseId: number;
+      progress: number;
+    },
   ) {
     const { roomId, userId, exerciseId, progress } = payload;
     // this legacy event still notifica un progreso básico; preferir `updateProgress`
@@ -307,7 +321,10 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     // Notificar a todos en la sala con la lista actualizada
-    console.log(`📤 [Room] Emitiendo roomUsersUpdate (por salida) a sala ${roomId}:`, updatedUsers);
+    console.log(
+      `📤 [Room] Emitiendo roomUsersUpdate (por salida) a sala ${roomId}:`,
+      updatedUsers,
+    );
     this.server.to(roomId).emit('roomUsersUpdate', {
       usersInRoom: updatedUsers,
     });

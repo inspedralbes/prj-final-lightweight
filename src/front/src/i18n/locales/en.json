@@ -93,6 +93,13 @@
     "clearAll": "Clear",
     "noRoutines": "No routines yet",
     "noRoutinesHint": "Get started by creating your first training routine.",
+    "soloHint": "Create your first routine to start training.",
+    "confirmDelete": "Are you sure you want to delete this routine? This action cannot be undone.",
+    "badgeMine": "Created by me",
+    "badgeCoach": "Created by coach",
+    "sectionMine": "My routines",
+    "sectionCoach": "Coach routines",
+    "filterAll": "All",
     "assignedTo": "Assigned to",
     "addExercise": "Add Exercise",
     "exerciseName": "Exercise Name",
@@ -101,6 +108,7 @@
     "recentlyAssigned": "Recently assigned",
     "moreExercises": "+{{count}} more",
     "viewAll": "View all exercises",
+    "noExercises": "No exercises added yet",
     "series": "Sets",
     "reps": "Reps",
     "weight": "Weight (kg)",
@@ -144,7 +152,8 @@
     "userAlreadyExists": "This user already exists",
     "resetEmailSent": "Recovery email sent",
     "routineNotFound": "Routine not found",
-    "clientUpdated": "Client updated successfully"
+    "clientUpdated": "Client updated successfully",
+    "noPermission": "You don't have permission to edit this routine"
   },
   "clients": {
     "title": "My Clients",

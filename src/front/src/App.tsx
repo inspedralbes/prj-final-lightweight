@@ -43,6 +43,14 @@ const AppContent = () => {
   };
 
   useEffect(() => {
+    // Reconnect socket when a user session is present (e.g. after logout+login).
+    // On first load the socket auto-connects; on subsequent logins it may be disconnected.
+    if (user && !socket.connected) {
+      socket.connect();
+    }
+  }, [user]);
+
+  useEffect(() => {
     socket.on("connect", () => {
       setIsConnected(true);
       if (user) {
@@ -58,16 +66,16 @@ const AppContent = () => {
       const preview =
         data.text.length > 50 ? data.text.substring(0, 50) + "..." : data.text;
       const senderName = data.fromUsername || data.from || "Alguien";
-      // roomId debe ser chat_client_{clientId}. Si soy CLIENT, mi clientId es user.id.
-      // Si soy COACH, el clientId viene en data.from (el remitente es el cliente).
       const roomId =
         user?.role === "CLIENT"
           ? `chat_client_${user.id}`
           : `chat_client_${data.from}`;
+      // isLive=true: real-time message — un-dismiss if room was previously dismissed
       addNotification(
         roomId,
         `${senderName} te ha enviado: ${preview}`,
         senderName,
+        true,
       );
     });
 
@@ -80,18 +88,35 @@ const AppContent = () => {
       chatService
         .getUnreadMessages()
         .then((msgs: P2PMessage[]) => {
+          // Group by room so we call addNotification ONCE per room with the real count.
+          // Calling it once per message would accumulate count on every reconnect/navigation.
+          type RoomEntry = { count: number; latestMsg: P2PMessage };
+          const byRoom: Record<string, RoomEntry> = {};
           msgs.forEach((m) => {
-            const preview =
-              m.text.length > 50 ? m.text.substring(0, 50) + "..." : m.text;
-            const senderName = m.sender?.username || `Usuario ${m.senderId}`;
             const roomId =
               user?.role === "CLIENT"
                 ? `chat_client_${user.id}`
                 : `chat_client_${m.senderId}`;
+            if (!byRoom[roomId]) {
+              byRoom[roomId] = { count: 0, latestMsg: m };
+            }
+            byRoom[roomId].count++;
+            byRoom[roomId].latestMsg = m; // keep the latest preview
+          });
+          Object.entries(byRoom).forEach(([roomId, { count, latestMsg }]) => {
+            const preview =
+              latestMsg.text.length > 50
+                ? latestMsg.text.substring(0, 50) + "..."
+                : latestMsg.text;
+            const senderName =
+              latestMsg.sender?.username || `Usuario ${latestMsg.senderId}`;
+            // isLive=false: don't un-dismiss; initialCount=count: real DB unread total
             addNotification(
               roomId,
               `${senderName} te ha enviado: ${preview}`,
               senderName,
+              false,
+              count,
             );
           });
         })
@@ -149,7 +174,7 @@ const AppContent = () => {
           <Route
             path="/routine/:id/edit"
             element={
-              <ProtectedRoute requiredRole="COACH">
+              <ProtectedRoute>
                 <RoutineExercisesEdit />
               </ProtectedRoute>
             }
@@ -220,7 +245,10 @@ const AppContent = () => {
       </BrowserRouter>
 
       {/* Notification Center */}
-      <NotificationCenter onChatClick={handleNotificationChatClick} />
+      <NotificationCenter
+        onChatClick={handleNotificationChatClick}
+        position={user?.role === "CLIENT" ? "top-right" : "bottom-right"}
+      />
     </>
   );
 };

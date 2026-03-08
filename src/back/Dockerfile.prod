@@ -28,4 +28,6 @@ EXPOSE 3000
 
 # 1. prisma migrate deploy applies pending migrations without data loss
 # 2. node dist/main starts the compiled NestJS app
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+# Use the local prisma binary (node_modules/.bin/prisma) so we always run
+# the pinned v6 from package.json instead of whatever `npx prisma` downloads.
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node dist/main"]

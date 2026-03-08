@@ -17,12 +17,8 @@ dotenv.config();
 
 @WebSocketGateway({
   cors: {
-    origin: [
-      process.env.FRONTEND_URL || '',
-      // in dev we sometimes run Vite on 5173 or 5174; allow both
-      'http://localhost:5173',
-      'http://localhost:5174',
-    ].filter((v) => !!v) as string[],
+    origin: true, // nginx restricts external access; allow any origin at WS level
+    credentials: true,
   },
 })
 export class EventsGateway
@@ -83,30 +79,42 @@ export class EventsGateway
     @MessageBody() payload: any,
   ) {
     if (!payload) {
-      console.warn('[Chat] open-chat called with empty payload from', client.id);
+      console.warn(
+        '[Chat] open-chat called with empty payload from',
+        client.id,
+      );
       return;
     }
-    const { userId, roomId, otherUserId }: { userId: number; roomId: string; otherUserId?: number } = payload;
+    const {
+      userId,
+      roomId,
+      otherUserId,
+    }: { userId: number; roomId: string; otherUserId?: number } = payload;
     const set = this.userOpenChats.get(userId) || new Set<string>();
     set.add(roomId);
     this.userOpenChats.set(userId, set);
     console.log(`[Chat] Usuario ${userId} abrió chat ${roomId}`);
-    
+
     // Notificar al otro usuario (si está conectado) del estado
     if (otherUserId) {
       const otherSocketId = this.userSockets.get(otherUserId);
       if (otherSocketId) {
-        const otherHasChatOpen = this.userOpenChats.get(otherUserId)?.has(roomId) || false;
+        const otherHasChatOpen =
+          this.userOpenChats.get(otherUserId)?.has(roomId) || false;
         // Ambos tienen abierto el chat → VERDE
         const status = otherHasChatOpen ? 'connected' : 'connecting';
-        console.log(`[Chat] informing otherUser ${otherUserId} (socket ${otherSocketId}) that user ${userId} opened chat; status=${status}`);
+        console.log(
+          `[Chat] informing otherUser ${otherUserId} (socket ${otherSocketId}) that user ${userId} opened chat; status=${status}`,
+        );
         this.server.to(otherSocketId).emit('chat-partner-status', {
           roomId,
           userId,
           status, // 'connected' si ambos tienen abierto, 'connecting' si solo uno
         });
       } else {
-        console.log(`[Chat] otherUser ${otherUserId} not connected, cannot inform status`);
+        console.log(
+          `[Chat] otherUser ${otherUserId} not connected, cannot inform status`,
+        );
       }
     }
   }
@@ -117,10 +125,17 @@ export class EventsGateway
     @MessageBody() payload: any,
   ) {
     if (!payload) {
-      console.warn('[Chat] close-chat called with empty payload from', client.id);
+      console.warn(
+        '[Chat] close-chat called with empty payload from',
+        client.id,
+      );
       return;
     }
-    const { userId, roomId, otherUserId }: { userId: number; roomId: string; otherUserId?: number } = payload;
+    const {
+      userId,
+      roomId,
+      otherUserId,
+    }: { userId: number; roomId: string; otherUserId?: number } = payload;
     const set = this.userOpenChats.get(userId);
     if (set) {
       set.delete(roomId);
@@ -128,22 +143,27 @@ export class EventsGateway
       else this.userOpenChats.set(userId, set);
     }
     console.log(`[Chat] Usuario ${userId} cerró chat ${roomId}`);
-    
+
     // Notificar al otro usuario del cambio de estado
     if (otherUserId) {
       const otherSocketId = this.userSockets.get(otherUserId);
       if (otherSocketId) {
-        const otherHasChatOpen = this.userOpenChats.get(otherUserId)?.has(roomId) || false;
+        const otherHasChatOpen =
+          this.userOpenChats.get(otherUserId)?.has(roomId) || false;
         // Si el otro sigue teniendo abierto → NARANJA (solo uno conectado)
         const status = otherHasChatOpen ? 'connecting' : 'disconnected';
-        console.log(`[Chat] informing otherUser ${otherUserId} that user ${userId} closed chat; status=${status}`);
+        console.log(
+          `[Chat] informing otherUser ${otherUserId} that user ${userId} closed chat; status=${status}`,
+        );
         this.server.to(otherSocketId).emit('chat-partner-status', {
           roomId,
           userId,
           status,
         });
       } else {
-        console.log(`[Chat] otherUser ${otherUserId} not connected when user ${userId} closed chat`);
+        console.log(
+          `[Chat] otherUser ${otherUserId} not connected when user ${userId} closed chat`,
+        );
       }
     }
   }
@@ -209,19 +229,30 @@ export class EventsGateway
     @MessageBody() payload: any,
   ) {
     if (!payload) {
-      console.warn('[Chat] get-chat-status called with empty payload from', client.id);
+      console.warn(
+        '[Chat] get-chat-status called with empty payload from',
+        client.id,
+      );
       return;
     }
-    const { roomId, userId, otherUserId }: { roomId: string; userId: number; otherUserId: number } = payload;
-    const userHasChatOpen = this.userOpenChats.get(userId)?.has(roomId) || false;
-    const otherHasChatOpen = this.userOpenChats.get(otherUserId)?.has(roomId) || false;
-    
+    const {
+      roomId,
+      userId,
+      otherUserId,
+    }: { roomId: string; userId: number; otherUserId: number } = payload;
+    const userHasChatOpen =
+      this.userOpenChats.get(userId)?.has(roomId) || false;
+    const otherHasChatOpen =
+      this.userOpenChats.get(otherUserId)?.has(roomId) || false;
+
     // Ambos abiertos → VERDE (connected)
     // Solo uno abierto → NARANJA (connecting)
     const status = otherHasChatOpen ? 'connected' : 'connecting';
-    
-    console.log(`[Chat] Get chat status: user ${userId} (open=${userHasChatOpen}), other ${otherUserId} (open=${otherHasChatOpen}) → ${status}`);
-    
+
+    console.log(
+      `[Chat] Get chat status: user ${userId} (open=${userHasChatOpen}), other ${otherUserId} (open=${otherHasChatOpen}) → ${status}`,
+    );
+
     client.emit('chat-status', {
       roomId,
       status,
@@ -235,10 +266,17 @@ export class EventsGateway
     @MessageBody() payload: any,
   ) {
     if (!payload) {
-      console.warn('[Chat] send-p2p-message called with empty payload from', client.id);
+      console.warn(
+        '[Chat] send-p2p-message called with empty payload from',
+        client.id,
+      );
       return;
     }
-    const { receiverId, text, senderId }: { receiverId: any; text: string; senderId: any } = payload;
+    const {
+      receiverId,
+      text,
+      senderId,
+    }: { receiverId: any; text: string; senderId: any } = payload;
     const recvId = Number(receiverId);
     const sendId = Number(senderId);
     console.log(`[Chat P2P] Mensaje de ${sendId} a ${recvId}: ${text}`);
@@ -257,7 +295,9 @@ export class EventsGateway
         : false;
 
       if (receiverSocketId) {
-        console.log(`[Chat P2P] Delivering real-time message to socket ${receiverSocketId}`);
+        console.log(
+          `[Chat P2P] Delivering real-time message to socket ${receiverSocketId}`,
+        );
         // enviar siempre el mensaje real-time para que aparezca en la ventana si está abierta
         this.server.to(receiverSocketId).emit('p2p-message', {
           from: senderId,
@@ -278,7 +318,9 @@ export class EventsGateway
           });
         }
       } else {
-        console.log(`[Chat P2P] Receptor ${recvId} no conectado; no se entregó el mensaje en tiempo real`);
+        console.log(
+          `[Chat P2P] Receptor ${recvId} no conectado; no se entregó el mensaje en tiempo real`,
+        );
       }
     } catch (error) {
       console.error('[Chat P2P] Error sending message:', error);
