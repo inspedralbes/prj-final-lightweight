@@ -38,7 +38,12 @@ interface ActiveSessionProps {
   isSessionActive: boolean;
   partnerProgress?: PartnerProgress | null;
   partnerDisconnected?: boolean;
-  onSessionFinished: (stats: { time: number; volume: number; exercises: number }) => void;
+  partnerUsername?: string;
+  onSessionFinished: (stats: {
+    time: number;
+    volume: number;
+    exercises: number;
+  }) => void;
   onLeave: () => void;
   isSoloMode?: boolean;
 }
@@ -54,6 +59,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
   isSessionActive,
   partnerProgress,
   partnerDisconnected,
+  partnerUsername,
   onSessionFinished,
   onLeave,
   isSoloMode,
@@ -79,6 +85,22 @@ const ActiveSession: FC<ActiveSessionProps> = ({
     if (isSessionActive) {
       setIsTimerRunning(true);
       setTime(0);
+      // Emit initial progress so partner sees the first exercise immediately
+      if (socket && !isSoloMode && selectedRoutine) {
+        const firstEx = selectedRoutine.exercises?.[0];
+        if (firstEx) {
+          socket.emit("updateProgress", {
+            roomId,
+            userId,
+            progressPercentage: 0,
+            completedExercises: [],
+            currentExerciseIndex: 0,
+            currentSet: 1,
+            exerciseName: firstEx.exercise.name,
+            totalSets: firstEx.sets,
+          });
+        }
+      }
     }
   }, [isSessionActive]);
 
@@ -141,19 +163,19 @@ const ActiveSession: FC<ActiveSessionProps> = ({
 
     if (currentSet < currentEx.sets) {
       updatedSet = currentSet + 1;
-      toast.success("Sèrie completada!");
+      toast.success(t("virtualRoom.setCompleted"));
     } else {
       justFinishedExercise = true;
       setCompletedExercises((prev) => [...prev, currentEx.exerciseId]);
       if (currentExerciseIdx < (selectedRoutine.exercises?.length || 0) - 1) {
         updatedExerciseIdx = currentExerciseIdx + 1;
         updatedSet = 1;
-        toast.success("Exercici completat! Següent exercici...");
+        toast.success(t("virtualRoom.exerciseCompleted"));
       } else {
         // Finished entire routine
         setProgress(100);
         setIsTimerRunning(false);
-        toast.success("FELICITATS! Entrenament completat!");
+        toast.success(t("virtualRoom.workoutCompleted"));
         if (socket && !isSoloMode) {
           socket.emit("updateProgress", {
             roomId,
@@ -188,8 +210,11 @@ const ActiveSession: FC<ActiveSessionProps> = ({
       selectedRoutine.exercises
         ?.slice(0, updatedExerciseIdx)
         .reduce((acc, ex) => acc + ex.sets, 0) || 0;
-    const currentTotalCompleted = completedSets + updatedSet;
-    const newProgress = Math.round((currentTotalCompleted / totalSets) * 100);
+    const currentTotalCompleted = completedSets + updatedSet - 1;
+    const newProgress = Math.min(
+      99,
+      Math.round((currentTotalCompleted / totalSets) * 100),
+    );
     setProgress(newProgress);
 
     if (socket && !isSoloMode) {
@@ -218,7 +243,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
     return (
       <div className="w-full h-full flex flex-col items-center justify-center p-4">
         <h2 className="text-zinc-500 font-black uppercase tracking-widest text-lg mb-6">
-          Prepareu-vos...
+          {t("virtualRoom.getReady")}
         </h2>
         <div className="text-[8rem] md:text-[10rem] font-black text-orange-500 animate-pulse leading-none">
           {countdown}
@@ -234,23 +259,26 @@ const ActiveSession: FC<ActiveSessionProps> = ({
   if (isSessionActive) {
     return (
       <div className="w-full h-full overflow-y-auto p-4 md:p-6">
-        <div className={`grid grid-cols-1 ${isSoloMode ? 'max-w-2xl mx-auto' : 'lg:grid-cols-2 max-w-6xl mx-auto'} gap-4 md:gap-6`}>
+        <div
+          className={`grid grid-cols-1 ${isSoloMode ? "max-w-2xl mx-auto" : "lg:grid-cols-2 max-w-6xl mx-auto"} gap-4 md:gap-6`}
+        >
           {/* Left column: My training */}
           <div className="space-y-6">
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Dumbbell className="text-orange-500" /> El meu entrenament
+                  <Dumbbell className="text-orange-500" />{" "}
+                  {t("virtualRoom.myTraining")}
                 </h2>
                 <div className="px-3 py-1 bg-orange-500/10 text-orange-500 rounded-full text-xs font-bold uppercase tracking-wider">
-                  SESSIÓ ACTIVA
+                  {t("virtualRoom.activeSession")}
                 </div>
               </div>
 
               {/* Timer */}
-              <div className="bg-black/10 rounded-xl p-8 text-center border border-zinc-200/10 mb-8 flex flex-col items-center justify-center">
+              <div className="bg-zinc-900/50 rounded-xl p-8 text-center border border-zinc-700/30 mb-8 flex flex-col items-center justify-center">
                 <span className="text-zinc-500 text-sm font-medium uppercase tracking-widest mb-2 font-mono">
-                  Cronòmetre
+                  {t("virtualRoom.stopwatch")}
                 </span>
                 <div className="text-6xl font-mono font-bold text-white tracking-tighter mb-6">
                   {formatTime(time)}
@@ -287,12 +315,17 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                     </h3>
                     <div className="flex items-center gap-4 text-zinc-400">
                       <span className="flex items-center gap-1 font-medium bg-zinc-800 px-2 py-0.5 rounded">
-                        Sèrie {currentSet}/
-                        {selectedRoutine.exercises[currentExerciseIdx].sets}
+                        {t("virtualRoom.series", {
+                          current: currentSet,
+                          total:
+                            selectedRoutine.exercises[currentExerciseIdx].sets,
+                        })}
                       </span>
                       <span className="flex items-center gap-1">
-                        Objectiu:{" "}
-                        {selectedRoutine.exercises[currentExerciseIdx].reps} reps
+                        {t("virtualRoom.target", {
+                          reps: selectedRoutine.exercises[currentExerciseIdx]
+                            .reps,
+                        })}
                       </span>
                     </div>
                   </div>
@@ -300,7 +333,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-zinc-500 uppercase">
-                        Pes (kg)
+                        {t("virtualRoom.weight")}
                       </label>
                       <input
                         type="number"
@@ -310,12 +343,12 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                         placeholder="0"
                         min="0"
                         step="0.1"
-                        className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-4 text-white text-xl font-bold focus:border-orange-500 outline-none transition-all"
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-4 text-white text-xl font-bold focus:border-orange-500 outline-none transition-all"
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-zinc-500 uppercase">
-                        Reps
+                        {t("virtualRoom.reps")}
                       </label>
                       <input
                         type="number"
@@ -326,7 +359,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                           currentExerciseIdx
                         ].reps.toString()}
                         min="0"
-                        className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-4 text-white text-xl font-bold focus:border-orange-500 outline-none transition-all"
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-4 text-white text-xl font-bold focus:border-orange-500 outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -348,7 +381,13 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                   >
                     {progress === 100
                       ? t("virtualRoom.finishSessionButton")
-                      : "Completar Sèrie"}
+                      : currentExerciseIdx ===
+                            (selectedRoutine.exercises?.length || 0) - 1 &&
+                          currentSet ===
+                            selectedRoutine.exercises?.[currentExerciseIdx]
+                              ?.sets
+                        ? t("virtualRoom.finishRoutine")
+                        : t("virtualRoom.completeSet")}
                     <ChevronRight size={24} />
                   </button>
                 </div>
@@ -361,7 +400,8 @@ const ActiveSession: FC<ActiveSessionProps> = ({
             <div className="space-y-6">
               <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
                 <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-8">
-                  <Activity className="text-orange-500" /> Progrés de la sala
+                  <Activity className="text-orange-500" />{" "}
+                  {t("virtualRoom.roomProgress")}
                 </h2>
 
                 {partnerDisconnected && (
@@ -395,9 +435,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                           strokeWidth="8"
                           fill="transparent"
                           strokeDasharray={364.4}
-                          strokeDashoffset={
-                            364.4 - (364.4 * progress) / 100
-                          }
+                          strokeDashoffset={364.4 - (364.4 * progress) / 100}
                           className="text-orange-500 transition-all duration-500"
                         />
                       </svg>
@@ -406,7 +444,8 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                       </span>
                     </div>
                     <p className="text-sm font-bold text-zinc-400 flex items-center justify-center gap-2">
-                      <Target size={14} className="text-orange-500" /> Jo
+                      <Target size={14} className="text-orange-500" />{" "}
+                      {t("virtualRoom.me")}
                     </p>
                   </div>
 
@@ -433,8 +472,9 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                           strokeDasharray={364.4}
                           strokeDashoffset={
                             364.4 -
-                            (364.4 * (partnerProgress?.progressPercentage || 0)) /
-                            100
+                            (364.4 *
+                              (partnerProgress?.progressPercentage || 0)) /
+                              100
                           }
                           className="text-blue-500 transition-all duration-500"
                         />
@@ -444,9 +484,15 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                       </span>
                     </div>
                     <p className="text-sm font-bold text-zinc-400 flex items-center justify-center gap-2">
-                      <Users size={14} className="text-blue-500" /> Contrincant
+                      <Users size={14} className="text-blue-500" />{" "}
+                      {partnerUsername || t("virtualRoom.opponent")}
                     </p>
-                    {partnerProgress?.exerciseName &&
+                    {partnerProgress?.progressPercentage === 100 ? (
+                      <p className="text-xs text-green-400 font-bold mt-1 flex items-center justify-center gap-1">
+                        <Check size={12} /> {t("virtualRoom.partnerFinished")}
+                      </p>
+                    ) : (
+                      partnerProgress?.exerciseName &&
                       partnerProgress.currentSet != null &&
                       partnerProgress.totalSets != null && (
                         <p className="text-xs text-zinc-500 mt-1">
@@ -456,57 +502,63 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                             total: partnerProgress.totalSets,
                           })}
                         </p>
-                      )}
+                      )
+                    )}
                   </div>
                 </div>
 
                 {/* Exercise list */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold text-zinc-500 uppercase mb-4 tracking-widest">
-                    Llista d'exercicis
+                    {t("virtualRoom.exerciseList")}
                   </h4>
                   {selectedRoutine.exercises?.map((ex, i) => (
                     <div
                       key={i}
-                      className={`flex items-center justify-between p-4 rounded-xl border ${i === currentExerciseIdx
+                      className={`flex items-center justify-between p-4 rounded-xl border ${
+                        i === currentExerciseIdx
                           ? "bg-orange-500/5 border-orange-500/20"
-                          : "bg-black border-zinc-800"
-                        }`}
+                          : "bg-zinc-900/50 border-zinc-700"
+                      }`}
                     >
                       <div className="flex items-center gap-4">
                         <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${i <= currentExerciseIdx
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                            i <= currentExerciseIdx
                               ? "bg-orange-500 text-white"
                               : "bg-zinc-800 text-zinc-500"
-                            }`}
+                          }`}
                         >
                           {i + 1}
                         </div>
                         <span
-                          className={`font-bold ${i === currentExerciseIdx
+                          className={`font-bold ${
+                            i === currentExerciseIdx
                               ? "text-white"
                               : "text-zinc-500"
-                            }`}
+                          }`}
                         >
                           {ex.exercise.name}
                         </span>
                       </div>
                       <div className="flex gap-2">
                         <div
-                          className={`p-1 rounded ${completedExercises.includes(ex.exerciseId)
+                          className={`p-1 rounded ${
+                            completedExercises.includes(ex.exerciseId)
                               ? "text-orange-500"
                               : "text-zinc-800"
-                            }`}
+                          }`}
                         >
                           <Check size={20} strokeWidth={3} />
                         </div>
                         <div
-                          className={`p-1 rounded ${partnerProgress?.completedExercises.includes(
-                            ex.exerciseId
-                          )
+                          className={`p-1 rounded ${
+                            partnerProgress?.completedExercises.includes(
+                              ex.exerciseId,
+                            )
                               ? "text-blue-500"
                               : "text-zinc-800"
-                            }`}
+                          }`}
                         >
                           <Check size={20} strokeWidth={3} />
                         </div>
@@ -526,7 +578,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
             className="py-3 px-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-bold rounded-full transition-all flex items-center gap-2 shadow-2xl"
           >
             <LogOut className="w-5 h-5" />
-            <span>Abandonar Sala</span>
+            <span>{t("virtualRoom.abandonRoom")}</span>
           </button>
         </div>
       </div>
