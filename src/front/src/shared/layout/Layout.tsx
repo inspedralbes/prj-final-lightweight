@@ -228,14 +228,14 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar (Mobile) */}
-        <div className="md:hidden bg-[#1a1a1a] border-b border-[#2a2a2a] px-4 py-4 grid grid-cols-3 items-center">
+        <div className="md:hidden bg-[#1a1a1a] border-b border-[#2a2a2a] px-4 py-4 relative flex items-center">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-gray-400 hover:text-white justify-self-start"
+            className="text-gray-400 hover:text-white"
           >
             <Menu className="w-6 h-6" />
           </button>
-          <div className="flex items-center gap-1 justify-self-center">
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
             <img
               src="/LW_logo.png"
               alt="LightWeight Logo"
