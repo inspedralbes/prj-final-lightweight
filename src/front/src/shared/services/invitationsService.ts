@@ -1,0 +1,130 @@
+/**
+ * Servicio para gestionar las operaciones de invitaciones con el backend
+ */
+
+interface InvitationResponse {
+  id: number;
+  coachId: number;
+  clientId?: number;
+  code: string;
+  status: string;
+  expiresAt?: string;
+  createdAt: string;
+  acceptedAt?: string;
+}
+
+interface CreateInvitationRequest {
+  expiresAt?: string;
+}
+
+class InvitationsService {
+  private baseUrl: string;
+
+  constructor() {
+    this.baseUrl = `${import.meta.env.VITE_BACK_URL}/invitations`;
+  }
+
+  /**
+   * Genera un nuevo código de invitación (solo para COACH)
+   */
+  async generateCode(expiresAt?: string): Promise<InvitationResponse> {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(this.baseUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        expiresAt: expiresAt || null,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.message || "Failed to generate invitation code",
+      );
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Canjea un código de invitación (para CLIENT)
+   * Vincula el cliente actual con el coach del código
+   */
+  async acceptInvitationCode(code: string): Promise<InvitationResponse> {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(`${this.baseUrl}/${code}/accept`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to accept invitation code");
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Rechaza una invitación PENDING dirigida al cliente autenticado
+   */
+  async rejectInvitation(id: number): Promise<void> {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`${this.baseUrl}/${id}/reject`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to reject invitation");
+    }
+  }
+
+  /**
+   * Valida si un código de sala de entrenamiento existe y está disponible para unirse
+   */
+  async validateSessionCode(code: string): Promise<boolean> {
+    const token = localStorage.getItem("token");
+    const response = await fetch(
+      `${this.baseUrl}/validate-session/${encodeURIComponent(code)}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    if (!response.ok) return false;
+    const data = await response.json();
+    return data.valid === true;
+  }
+
+  /**
+   * Consulta las invitaciones PENDING dirigidas al cliente autenticado
+   * Permite mostrar notificaciones incluso si el cliente no estaba conectado al enviarlas
+   */
+  async getPendingForMe(): Promise<
+    { id: number; code: string; coachName: string; coachId: number }[]
+  > {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`${this.baseUrl}/pending-for-me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return [];
+    return response.json();
+  }
+}
+
+// Exportar instancia única del servicio
+export const invitationsService = new InvitationsService();
+export type { InvitationResponse, CreateInvitationRequest };

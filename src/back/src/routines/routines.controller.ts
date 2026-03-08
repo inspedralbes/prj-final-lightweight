@@ -20,12 +20,17 @@ export class RoutinesController {
   constructor(private routinesService: RoutinesService) {}
 
   // ⚠️ IMPORTANTE: Las rutas estáticas SIEMPRE antes que las dinámicas (:id)
-  // Si 'clients-options' estuviera DESPUÉS de ':id', NestJS lo trataría como un ID.
+  // Si 'global' estuviera DESPUÉS de ':id', NestJS lo trataría como un ID.
+  @Get('global')
+  @UseGuards(JwtAuthGuard)
+  async getGlobalRoutines() {
+    return this.routinesService.getGlobalRoutines();
+  }
 
   @Get('clients-options')
   @UseGuards(CoachGuard)
-  async getClientsOptions() {
-    return this.routinesService.getClientsOptions();
+  async getClientsOptions(@Request() req: any) {
+    return this.routinesService.getClientsOptions(req.user.userId);
   }
 
   // Endpoint para CLIENTES: devuelve las rutinas asignadas al usuario autenticado
@@ -43,44 +48,45 @@ export class RoutinesController {
 
   @Get(':id')
   async getById(@Param('id') id: string) {
-    return this.routinesService.getRoutineById(Number(id));
+    const routineId = Number(id);
+    if (isNaN(routineId)) {
+      return null; // O lanzar un BadRequestException
+    }
+    return this.routinesService.getRoutineById(routineId);
   }
 
   @Post('create')
-  @UseGuards(CoachGuard)
+  @UseGuards(JwtAuthGuard)
   async create(@Request() req: any, @Body() body: CreateRoutineDto) {
-    const coachId = req.user.userId;
-    const { name, exercises, clientId } = body;
+    const { name, exercises, clientIds } = body;
     return this.routinesService.createRoutine(
-      coachId,
+      req.user,
       name,
       exercises || [],
-      clientId,
+      clientIds && clientIds.length > 0 ? clientIds : undefined,
     );
   }
 
   @Put(':id/edit')
-  @UseGuards(CoachGuard)
+  @UseGuards(JwtAuthGuard)
   async edit(
     @Request() req: any,
     @Param('id') id: string,
     @Body() body: UpdateRoutineDto,
   ) {
-    const coachId = req.user.userId;
-    const { name, exercises, clientId } = body;
+    const { name, exercises, clientIds } = body;
     return this.routinesService.updateRoutine(
       Number(id),
-      coachId,
+      req.user,
       name,
       exercises,
-      clientId,
+      clientIds,
     );
   }
 
   @Delete(':id')
-  @UseGuards(CoachGuard)
+  @UseGuards(JwtAuthGuard)
   async delete(@Request() req: any, @Param('id') id: string) {
-    const coachId = req.user.userId;
-    return this.routinesService.deleteRoutine(Number(id), coachId);
+    return this.routinesService.deleteRoutine(Number(id), req.user);
   }
 }

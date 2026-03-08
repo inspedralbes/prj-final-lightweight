@@ -9,3 +9,21 @@ html, body, #root {
   /* Opcional: define una fuente base si quieres */
   font-family: system-ui, -apple-system, sans-serif;
 }
+
+/* Cursor pointer para botones y elementos interactivos */
+button,
+[role="button"],
+a,
+input[type="checkbox"],
+input[type="radio"],
+select {
+  cursor: pointer;
+}
+
+/* Desabilita cursor pointer para elementos deshabilitados */
+button:disabled,
+[role="button"][aria-disabled="true"],
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+}

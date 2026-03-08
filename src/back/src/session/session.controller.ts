@@ -17,7 +17,23 @@ import { CoachGuard } from '../auth/guards/coach.guard';
 export class SessionController {
   constructor(private sessionService: SessionService) {}
 
-  // Ruta PÚBLICA para acceder a una sesión
+  // ⚠️ Rutas estáticas siempre antes que las dinámicas (:code)
+
+  // Ruta PROTEGIDA: Obtener sesiones del coach autenticado
+  @Get()
+  @UseGuards(CoachGuard)
+  async getCoachSessions(@Request() req: any) {
+    return this.sessionService.getCoachSessions(req.user.userId);
+  }
+
+  // Ruta PROTEGIDA: Obtener sesiones del cliente en modo solitario
+  @Get('my-sessions')
+  @UseGuards(JwtAuthGuard)
+  async getClientSessions(@Request() req: any) {
+    return this.sessionService.getClientSessions(req.user.userId);
+  }
+
+  // Ruta PÚBLICA para acceder a una sesión por código
   @Get(':code')
   async getSessionByCode(@Param('code') code: string) {
     const session = await this.sessionService.getSessionByCode(code);
@@ -27,45 +43,33 @@ export class SessionController {
     return session;
   }
 
-  // Ruta PROTEGIDA: Crear sesión (solo coaches)
+  // Ruta PROTEGIDA: Crear sesión (coaches Y clientes en modo solitario)
   @Post('create')
-  @UseGuards(CoachGuard)
+  @UseGuards(JwtAuthGuard)
   async createSession(
     @Request() req: any,
     @Body() { routineId }: { routineId: number },
   ) {
-    const coachId = req.user.userId;
-    const session = await this.sessionService.createSession(coachId, routineId);
-    return session;
-  }
-
-  // Ruta PROTEGIDA: Obtener sesiones del coach
-  @Get()
-  @UseGuards(CoachGuard)
-  async getCoachSessions(@Request() req: any) {
-    const coachId = req.user.userId;
-    const sessions = await this.sessionService.getCoachSessions(coachId);
-    return sessions;
+    return this.sessionService.createSession(
+      req.user.userId,
+      req.user.role,
+      routineId,
+    );
   }
 
   // Ruta PROTEGIDA: Actualizar estado de sesión
   @Post(':code/status')
-  @UseGuards(CoachGuard)
+  @UseGuards(JwtAuthGuard)
   async updateSessionStatus(
     @Param('code') code: string,
     @Body() { status }: { status: 'PENDING' | 'ACTIVE' | 'COMPLETED' },
     @Request() req: any,
   ) {
-    // Verificar que la sesión pertenece al coach
-    const session = await this.sessionService.getSessionByCode(code);
-    if (!session || session.coachId !== req.user.userId) {
-      throw new HttpException('Unauthorized', HttpStatus.FORBIDDEN);
-    }
-
-    const updatedSession = await this.sessionService.updateSessionStatus(
+    return this.sessionService.updateSessionStatus(
       code,
       status,
+      req.user.userId,
+      req.user.role,
     );
-    return updatedSession;
   }
 }

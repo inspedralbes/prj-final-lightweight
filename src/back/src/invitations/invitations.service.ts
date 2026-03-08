@@ -14,7 +14,11 @@ export class InvitationsService {
   constructor(private prisma: PrismaService) {}
 
   // Genera un nuevo código de invitación único para el coach
-  async create(coachId: number, dto: CreateInvitationDto): Promise<Invitation> {
+  async create(
+    coachId: number,
+    dto: CreateInvitationDto,
+    targetClientId?: number,
+  ): Promise<Invitation> {
     const code = uuidv4();
     return this.prisma.invitation.create({
       data: {
@@ -22,6 +26,7 @@ export class InvitationsService {
         code,
         status: InvitationStatus.PENDING,
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
+        ...(targetClientId ? { targetClientId } : {}),
       },
     });
   }
@@ -36,15 +41,41 @@ export class InvitationsService {
       throw new NotFoundException('Invitation code not found');
     }
 
+    // un coach no puede usar su propio código
+    if (invitation.coachId === clientId) {
+      throw new BadRequestException('Cannot accept your own invitation code');
+    }
+
     this.checkExpiry(invitation);
 
-    if (invitation.status !== InvitationStatus.PENDING) {
+    // Si está pendiente, el comportamiento normal es aceptarla.
+    if (invitation.status === InvitationStatus.PENDING) {
+      // continue to transaction below
+    } else if (
+      invitation.status === InvitationStatus.ACCEPTED &&
+      invitation.clientId === clientId
+    ) {
+      // el invitado ya se había unido anteriormente; permitimos reingresar
+      return invitation;
+    } else {
+      // cualquier otro estado (REVOKED/EXPIRED/…)
       throw new BadRequestException(
         `Invitation is not usable (status: ${invitation.status})`,
       );
     }
 
-    // Vincular cliente con coach y marcar como aceptada en una transacción
+    // Verificar que el propietario de la invitación tenga rol COACH
+    const coach = await this.prisma.user.findUnique({
+      where: { id: invitation.coachId },
+      select: { id: true, role: true },
+    });
+    if (!coach || coach.role !== 'COACH') {
+      throw new BadRequestException(
+        'The invitation owner is not a valid coach',
+      );
+    }
+
+    // Vincular cliente con coach, marcar como aceptada y revocar las demás PENDING en una transacción
     const [updatedInvitation] = await this.prisma.$transaction([
       this.prisma.invitation.update({
         where: { id: invitation.id },
@@ -57,6 +88,15 @@ export class InvitationsService {
       this.prisma.user.update({
         where: { id: clientId },
         data: { coachId: invitation.coachId },
+      }),
+      // Revocar automáticamente todas las demás invitaciones PENDING de este cliente
+      this.prisma.invitation.updateMany({
+        where: {
+          targetClientId: clientId,
+          status: InvitationStatus.PENDING,
+          id: { not: invitation.id },
+        },
+        data: { status: InvitationStatus.REVOKED },
       }),
     ]);
 
@@ -99,5 +139,74 @@ export class InvitationsService {
       });
       throw new BadRequestException('Invitation has expired');
     }
+  }
+
+  // Rechaza una invitación PENDING dirigida al cliente
+  async reject(clientId: number, id: number): Promise<void> {
+    const invitation = await this.prisma.invitation.findUnique({
+      where: { id },
+    });
+
+    if (!invitation) {
+      throw new NotFoundException('Invitation not found');
+    }
+
+    if (invitation.targetClientId !== clientId) {
+      throw new ForbiddenException('This invitation is not directed to you');
+    }
+
+    if (invitation.status !== InvitationStatus.PENDING) {
+      throw new BadRequestException(
+        `Only PENDING invitations can be rejected (current status: ${invitation.status})`,
+      );
+    }
+
+    await this.prisma.invitation.update({
+      where: { id },
+      data: { status: InvitationStatus.REVOKED },
+    });
+  }
+
+  // Verifica si un código de sala de entrenamiento es válido (existe y está PENDING)
+  async validateSessionCode(code: string): Promise<{ valid: boolean }> {
+    const invitation = await this.prisma.invitation.findUnique({
+      where: { code },
+    });
+
+    if (!invitation || invitation.status !== InvitationStatus.PENDING) {
+      return { valid: false };
+    }
+
+    if (invitation.expiresAt && invitation.expiresAt < new Date()) {
+      return { valid: false };
+    }
+
+    return { valid: true };
+  }
+
+  // Devuelve las invitaciones PENDING dirigidas a este cliente (para mostrar al cargar la app)
+  async getPendingForClient(
+    clientId: number,
+  ): Promise<
+    { id: number; code: string; coachName: string; coachId: number }[]
+  > {
+    const invitations = await this.prisma.invitation.findMany({
+      where: {
+        targetClientId: clientId,
+        status: InvitationStatus.PENDING,
+      },
+      include: {
+        coach: {
+          select: { id: true, username: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return invitations.map((inv) => ({
+      id: inv.id,
+      code: inv.code,
+      coachName: inv.coach.username,
+      coachId: inv.coach.id,
+    }));
   }
 }

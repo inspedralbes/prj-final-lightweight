@@ -72,6 +72,26 @@ services:
     depends_on:
       - backend
 
+  # --- CERTBOT (SSL certificates) ---
+  certbot:
+    container_name: lw-certbot
+    image: certbot/certbot
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - certbot-webroot:/var/www/certbot
+    # Run manually: docker compose -f docker-compose.prod.yml run --rm certbot
+    # For renewal (add to crontab):
+    #   docker compose -f docker-compose.prod.yml --profile certbot run --rm certbot renew
+    command: >
+      certonly --webroot
+        --webroot-path=/var/www/certbot
+        --email admin@inspedralbes.cat
+        --agree-tos
+        --non-interactive
+        -d lightweight.daw.inspedralbes.cat
+    profiles:
+      - certbot
+
   # --- NGINX (reverse proxy) ---
   nginx:
     container_name: lw-nginx
@@ -79,8 +99,11 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - letsencrypt:/etc/letsencrypt:ro
+      - certbot-webroot:/var/www/certbot:ro
     depends_on:
       - backend
       - frontend
@@ -88,3 +111,5 @@ services:
 
 volumes:
   postgres_db:
+  letsencrypt:
+  certbot-webroot:

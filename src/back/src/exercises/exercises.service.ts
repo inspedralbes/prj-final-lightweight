@@ -112,26 +112,39 @@ export class ExerciseService {
   }
 
   async searchExercises(filters: any) {
+    this.logger.log(`searchExercises filters: ${JSON.stringify(filters)}`);
     const {
+      search,
       level,
       category,
       force,
       mechanic,
       equipment,
       primaryMuscle,
-      secondaryMuscle,
+      page = 1,
+      limit = 20,
     } = filters;
 
     return this.prisma.exerciseCatalog.findMany({
       where: {
+        ...(search && {
+          name: { mode: 'insensitive', contains: search },
+        }),
         ...(level && { level }),
-        ...(category && { category }),
-        ...(force && { forceType: force }),
-        ...(mechanic && { mechanic }),
-        ...(equipment && { equipment }),
-        ...(primaryMuscle && { primaryMuscle: { has: primaryMuscle } }),
-        ...(secondaryMuscle && { secondaryMuscle: { has: secondaryMuscle } }),
+        ...(category && {
+          category: { mode: 'insensitive', equals: category },
+        }),
+        ...(force && { forceType: { mode: 'insensitive', equals: force } }),
+        ...(mechanic && {
+          mechanic: { mode: 'insensitive', equals: mechanic },
+        }),
+        ...(equipment && {
+          equipment: { mode: 'insensitive', equals: equipment },
+        }),
+        ...(primaryMuscle && { primaryMuscle: { hasSome: [primaryMuscle] } }),
       },
+      skip: (page - 1) * limit,
+      take: Number(limit),
     });
   }
 }
