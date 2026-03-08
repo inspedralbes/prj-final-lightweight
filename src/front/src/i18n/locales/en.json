@@ -108,6 +108,7 @@
     "recentlyAssigned": "Recently assigned",
     "moreExercises": "+{{count}} more",
     "viewAll": "View all exercises",
+    "noExercises": "No exercises added yet",
     "series": "Sets",
     "reps": "Reps",
     "weight": "Weight (kg)",

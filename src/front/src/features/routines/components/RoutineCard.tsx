@@ -195,6 +195,13 @@ const RoutineCard = ({
               )}
             </div>
           )}
+          {isClientMode && exercises.length === 0 && (
+            <div className="pt-4 border-t border-[#222] mt-2">
+              <p className="text-xs text-gray-600 italic">
+                {t("routines.noExercises")}
+              </p>
+            </div>
+          )}
 
           {/* Assigned clients — coach mode */}
           {!isClientMode && assignedClients.length > 0 && (
@@ -353,6 +360,14 @@ const RoutineCard = ({
 
               {/* Body */}
               <div className="overflow-y-auto flex-1 p-4 space-y-2">
+                {exercises.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-10 gap-2">
+                    <ClipboardList className="w-8 h-8 text-gray-700" />
+                    <p className="text-sm text-gray-500 italic">
+                      {t("routines.noExercises")}
+                    </p>
+                  </div>
+                )}
                 {exercises.map((re, i) => {
                   const exName = re.exercise?.name ?? re.name;
                   const exDesc = re.exercise?.description;

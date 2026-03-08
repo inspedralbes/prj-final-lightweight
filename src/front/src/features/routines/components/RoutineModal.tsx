@@ -67,15 +67,17 @@ const RoutineModal = ({
     if (pickerOpen) setTimeout(() => searchRef.current?.focus(), 30);
   }, [pickerOpen]);
 
-  // Close picker on outside click
+  // Close picker on outside click — uses "click" (not "mousedown") so that
+  // button onClick handlers fire and complete BEFORE the picker closes,
+  // preventing the layout-shift race that swallows the Guardar click.
   useEffect(() => {
     if (!pickerOpen) return;
     const handler = (e: MouseEvent) => {
       if (pickerRef.current && !pickerRef.current.contains(e.target as Node))
         setPickerOpen(false);
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
   }, [pickerOpen]);
 
   // Close on Escape
@@ -121,8 +123,7 @@ const RoutineModal = ({
     return colors[idx % colors.length];
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const doSubmit = async () => {
     const trimmed = formName.trim();
     if (!trimmed) {
       setNameError(t("routines.nameRequired") || "El nombre es obligatorio");
@@ -136,6 +137,11 @@ const RoutineModal = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    doSubmit();
   };
 
   return (
@@ -211,311 +217,320 @@ const RoutineModal = ({
         </div>
 
         {/* Form — scrolls when picker expands */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-5 overflow-y-auto">
-          {/* Routine name */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium text-gray-300">
-                {t("routines.name")}
-                <span className="text-orange-500 ml-1">*</span>
-              </label>
-              <span
-                className={`text-xs ${formName.length > 50 ? "text-red-400" : "text-gray-600"}`}
-              >
-                {formName.length}/60
-              </span>
-            </div>
-            <input
-              ref={inputRef}
-              type="text"
-              value={formName}
-              onChange={(e) => {
-                if (e.target.value.length <= 60) {
-                  setFormName(e.target.value);
-                  if (nameError) setNameError("");
-                }
-              }}
-              placeholder={t("routines.namePlaceholder")}
-              className={`w-full bg-[#0a0a0a] border rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-700 focus:outline-none focus:ring-1 transition-all ${
-                nameError
-                  ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
-                  : "border-[#333] focus:border-orange-500 focus:ring-orange-500/20"
-              }`}
-            />
-            {nameError && (
-              <p className="mt-1.5 text-xs text-red-400 flex items-center gap-1">
-                <svg
-                  className="w-3 h-3 shrink-0"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {nameError}
-              </p>
-            )}
-          </div>
-
-          {!hideClientSelector && (
+        <form
+          onSubmit={handleFormSubmit}
+          className="flex flex-col min-h-0 flex-1"
+        >
+          {/* Scrollable fields */}
+          <div className="p-5 space-y-5 overflow-y-auto flex-1">
+            {/* Routine name */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-medium text-gray-300">
-                  {t("routines.assignClient")}
-                  <span className="ml-2 text-xs font-normal text-gray-600">
-                    ({t("common.optional")})
-                  </span>
+                  {t("routines.name")}
+                  <span className="text-orange-500 ml-1">*</span>
                 </label>
-                {selectedIds.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedIds([])}
-                    className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
-                  >
-                    {t("routines.clearAll") || "Limpiar"}
-                  </button>
-                )}
+                <span
+                  className={`text-xs ${formName.length > 50 ? "text-red-400" : "text-gray-600"}`}
+                >
+                  {formName.length}/60
+                </span>
               </div>
-
-              {clients.length === 0 ? (
-                /* Empty state */
-                <div className="flex items-center gap-3 bg-[#1a1a1a] border border-dashed border-[#333] rounded-xl px-4 py-3.5">
-                  <div className="p-1.5 bg-yellow-500/10 rounded-lg shrink-0">
-                    <svg
-                      className="w-4 h-4 text-yellow-500/70"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-400">
-                      {t("routines.noClientsAvailable")}
-                    </p>
-                    <p className="text-xs text-gray-600 mt-0.5">
-                      {t("routines.noClientsAvailableHint")}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div ref={pickerRef}>
-                  {/* Trigger button */}
-                  <button
-                    type="button"
-                    onClick={() => setPickerOpen((o) => !o)}
-                    className={`w-full flex items-center justify-between bg-[#0a0a0a] border px-4 py-3 text-sm transition-all ${
-                      pickerOpen
-                        ? "border-orange-500 ring-1 ring-orange-500/20 rounded-t-xl rounded-b-none"
-                        : "border-[#333] hover:border-[#444] rounded-xl"
-                    }`}
+              <input
+                ref={inputRef}
+                type="text"
+                value={formName}
+                onChange={(e) => {
+                  if (e.target.value.length <= 60) {
+                    setFormName(e.target.value);
+                    if (nameError) setNameError("");
+                  }
+                }}
+                placeholder={t("routines.namePlaceholder")}
+                className={`w-full bg-[#0a0a0a] border rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-700 focus:outline-none focus:ring-1 transition-all ${
+                  nameError
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                    : "border-[#333] focus:border-orange-500 focus:ring-orange-500/20"
+                }`}
+              />
+              {nameError && (
+                <p className="mt-1.5 text-xs text-red-400 flex items-center gap-1">
+                  <svg
+                    className="w-3 h-3 shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
                   >
-                    <span
-                      className={
-                        selectedIds.length === 0
-                          ? "text-gray-600"
-                          : "text-white font-medium"
-                      }
-                    >
-                      {selectedIds.length === 0
-                        ? t("routines.selectClients") || "Seleccionar clientes…"
-                        : `${selectedIds.length} cliente${selectedIds.length > 1 ? "s" : ""} seleccionado${selectedIds.length > 1 ? "s" : ""}`}
-                    </span>
-                    <svg
-                      className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${pickerOpen ? "rotate-180" : ""}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
-
-                  {/* Inline panel — expands in flow, no absolute positioning */}
-                  {pickerOpen && (
-                    <div className="w-full bg-[#161616] border border-t-0 border-orange-500/40 rounded-b-xl overflow-hidden">
-                      {/* Search */}
-                      <div className="p-2 border-b border-[#222]">
-                        <div className="relative">
-                          <svg
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600 pointer-events-none"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                          </svg>
-                          <input
-                            ref={searchRef}
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder={t("common.search") || "Buscar…"}
-                            className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg pl-8 pr-3 py-2 text-xs text-white placeholder:text-gray-700 focus:outline-none focus:border-orange-500/50"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Client list */}
-                      <ul className="max-h-52 overflow-y-auto py-1">
-                        {filteredClients.length === 0 ? (
-                          <li className="px-4 py-3 text-xs text-gray-600 text-center">
-                            {t("common.noResults") || "Sin resultados"}
-                          </li>
-                        ) : (
-                          filteredClients.map((client) => {
-                            const isSelected = selectedIds.includes(client.id);
-                            const colorIdx = clients.findIndex(
-                              (c) => c.id === client.id,
-                            );
-                            return (
-                              <li key={client.id}>
-                                <button
-                                  type="button"
-                                  onClick={() => toggleClient(client.id)}
-                                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
-                                    isSelected
-                                      ? "bg-orange-500/[0.08] text-white"
-                                      : "text-gray-300 hover:bg-[#1e1e1e]"
-                                  }`}
-                                >
-                                  <div
-                                    className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${avatarColor(colorIdx)}`}
-                                  >
-                                    {client.username[0].toUpperCase()}
-                                  </div>
-                                  <span className="flex-1 text-left truncate">
-                                    {client.username}
-                                  </span>
-                                  <div
-                                    className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
-                                      isSelected
-                                        ? "bg-orange-500 border-orange-500"
-                                        : "border-[#444]"
-                                    }`}
-                                  >
-                                    {isSelected && (
-                                      <svg
-                                        className="w-2.5 h-2.5 text-black"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth={3}
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          d="M5 13l4 4L19 7"
-                                        />
-                                      </svg>
-                                    )}
-                                  </div>
-                                </button>
-                              </li>
-                            );
-                          })
-                        )}
-                      </ul>
-
-                      {/* Footer: select-all / deselect-all */}
-                      {filteredClients.length > 1 && (
-                        <div className="flex items-center justify-between px-3 py-2 border-t border-[#222]">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedIds(
-                                Array.from(
-                                  new Set([
-                                    ...selectedIds,
-                                    ...filteredClients.map((c) => c.id),
-                                  ]),
-                                ),
-                              )
-                            }
-                            className="text-xs text-gray-500 hover:text-orange-400 transition-colors"
-                          >
-                            {t("routines.selectAll") || "Seleccionar todos"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedIds(
-                                selectedIds.filter(
-                                  (id) =>
-                                    !filteredClients
-                                      .map((c) => c.id)
-                                      .includes(id),
-                                ),
-                              )
-                            }
-                            className="text-xs text-gray-500 hover:text-red-400 transition-colors"
-                          >
-                            {t("routines.deselectAll") || "Deseleccionar"}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Selected client pills */}
-                  {selectedClients.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {selectedClients.map((client) => {
-                        const colorIdx = clients.findIndex(
-                          (c) => c.id === client.id,
-                        );
-                        return (
-                          <div
-                            key={client.id}
-                            className="inline-flex items-center gap-1.5 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 text-xs px-2.5 py-1.5 rounded-full hover:border-red-500/40 transition-all"
-                          >
-                            <div
-                              className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${avatarColor(colorIdx)}`}
-                            >
-                              {client.username[0].toUpperCase()}
-                            </div>
-                            <span className="max-w-[100px] truncate">
-                              {client.username}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removeClient(client.id)}
-                              className="text-gray-600 hover:text-red-400 transition-colors ml-0.5"
-                              aria-label={`Remove ${client.username}`}
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  {nameError}
+                </p>
               )}
             </div>
-          )}
 
-          {/* Actions */}
-          <div className="flex items-center gap-3 pt-1">
+            {!hideClientSelector && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium text-gray-300">
+                    {t("routines.assignClient")}
+                    <span className="ml-2 text-xs font-normal text-gray-600">
+                      ({t("common.optional")})
+                    </span>
+                  </label>
+                  {selectedIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds([])}
+                      className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                    >
+                      {t("routines.clearAll") || "Limpiar"}
+                    </button>
+                  )}
+                </div>
+
+                {clients.length === 0 ? (
+                  /* Empty state */
+                  <div className="flex items-center gap-3 bg-[#1a1a1a] border border-dashed border-[#333] rounded-xl px-4 py-3.5">
+                    <div className="p-1.5 bg-yellow-500/10 rounded-lg shrink-0">
+                      <svg
+                        className="w-4 h-4 text-yellow-500/70"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-400">
+                        {t("routines.noClientsAvailable")}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        {t("routines.noClientsAvailableHint")}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div ref={pickerRef}>
+                    {/* Trigger button */}
+                    <button
+                      type="button"
+                      onClick={() => setPickerOpen((o) => !o)}
+                      className={`w-full flex items-center justify-between bg-[#0a0a0a] border px-4 py-3 text-sm transition-all ${
+                        pickerOpen
+                          ? "border-orange-500 ring-1 ring-orange-500/20 rounded-t-xl rounded-b-none"
+                          : "border-[#333] hover:border-[#444] rounded-xl"
+                      }`}
+                    >
+                      <span
+                        className={
+                          selectedIds.length === 0
+                            ? "text-gray-600"
+                            : "text-white font-medium"
+                        }
+                      >
+                        {selectedIds.length === 0
+                          ? t("routines.selectClients") ||
+                            "Seleccionar clientes…"
+                          : `${selectedIds.length} cliente${selectedIds.length > 1 ? "s" : ""} seleccionado${selectedIds.length > 1 ? "s" : ""}`}
+                      </span>
+                      <svg
+                        className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${pickerOpen ? "rotate-180" : ""}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+
+                    {/* Inline panel — expands in flow, no absolute positioning */}
+                    {pickerOpen && (
+                      <div className="w-full bg-[#161616] border border-t-0 border-orange-500/40 rounded-b-xl overflow-hidden">
+                        {/* Search */}
+                        <div className="p-2 border-b border-[#222]">
+                          <div className="relative">
+                            <svg
+                              className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600 pointer-events-none"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                              />
+                            </svg>
+                            <input
+                              ref={searchRef}
+                              type="text"
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              placeholder={t("common.search") || "Buscar…"}
+                              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg pl-8 pr-3 py-2 text-xs text-white placeholder:text-gray-700 focus:outline-none focus:border-orange-500/50"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Client list */}
+                        <ul className="max-h-52 overflow-y-auto py-1">
+                          {filteredClients.length === 0 ? (
+                            <li className="px-4 py-3 text-xs text-gray-600 text-center">
+                              {t("common.noResults") || "Sin resultados"}
+                            </li>
+                          ) : (
+                            filteredClients.map((client) => {
+                              const isSelected = selectedIds.includes(
+                                client.id,
+                              );
+                              const colorIdx = clients.findIndex(
+                                (c) => c.id === client.id,
+                              );
+                              return (
+                                <li key={client.id}>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleClient(client.id)}
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
+                                      isSelected
+                                        ? "bg-orange-500/[0.08] text-white"
+                                        : "text-gray-300 hover:bg-[#1e1e1e]"
+                                    }`}
+                                  >
+                                    <div
+                                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${avatarColor(colorIdx)}`}
+                                    >
+                                      {client.username[0].toUpperCase()}
+                                    </div>
+                                    <span className="flex-1 text-left truncate">
+                                      {client.username}
+                                    </span>
+                                    <div
+                                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
+                                        isSelected
+                                          ? "bg-orange-500 border-orange-500"
+                                          : "border-[#444]"
+                                      }`}
+                                    >
+                                      {isSelected && (
+                                        <svg
+                                          className="w-2.5 h-2.5 text-black"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth={3}
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M5 13l4 4L19 7"
+                                          />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  </button>
+                                </li>
+                              );
+                            })
+                          )}
+                        </ul>
+
+                        {/* Footer: select-all / deselect-all */}
+                        {filteredClients.length > 1 && (
+                          <div className="flex items-center justify-between px-3 py-2 border-t border-[#222]">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedIds(
+                                  Array.from(
+                                    new Set([
+                                      ...selectedIds,
+                                      ...filteredClients.map((c) => c.id),
+                                    ]),
+                                  ),
+                                )
+                              }
+                              className="text-xs text-gray-500 hover:text-orange-400 transition-colors"
+                            >
+                              {t("routines.selectAll") || "Seleccionar todos"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedIds(
+                                  selectedIds.filter(
+                                    (id) =>
+                                      !filteredClients
+                                        .map((c) => c.id)
+                                        .includes(id),
+                                  ),
+                                )
+                              }
+                              className="text-xs text-gray-500 hover:text-red-400 transition-colors"
+                            >
+                              {t("routines.deselectAll") || "Deseleccionar"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Selected client pills */}
+                    {selectedClients.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2.5">
+                        {selectedClients.map((client) => {
+                          const colorIdx = clients.findIndex(
+                            (c) => c.id === client.id,
+                          );
+                          return (
+                            <div
+                              key={client.id}
+                              className="inline-flex items-center gap-1.5 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 text-xs px-2.5 py-1.5 rounded-full hover:border-red-500/40 transition-all"
+                            >
+                              <div
+                                className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${avatarColor(colorIdx)}`}
+                              >
+                                {client.username[0].toUpperCase()}
+                              </div>
+                              <span className="max-w-[100px] truncate">
+                                {client.username}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removeClient(client.id)}
+                                className="text-gray-600 hover:text-red-400 transition-colors ml-0.5"
+                                aria-label={`Remove ${client.username}`}
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Sticky footer — always visible even when picker is open */}
+          <div className="flex items-center gap-3 px-5 py-4 border-t border-[#222] shrink-0">
             <button
               type="button"
               onClick={onClose}
@@ -525,7 +540,8 @@ const RoutineModal = ({
               {t("common.cancel")}
             </button>
             <button
-              type="submit"
+              type="button"
+              onClick={doSubmit}
               disabled={isSubmitting || !formName.trim()}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all shadow-lg disabled:cursor-not-allowed ${
                 isEditing
