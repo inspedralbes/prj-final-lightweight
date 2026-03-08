@@ -16,6 +16,7 @@ import {
 import { myCoachService } from "@/features/client/services/myCoachService";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { ConfirmModal } from "@/shared/components/ConfirmModal";
+import { useNotification } from "@/features/notifications/context/NotificationContext";
 
 const POLL_INTERVAL_MS = 10_000;
 
@@ -40,6 +41,22 @@ const ClientHome = () => {
   // null = todavía verificando; true/false = confirmado por backend
   const [hasCoach, setHasCoach] = useState<boolean | null>(null);
   const toast = useToast();
+  const { notifications, markAsRead } = useNotification();
+
+  const myRoomId = `chat_client_${user.id}`;
+  const unreadFromCoach = (() => {
+    const n = notifications.find(
+      (
+        n,
+      ): n is import("@/features/notifications/context/NotificationContext").ChatNotification =>
+        n.type === "chat" && n.roomId === myRoomId && !n.read,
+    );
+    return n ? n.count : 0;
+  })();
+  const markCoachChatRead = () =>
+    notifications
+      .filter((n) => n.type === "chat" && n.roomId === myRoomId && !n.read)
+      .forEach((n) => markAsRead(n.id));
 
   // Solo mode: modal & confirm state
   const isSoloMode = !user.coachId && hasCoach === false;
@@ -150,6 +167,7 @@ const ClientHome = () => {
     const handleOpenChat = (event: Event) => {
       const customEvent = event as CustomEvent;
       if (user && customEvent.detail?.roomId === `chat_client_${user.id}`) {
+        markCoachChatRead();
         setIsChatOpen(true);
       }
     };
@@ -304,13 +322,23 @@ const ClientHome = () => {
       )}
       {/* Floating Chat Button — solo visible si el backend confirma coach asignado */}
       {hasCoach === true && (
-        <button
-          onClick={() => setIsChatOpen(true)}
-          className="fixed bottom-6 right-6 bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-full shadow-lg transition-all hover:scale-110 z-40"
-          title="Chat with Coach"
-        >
-          <MessageCircle className="w-6 h-6" />
-        </button>
+        <div className="fixed bottom-6 right-6 z-40">
+          <button
+            onClick={() => {
+              markCoachChatRead();
+              setIsChatOpen(true);
+            }}
+            className="relative bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-full shadow-lg transition-all hover:scale-110"
+            title="Chat with Coach"
+          >
+            <MessageCircle className="w-6 h-6" />
+            {unreadFromCoach > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-white text-orange-500 text-[10px] font-bold flex items-center justify-center shadow">
+                {unreadFromCoach}
+              </span>
+            )}
+          </button>
+        </div>
       )}
 
       {/* Chat Overlay */}

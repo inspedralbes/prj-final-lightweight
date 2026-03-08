@@ -11,6 +11,7 @@ import { Mail, Edit, X, MessageCircle } from "@/shared/components/Icons";
 import { UserX, UserPlus, Loader, Check } from "lucide-react";
 import P2PChat from "@/features/chat/components/P2PChat";
 import { ConfirmModal } from "@/shared/components/ConfirmModal";
+import { useNotification } from "@/features/notifications/context/NotificationContext";
 
 const Clients = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -33,6 +34,32 @@ const Clients = () => {
 
   const { t } = useTranslation();
   const toast = useToast();
+  const { notifications, markAsRead } = useNotification();
+
+  // Count unread messages per client (uses count field for accurate multi-message totals)
+  const unreadForClient = (clientId: number): number => {
+    const n = notifications.find(
+      (
+        n,
+      ): n is import("@/features/notifications/context/NotificationContext").ChatNotification =>
+        n.type === "chat" && n.roomId === `chat_client_${clientId}` && !n.read,
+    );
+    return n ? n.count : 0;
+  };
+
+  // Open chat for a client and immediately mark their notifications as read
+  const openChatFor = (client: Client) => {
+    notifications
+      .filter(
+        (n) =>
+          n.type === "chat" &&
+          n.roomId === `chat_client_${client.id}` &&
+          !n.read,
+      )
+      .forEach((n) => markAsRead(n.id));
+    setSelectedClient(client);
+    setIsChatOpen(true);
+  };
 
   const fetchClients = async () => {
     try {
@@ -253,14 +280,16 @@ const Clients = () => {
                     {t("clients.viewProfile")}
                   </button>
                   <button
-                    onClick={() => {
-                      setSelectedClient(client);
-                      setIsChatOpen(true);
-                    }}
-                    className="bg-[#2a2a2a] hover:bg-[#333] text-white p-2 rounded-lg transition-colors border border-[#3a3a3a]"
+                    onClick={() => openChatFor(client)}
+                    className="relative bg-[#2a2a2a] hover:bg-[#333] text-white p-2 rounded-lg transition-colors border border-[#3a3a3a]"
                     title="Real-time Chat"
                   >
                     <MessageCircle className="w-5 h-5" />
+                    {unreadForClient(client.id) > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
+                        {unreadForClient(client.id)}
+                      </span>
+                    )}
                   </button>
                   <button
                     onClick={() => setConfirmUnlinkClient(client)}
