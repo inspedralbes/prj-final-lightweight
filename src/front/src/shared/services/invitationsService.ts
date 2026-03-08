@@ -94,6 +94,22 @@ class InvitationsService {
   }
 
   /**
+   * Valida si un código de sala de entrenamiento existe y está disponible para unirse
+   */
+  async validateSessionCode(code: string): Promise<boolean> {
+    const token = localStorage.getItem("token");
+    const response = await fetch(
+      `${this.baseUrl}/validate-session/${encodeURIComponent(code)}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    if (!response.ok) return false;
+    const data = await response.json();
+    return data.valid === true;
+  }
+
+  /**
    * Consulta las invitaciones PENDING dirigidas al cliente autenticado
    * Permite mostrar notificaciones incluso si el cliente no estaba conectado al enviarlas
    */

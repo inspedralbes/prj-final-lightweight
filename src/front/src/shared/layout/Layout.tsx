@@ -136,7 +136,7 @@ const Layout = ({ children }: LayoutProps) => {
               alt="LightWeight Logo"
               className="w-15 h-15 object-contain"
             />
-            <span className="text-xl font-bold text-white tracking-tight hidden sm:inline">
+            <span className="text-xl font-bold text-white tracking-tight">
               Light<span className="text-orange-500">Weight</span>
             </span>
           </div>
@@ -228,18 +228,23 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar (Mobile) */}
-        <div className="md:hidden bg-[#1a1a1a] border-b border-[#2a2a2a] px-4 py-4 flex items-center justify-between">
+        <div className="md:hidden bg-[#1a1a1a] border-b border-[#2a2a2a] px-4 py-4 grid grid-cols-3 items-center">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white justify-self-start"
           >
             <Menu className="w-6 h-6" />
           </button>
-          <img
-            src="/LW_logo.png"
-            alt="LightWeight Logo"
-            className="w-10 h-10 object-contain"
-          />
+          <div className="flex items-center gap-1 justify-self-center">
+            <img
+              src="/LW_logo.png"
+              alt="LightWeight Logo"
+              className="w-10 h-10 object-contain"
+            />
+            <span className="text-xl font-bold text-white tracking-tight">
+              Light<span className="text-orange-500">Weight</span>
+            </span>
+          </div>
         </div>
 
         {/* Main Content Area */}

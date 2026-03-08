@@ -51,23 +51,31 @@ export default function VirtualGymRoom() {
   const [selectedRoutine, setSelectedRoutine] = useState<Routine | null>(null);
 
   // Partner syncing state (progress updates)
-  const [partnerProgress, setPartnerProgress] = useState<PartnerProgress | null>(null);
+  const [partnerProgress, setPartnerProgress] =
+    useState<PartnerProgress | null>(null);
   const [partnerDisconnected, setPartnerDisconnected] = useState(false);
 
   // STRICT STATE SEPARATION: Local user finish state
   const [isLocalFinished, setIsLocalFinished] = useState(false);
-  const [localStats, setLocalStats] = useState<{ time: number; volume: number; exercises: number } | null>(null);
+  const [localStats, setLocalStats] = useState<{
+    time: number;
+    volume: number;
+    exercises: number;
+  } | null>(null);
 
   // STRICT STATE SEPARATION: Partner finish state
   const [isPartnerFinished, setIsPartnerFinished] = useState(false);
-  const [partnerStats, setPartnerStats] = useState<{ time: number; volume: number; exercises: number } | null>(null);
-
+  const [partnerStats, setPartnerStats] = useState<{
+    time: number;
+    volume: number;
+    exercises: number;
+  } | null>(null);
 
   // Socket Effect
   useEffect(() => {
     if (!roomId || !user) return;
 
-    const apiUrl = import.meta.env.VITE_BACK_URL || 'http://localhost:3000';
+    const apiUrl = import.meta.env.VITE_BACK_URL || "http://localhost:3000";
     const newSocket = io(`${apiUrl}/room`, {
       path: "/socket.io/",
       transports: ["websocket", "polling"],
@@ -78,17 +86,25 @@ export default function VirtualGymRoom() {
     newSocket.on("connect", () => {
       setIsConnected(true);
       setIsConnecting(false);
-      newSocket.emit("joinRoom", { roomId, userId: user.id, username: user.username, isHost: initialIsHost });
+      newSocket.emit("joinRoom", {
+        roomId,
+        userId: user.id,
+        username: user.username,
+        isHost: initialIsHost,
+      });
     });
 
-    newSocket.on("joinedRoom", (data: { isHost: boolean, usersInRoom: RoomUser[] }) => {
-      setIsHost(data.isHost);
-      setUsersInRoom(data.usersInRoom);
-      // Reset disconnection state if someone joins
-      if (data.usersInRoom.length >= 2) {
-        setPartnerDisconnected(false);
-      }
-    });
+    newSocket.on(
+      "joinedRoom",
+      (data: { isHost: boolean; usersInRoom: RoomUser[] }) => {
+        setIsHost(data.isHost);
+        setUsersInRoom(data.usersInRoom);
+        // Reset disconnection state if someone joins
+        if (data.usersInRoom.length >= 2) {
+          setPartnerDisconnected(false);
+        }
+      },
+    );
 
     newSocket.on("roomUsersUpdate", (data: { usersInRoom: RoomUser[] }) => {
       setUsersInRoom(data.usersInRoom);
@@ -123,49 +139,55 @@ export default function VirtualGymRoom() {
     });
 
     // Partner finished event: Silent background update if local user hasn't finished yet
-    newSocket.on('partnerFinished', (payload: { userId: string; finalStats: any }) => {
-      if (String(payload.userId) !== String(user.id)) {
-        // Always save partner stats
-        setPartnerStats(payload.finalStats);
-        setIsPartnerFinished(true);
-        // NOTE: Do NOT show summary screen if isLocalFinished is false
-        // The component will display waiting message instead
-      }
-    });
+    newSocket.on(
+      "partnerFinished",
+      (payload: { userId: string; finalStats: any }) => {
+        if (String(payload.userId) !== String(user.id)) {
+          // Always save partner stats
+          setPartnerStats(payload.finalStats);
+          setIsPartnerFinished(true);
+          // NOTE: Do NOT show summary screen if isLocalFinished is false
+          // The component will display waiting message instead
+        }
+      },
+    );
 
-    newSocket.on('hostDisconnected', () => {
+    newSocket.on("hostDisconnected", () => {
       if (!isHost) {
         newSocket.disconnect();
-        navigate('/clients/invitations');
+        navigate("/friend-session");
       }
     });
 
-    newSocket.on('guestDisconnected', () => {
+    newSocket.on("guestDisconnected", () => {
       if (isHost) {
-        toast.info(t('virtualRoom.guestDisconnected'));
+        toast.info(t("virtualRoom.guestDisconnected"));
         setPartnerDisconnected(true);
       }
     });
 
     setSocket(newSocket);
-    return () => { newSocket.disconnect(); };
+    return () => {
+      newSocket.disconnect();
+    };
   }, [roomId, user]);
-
-
-
 
   const handleLeaveRoom = () => {
     socket?.disconnect();
-    navigate("/client-home");
+    navigate("/friend-session");
   };
 
   const handleStartSession = (routine: Routine) => {
     if (!socket || !roomId) return;
     setSelectedRoutine(routine);
-    socket.emit('startSession', { roomId, routine });
+    socket.emit("startSession", { roomId, routine });
   };
 
-  const handleSessionFinished = (stats: { time: number; volume: number; exercises: number }) => {
+  const handleSessionFinished = (stats: {
+    time: number;
+    volume: number;
+    exercises: number;
+  }) => {
     // STRICT: Mark this user as locally finished and save their stats
     setIsLocalFinished(true);
     setLocalStats(stats);
@@ -173,9 +195,18 @@ export default function VirtualGymRoom() {
 
     // Emit to socket so partner knows this user finished
     if (socket && roomId && user?.id) {
-      socket.emit('sessionFinished', { roomId, userId: user.id, finalStats: stats });
+      socket.emit("sessionFinished", {
+        roomId,
+        userId: user.id,
+        finalStats: stats,
+      });
     }
   };
+
+  // Derive partner username from room users
+  const partnerUsername = usersInRoom.find(
+    (u) => String(u.id) !== String(user?.id),
+  )?.username;
 
   // Determine which content to render
   const renderContent = () => {
@@ -184,7 +215,9 @@ export default function VirtualGymRoom() {
         <div className="flex items-center justify-center w-full h-full">
           <div className="text-center">
             <Loader2 className="w-12 h-12 text-orange-500 animate-spin mx-auto mb-4" />
-            <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Connectant a la sala...</p>
+            <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">
+              {t("virtualRoom.connecting")}
+            </p>
           </div>
         </div>
       );
@@ -197,6 +230,7 @@ export default function VirtualGymRoom() {
           localStats={localStats}
           partnerStats={partnerStats}
           isPartnerFinished={isPartnerFinished}
+          partnerUsername={partnerUsername}
           socket={socket}
           onLeave={handleLeaveRoom}
         />
@@ -208,7 +242,9 @@ export default function VirtualGymRoom() {
         <ActiveSession
           socket={socket}
           roomId={roomId}
-          userId={typeof user?.id === "string" ? user.id : String(user?.id || "")}
+          userId={
+            typeof user?.id === "string" ? user.id : String(user?.id || "")
+          }
           isHost={isHost}
           selectedRoutine={selectedRoutine!}
           isCountingDown={isCountingDown}
@@ -216,6 +252,7 @@ export default function VirtualGymRoom() {
           isSessionActive={isSessionActive}
           partnerProgress={partnerProgress}
           partnerDisconnected={partnerDisconnected}
+          partnerUsername={partnerUsername}
           onSessionFinished={handleSessionFinished}
           onLeave={handleLeaveRoom}
         />
@@ -238,9 +275,7 @@ export default function VirtualGymRoom() {
   // Render within Layout (wraps with Sidebar and header)
   return (
     <Layout>
-      <div className="w-full h-full flex flex-col bg-gradient-to-b from-zinc-950 via-zinc-950 to-black">
-        {renderContent()}
-      </div>
+      <div className="w-full h-full flex flex-col">{renderContent()}</div>
     </Layout>
   );
 }

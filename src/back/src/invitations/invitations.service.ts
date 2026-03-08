@@ -167,6 +167,23 @@ export class InvitationsService {
     });
   }
 
+  // Verifica si un código de sala de entrenamiento es válido (existe y está PENDING)
+  async validateSessionCode(code: string): Promise<{ valid: boolean }> {
+    const invitation = await this.prisma.invitation.findUnique({
+      where: { code },
+    });
+
+    if (!invitation || invitation.status !== InvitationStatus.PENDING) {
+      return { valid: false };
+    }
+
+    if (invitation.expiresAt && invitation.expiresAt < new Date()) {
+      return { valid: false };
+    }
+
+    return { valid: true };
+  }
+
   // Devuelve las invitaciones PENDING dirigidas a este cliente (para mostrar al cargar la app)
   async getPendingForClient(
     clientId: number,

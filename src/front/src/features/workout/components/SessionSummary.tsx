@@ -20,6 +20,7 @@ interface SessionSummaryProps {
   // Flag indicating if partner has finished
   isPartnerFinished?: boolean;
 
+  partnerUsername?: string;
   socket?: Socket | null;
   onLeave: () => void;
   isSoloMode?: boolean;
@@ -29,44 +30,64 @@ const SessionSummary: FC<SessionSummaryProps> = ({
   localStats,
   partnerStats,
   isPartnerFinished,
+  partnerUsername,
   socket,
   onLeave,
-  isSoloMode
+  isSoloMode,
 }) => {
   const { t } = useTranslation();
 
   // Component will automatically re-render when partnerStats or isPartnerFinished changes
   useEffect(() => {
     // Log for debugging
-    console.log('[SessionSummary] Partner state updated:', { isPartnerFinished, hasStats: !!partnerStats });
+    console.log("[SessionSummary] Partner state updated:", {
+      isPartnerFinished,
+      hasStats: !!partnerStats,
+    });
   }, [isPartnerFinished, partnerStats]);
 
   return (
-    <div className="w-full h-full bg-gradient-to-b from-zinc-900 to-zinc-950 flex items-center justify-center overflow-y-auto p-4">
-      <div className="w-full max-w-4xl bg-zinc-900/40 border border-zinc-800 rounded-2xl p-8 backdrop-blur-sm">
+    <div className="w-full h-full flex items-center justify-center overflow-y-auto p-4">
+      <div className="w-full max-w-4xl bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-xl">
         <h1 className="text-4xl font-black text-white text-center mb-8">
-          {t('virtualRoom.sessionCompletedTitle')}
+          {t("virtualRoom.sessionCompletedTitle")}
         </h1>
-        <div className={`grid grid-cols-1 ${isSoloMode ? 'max-w-md mx-auto' : 'md:grid-cols-2'} gap-8`}>
+        <div
+          className={`grid grid-cols-1 ${isSoloMode ? "max-w-md mx-auto" : "md:grid-cols-2"} gap-8`}
+        >
           {/* Local user stats column */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white text-center">{t('virtualRoom.yourStats')}</h2>
+            <h2 className="text-2xl font-bold text-white text-center">
+              {t("virtualRoom.yourStats")}
+            </h2>
             {localStats && (
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <Timer className="w-6 h-6 text-blue-400" />
-                  <span className="text-white">{t('virtualRoom.statTime')}:</span>
-                  <span className="text-orange-500 font-bold">{localStats.time}s</span>
+                  <span className="text-white">
+                    {t("virtualRoom.statTime")}:
+                  </span>
+                  <span className="text-orange-500 font-bold">
+                    {localStats.time}s
+                  </span>
                 </div>
                 <div className="flex items-center gap-4">
                   <CheckCircle className="w-6 h-6 text-green-400" />
-                  <span className="text-white">{t('virtualRoom.statExercises')}:</span>
-                  <span className="text-orange-500 font-bold">{localStats.exercises}</span>
+                  <span className="text-white">
+                    {t("virtualRoom.statExercises")}:
+                  </span>
+                  <span className="text-orange-500 font-bold">
+                    {localStats.exercises}
+                  </span>
                 </div>
                 <div className="flex items-center gap-4">
                   <Dumbbell className="w-6 h-6 text-orange-400" />
-                  <span className="text-white">{t('virtualRoom.statVolume')}:</span>
-                  <span className="text-orange-500 font-bold">{localStats.volume}kg</span>
+                  <span className="text-white">
+                    {t("virtualRoom.statVolume")}:
+                  </span>
+                  <span className="text-orange-500 font-bold">
+                    {localStats.volume}kg
+                  </span>
                 </div>
               </div>
             )}
@@ -75,17 +96,21 @@ const SessionSummary: FC<SessionSummaryProps> = ({
           {/* Partner stats column */}
           {!isSoloMode && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-white text-center">{t('virtualRoom.partnerStats')}</h2>
+              <h2 className="text-2xl font-bold text-white text-center">
+                {partnerUsername || t("virtualRoom.partnerStats")}
+              </h2>
 
               {/* CASE A: Partner hasn't finished yet */}
               {!isPartnerFinished ? (
                 <div className="flex flex-col items-center justify-center gap-3 py-8 px-4 bg-zinc-800/30 rounded-xl border border-zinc-700">
                   <Loader2 className="animate-spin w-6 h-6 text-orange-500" />
                   <span className="text-zinc-300 font-semibold text-center">
-                    {'El contrincant segueix entrenant...'}
+                    {t("virtualRoom.stillTraining", {
+                      name: partnerUsername || t("virtualRoom.opponent"),
+                    })}
                   </span>
                   <span className="text-zinc-500 text-sm text-center">
-                    {'Espera que acabi per veure les seves estadístiques'}
+                    {t("virtualRoom.waitForPartnerStats")}
                   </span>
                 </div>
               ) : partnerStats ? (
@@ -93,18 +118,30 @@ const SessionSummary: FC<SessionSummaryProps> = ({
                 <div className="space-y-4">
                   <div className="flex items-center gap-4">
                     <Timer className="w-6 h-6 text-blue-400" />
-                    <span className="text-white">{t('virtualRoom.statTime')}:</span>
-                    <span className="text-orange-500 font-bold">{partnerStats.time}s</span>
+                    <span className="text-white">
+                      {t("virtualRoom.statTime")}:
+                    </span>
+                    <span className="text-orange-500 font-bold">
+                      {partnerStats.time}s
+                    </span>
                   </div>
                   <div className="flex items-center gap-4">
                     <CheckCircle className="w-6 h-6 text-green-400" />
-                    <span className="text-white">{t('virtualRoom.statExercises')}:</span>
-                    <span className="text-orange-500 font-bold">{partnerStats.exercises}</span>
+                    <span className="text-white">
+                      {t("virtualRoom.statExercises")}:
+                    </span>
+                    <span className="text-orange-500 font-bold">
+                      {partnerStats.exercises}
+                    </span>
                   </div>
                   <div className="flex items-center gap-4">
                     <Dumbbell className="w-6 h-6 text-orange-400" />
-                    <span className="text-white">{t('virtualRoom.statVolume')}:</span>
-                    <span className="text-orange-500 font-bold">{partnerStats.volume}kg</span>
+                    <span className="text-white">
+                      {t("virtualRoom.statVolume")}:
+                    </span>
+                    <span className="text-orange-500 font-bold">
+                      {partnerStats.volume}kg
+                    </span>
                   </div>
                 </div>
               ) : null}
@@ -120,7 +157,7 @@ const SessionSummary: FC<SessionSummaryProps> = ({
             }}
             className="w-full max-w-md py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl transition-all shadow-lg shadow-orange-500/20"
           >
-            {t('virtualRoom.returnPanel')}
+            {t("virtualRoom.returnPanel")}
           </button>
         </div>
       </div>
