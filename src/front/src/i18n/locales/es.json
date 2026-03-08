@@ -351,6 +351,7 @@
     "endCall": "Finalizar llamada",
     "connecting": "Conectando...",
     "cameraError": "No se pudo acceder a la cámara/micrófono",
+    "httpsRequired": "La videollamada requiere una conexión segura (HTTPS)",
     "callEnded": "Llamada finalizada",
     "mute": "Silenciar",
     "unmute": "Activar micrófono",

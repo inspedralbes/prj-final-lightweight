@@ -351,6 +351,7 @@
     "endCall": "Finalitzar trucada",
     "connecting": "Connectant...",
     "cameraError": "No s'ha pogut accedir a la càmera/micròfon",
+    "httpsRequired": "La videollamada requereix una connexió segura (HTTPS)",
     "callEnded": "Trucada finalitzada",
     "mute": "Silenciar",
     "unmute": "Activar micròfon",

@@ -351,6 +351,7 @@
     "endCall": "End call",
     "connecting": "Connecting...",
     "cameraError": "Could not access camera/microphone",
+    "httpsRequired": "Video calls require a secure connection (HTTPS)",
     "callEnded": "Call ended",
     "mute": "Mute",
     "unmute": "Unmute",

@@ -141,7 +141,13 @@ export default function VideoCallModal({
     let cancelled = false;
 
     const start = async () => {
-      // 1. Get local media
+      // 1. Check secure context (getUserMedia requires HTTPS outside localhost)
+      if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+        if (!cancelled) setError(t("videoCall.httpsRequired"));
+        return;
+      }
+
+      // 2. Get local media
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
