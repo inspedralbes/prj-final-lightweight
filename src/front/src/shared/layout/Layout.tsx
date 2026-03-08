@@ -231,7 +231,7 @@ const Layout = ({ children }: LayoutProps) => {
         <div className="md:hidden bg-[#1a1a1a] border-b border-[#2a2a2a] px-4 py-4 relative flex items-center">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white justify-self-start"
           >
             <Menu className="w-6 h-6" />
           </button>
