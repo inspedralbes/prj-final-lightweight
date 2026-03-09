@@ -75,8 +75,11 @@ export default function VirtualGymRoom() {
   useEffect(() => {
     if (!roomId || !user) return;
 
-    const apiUrl = import.meta.env.VITE_BACK_URL || "http://localhost:3000";
-    const newSocket = io(`${apiUrl}/room`, {
+    const backUrl = (import.meta.env.VITE_BACK_URL as string) || "";
+    const socketBaseUrl = backUrl.startsWith("http")
+      ? backUrl
+      : window.location.origin;
+    const newSocket = io(`${socketBaseUrl}/room`, {
       path: "/socket.io/",
       transports: ["websocket", "polling"],
       auth: { token: localStorage.getItem("token") },
