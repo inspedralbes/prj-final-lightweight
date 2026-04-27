@@ -679,3 +679,33 @@ NODE_ENV=production
 | Sessió individual | Fa una rutina en solitari amb comptador de sèries i resum final  |
 | Xat P2P           | Missatgeria en temps real amb el coach                           |
 | **Videollamada**  | Inicia/rep trucades de vídeo WebRTC directament des del xat      |
+
+---
+
+## OpenSpec — workflow de canvis
+
+Les especificacions tècniques del projecte es gestionen amb el workflow **OpenSpec** a `openspec/`.
+
+### Estructura
+
+```
+openspec/
+├── config.yaml          ← configuració global
+├── specs/               ← especificacions principals (fonts de veritat)
+└── changes/             ← canvis actius i arxivats
+    ├── <change-name>/
+    │   ├── proposal.md  ← proposta inicial
+    │   ├── design.md    ← disseny tècnic detallat
+    │   ├── specs/       ← specs delta (divergències respecte a specs/)
+    │   └── tasks.md     ← tasques d'implementació
+    └── archive/         ← canvis completats i arxivats
+```
+
+### Slash-commands (GitHub Copilot)
+
+| Comanda         | Descripció                                                  |
+| --------------- | ----------------------------------------------------------- |
+| `/opsx:propose` | Proposa un nou canvi (genera tots els artefactes d'un cop)  |
+| `/opsx:apply`   | Implementa les tasques d'un canvi actiu                     |
+| `/opsx:verify`  | Verifica que la implementació coincideix amb els artefactes |
+| `/opsx:archive` | Arxiva un canvi completat a `changes/archive/`              |
