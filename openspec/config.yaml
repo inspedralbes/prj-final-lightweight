@@ -1,0 +1,195 @@
+schema: spec-driven
+
+context: |
+  Project: LightWeight — Plataforma de Fitness per a Entrenadors i Clients
+  Description: >
+    Web platform that connects personal trainers (COACH) with their clients (CLIENT).
+    Coaches build exercise routines from a global catalog, assign them to clients, and
+    follow up via a P2P chat with WebRTC video calls. Clients can train solo or in
+    real-time co-op sessions where multiple participants share a workout room.
+
+    Production: https://lightweight.daw.inspedralbes.cat
+    Status: MVP in production. Realtime is the differentiator (chat, sessions, calls,
+    notifications) — every change must consider its WebSocket impact.
+
+  Roles:
+    - Visitant: anonymous, can only see public landing/login/register pages
+    - Coach (UserRole.COACH): creates routines, assigns to clients, hosts co-op sessions, chats and video-calls clients
+    - Client (UserRole.CLIENT): accepts coach invitations, runs assigned routines, joins co-op sessions, chats with coach
+    - Auth: JWT bearer (Passport JwtStrategy). Role guards enforce coach-only / client-only routes.
+
+  Backend:
+    Framework: NestJS 11 (Node.js)
+    Language: TypeScript 5.7
+    ORM: Prisma 6 (PostgreSQL 17)
+    Realtime: Socket.IO 4 (NestJS WebSocketGateway)
+    Auth: @nestjs/jwt + @nestjs/passport (passport-jwt), bcrypt for hashing
+    Port: 3000
+    Base path: /api (handled by Nginx reverse proxy in prod)
+    Location: src/back/
+    Modules (src/back/src/):
+      - auth (AuthController, AuthService, JwtStrategy, guards/, dto/) — register, login, profile
+      - routines (RoutinesController, RoutinesService, dto/) — CRUD routines + RoutineExercise + RoutineAssignment
+      - exercises (ExercisesController, ExercisesService) — read-only catalog (ExerciseCatalog)
+      - session (SessionController, SessionService) — live workout sessions (LiveSession lifecycle)
+      - room (RoomGateway, RoomModule) — Socket.IO gateway for co-op session rooms (join/leave/state sync)
+      - chat (ChatController, ChatService) — P2P chat history persistence
+      - invitations (InvitationsController, InvitationsService, dto/) — coach↔client linking via code or username
+      - clients (ClientsController, ClientsService, dto/) — coach view of their clients + ClientProfile notes
+      - events (EventsGateway, EventsDebugController) — global Socket.IO gateway for chat events, notifications, and WebRTC signalling
+      - prisma (PrismaService — global module)
+    DB Entities: User, ClientProfile, ExerciseCatalog, Routine, RoutineExercise, RoutineAssignment, Invitation, LiveSession, LiveParticipant, WorkoutEvent, ChatMessage, P2PChatMessage, FoodCatalog, DietPlan, DietMeal, DietMealItem (last 4 reserved for post-MVP)
+    DB Enums: UserRole (COACH, CLIENT), SessionStatus (PENDING, ACTIVE, COMPLETED), ParticipantRole (COACH, CLIENT), InvitationStatus (PENDING, ACCEPTED, EXPIRED, REVOKED)
+    Cascades: RoutineExercise/RoutineAssignment → Routine, ClientProfile → User, P2PChatMessage → User, LiveParticipant/WorkoutEvent/ChatMessage → LiveSession
+    Realtime concurrency: each LiveSession has a single sessionCode that is unique; participants join a Socket.IO room keyed by sessionCode
+
+  Frontend:
+    Framework: React 19 + Vite 7
+    Language: TypeScript 5.9
+    Styling: Tailwind CSS 4 + Flowbite React, Lucide icons
+    Router: React Router 7 (SPA, no SSR)
+    State: React Context (AuthContext, NotificationContext, ToastProvider) — no global store library
+    HTTP: axios with JWT interceptor + 401 redirect (shared/utils/api.ts)
+    Realtime: socket.io-client 4 (singleton at features/workout/services/socket.ts)
+    i18n: i18next + react-i18next (Català default, Castellà, Anglès)
+    WebRTC: native browser APIs, Google STUN (stun.l.google.com:19302), no TURN
+    Port: 5173 (dev), served by Nginx in prod
+    Location: src/front/
+    Architecture: Feature-based modular (src/front/src/features/<feature>/{pages,components,services,context,hooks})
+    Dependency rule: shared ← features/* ← App.tsx. shared/ never imports from features/. Features never import each other directly.
+    Path alias: @/ → src/front/src/
+    Features (src/front/src/features/):
+      - auth (Login, Register, ForgotPassword, ProtectedRoute, AuthContext)
+      - chat (P2PChat, VideoCallModal, chatService) — caller side of WebRTC lives here
+      - routines (RoutineExercisesEdit, RoutineCard, RoutineModal, routineService)
+      - exercises (ExercisesForm, ExerciseSearchModal)
+      - workout (SoloWorkoutSession, CoopSessionLobby, WorkoutRoom, ActiveSession, RoomLobby, SessionSummary, socket singleton)
+      - notifications (NotificationCenter, NotificationContext)
+      - coach (coach-only management pages)
+      - client (client-only pages)
+    Global mounts (App.tsx): router + role guards + global Socket.IO listeners (incoming video-call invite popup, notifications)
+
+  Shared / cross-cutting:
+    Note: there is no shared/ package today — types are duplicated between front and back.
+    A future spec change can introduce a workspace package (e.g. shared/ with @lw/types alias).
+    Current cross-cutting concerns live in src/front/src/shared/ (UI primitives, hooks, layout, axios client).
+
+  Infrastructure:
+    Layout: monorepo root with src/back/, src/front/, doc/, openspec/, nginx/. No pnpm workspaces — each package uses npm independently.
+    Local env: Docker Compose (docker-compose.yml at root) — services lw-postgres, lw-backend, lw-frontend, adminer
+    Production: docker-compose.prod.yml — backend, frontend, lw-postgres, adminer, nginx, certbot (profile: certbot)
+    Reverse proxy: Nginx terminates TLS; routes /api/* and /socket.io/* → backend:3000, /* → frontend
+    SSL: Let's Encrypt via dockerised Certbot, persistent volume `letsencrypt`, manual init via init-ssl.sh, weekly renew via host crontab
+    DB: PostgreSQL 17, named volume postgres_db, never exposed to public internet in prod
+    DB GUI: Adminer (port 8081 dev, /adminer/ in prod)
+    Node version: 20+ recommended (no .nvmrc enforced)
+    Credentials: all secrets via .env (gitignored). .env.example documents required keys. Production .env injected by GitHub Actions secret ENV_FILE.
+    CI/CD: GitHub Actions .github/workflows/deploy.yml — on push to main: rsync code to /opt/lw-app, write .env from secret, docker compose up -d --build
+
+  Socket.IO Protocol:
+    Authentication: JWT passed via socket handshake (auth.token); EventsGateway validates and attaches userId
+    Namespaces / rooms:
+      - user:{userId} — every authenticated socket auto-joins; used for direct messages, notifications, video-call invites
+      - session:{sessionCode} — joined by participants of a co-op LiveSession (RoomGateway)
+      - chat between two users uses sorted user ids as a logical pair, persisted via P2PChatMessage
+    Chat (P2PChatMessage):
+      - Client→Server: chat:send (to, text), chat:read (peerId)
+      - Server→Client: chat:message (full message), chat:read-receipt
+    Notifications: notification:new (invitation accepted/rejected, etc.)
+    Co-op session (RoomGateway, session:{sessionCode}):
+      - Client→Server: room:join, room:leave, room:exercise-progress, room:complete
+      - Server→Room: room:state, room:participant-joined, room:participant-left, room:exercise-progress
+    WebRTC signalling (EventsGateway, user-to-user):
+      - Caller→Server→Callee: video-call-invite
+      - Server→Caller: video-call-delivered (callee online) | video-call-unavailable (offline)
+      - Callee→Server→Caller: video-call-accept | video-call-reject | video-call-cancel
+      - Both peers exchange: join-room (roomId), webrtc-offer, webrtc-answer, webrtc-ice-candidate
+    Cancellation: caller hangup or 30s timeout fires video-call-cancel and dismisses the callee popup
+
+  Capabilities (the spec library will mirror these):
+    auth — registration, login, JWT issuance, password reset flow, role guards
+    invitations — coach↔client linking via code or direct username
+    routines — coach builds and edits routines using the global ExerciseCatalog
+    routine-assignments — coach assigns routines to clients, clients see their assigned routines
+    exercises-catalog — read-only catalog of exercises with filtering
+    solo-workout — client runs an assigned routine alone with set/rep tracking and summary
+    coop-session — coach creates a session with sessionCode, client joins, both see live state
+    p2p-chat — realtime chat between coach and client with read receipts and persistence
+    video-call — WebRTC P2P video call initiated from chat, with signalling via Socket.IO
+    notifications — global notification center for invitations, messages, calls
+    client-profile — coach-private notes and goals per client
+    i18n — UI translated to Català (default), Castellà and Anglès
+    theming — dark/light mode toggle persisted client-side
+    infra-deploy — docker-compose.prod, Nginx, Let's Encrypt, GitHub Actions CI/CD
+
+  Testing:
+    Backend: Jest (NestJS default) — co-located *.spec.ts. Coverage today is minimal (only the scaffolded app.controller.spec.ts).
+    Frontend: no automated tests configured today. Manual QA checklist lives in doc/Proves_usuari.md.
+    Type-check + lint: tsc -b (front), nest build (back), eslint (both) — these are the de-facto CI gates.
+    Recommended for new specs:
+      - Backend: add a *.spec.ts per service method touched (Jest + @nestjs/testing TestingModule, mock PrismaService)
+      - Frontend: introduce Vitest + @testing-library/react when the spec touches non-trivial UI logic; document the missing harness as a follow-up if the change does not include adding it
+      - Socket.IO flows: assert event emission with a Socket.IO test client or by spying on server.to(room).emit
+    Manual verification: doc/Proves_usuari.md serves as the smoke-test list for production releases.
+
+  Definition of Done:
+    - All acceptance criteria scenarios from the spec pass (manual or automated)
+    - Backend: `npm run lint` clean, `npm run build` succeeds (NestJS), `npm test` green for any added Jest specs
+    - Frontend: `npm run lint` clean, `npm run build` succeeds (`tsc -b && vite build`)
+    - Prisma: `npx prisma validate` clean; if schema changed, a migration is committed under `src/back/prisma/migrations/`
+    - No hardcoded secrets — every new env var is added to BOTH `.env.example` files (root + per-package) and to the GitHub Actions ENV_FILE template
+    - Socket.IO impact reviewed: any new event documented in this config and in the spec's design.md
+    - i18n: any user-facing string added to the three locale files (ca.json, es.json, en.json) — Catalan is default
+    - Manual QA pass against doc/Proves_usuari.md (or new entries added there)
+    - PR reviewed and merged to main; production smoke check at https://lightweight.daw.inspedralbes.cat after deploy
+
+  Conventions:
+    - Conventional commits, trunk-based development on `main`, feature branches via PR
+    - User-facing copy in Catalan; code identifiers, comments, and commit messages in English
+    - PKs are auto-increment Int (`@id @default(autoincrement())`) — not UUID
+    - DB column names snake_case via Prisma `@map`; model fields camelCase in code
+    - createdAt / updatedAt managed by Prisma (`@default(now())`, `@updatedAt`)
+    - DATABASE_URL, JWT_SECRET, FRONTEND_URL, VITE_BACK_URL always via environment variables
+    - HTTPS is mandatory in production (WebRTC `getUserMedia` requires it). Localhost is exempt.
+    - No SSR — admin/coach/client routes are all client-rendered. Auth state lives in localStorage + AuthContext.
+    - Socket.IO singleton on the frontend: import only from `features/workout/services/socket.ts`, never instantiate elsewhere.
+
+rules:
+  proposal:
+    - Keep proposals concise but include a Non-goals section
+    - Always list impacted capabilities
+    - Reference the affected backend module(s) explicitly (auth, routines, exercises, session, room, chat, invitations, clients, events, prisma) and frontend feature(s) (auth, chat, routines, exercises, workout, notifications, coach, client)
+    - Note cross-cutting side effects (e.g. new Socket.IO event → must update the singleton client and global App.tsx listener; new role-gated route → ProtectedRoute config)
+    - For realtime changes, list the new/modified Socket.IO events and the room they fan out to
+    - Link the change to its Jira US (User Story) and the parent Epic when relevant; tracking hierarchy is Epic → US → Tasks
+    - If the change adds services, gateways, or React contexts, include a testing note in the impact section even when no automated suite exists yet
+  specs:
+    - Use GIVEN/WHEN/THEN format for all acceptance criteria scenarios
+    - Cover edge cases and error conditions (e.g. duplicate username → 409, expired invitation → 410, offline callee → video-call-unavailable, JWT missing → 401)
+    - Include at least 3 scenarios per requirement when feasible
+    - Specify role-based access for each scenario (Visitant, Coach, Client) and the expected guard outcome
+    - Include Socket.IO events and payloads for any real-time scenario; specify the room the event is emitted to
+    - Specify HTTP status codes for all REST scenarios
+    - Include i18n acceptance, any user-visible string must exist in ca.json / es.json / en.json
+    - Every spec file MUST include at least one testability scenario describing how the feature can be exercised (Jest unit, manual QA step from Proves_usuari.md, or a documented Socket.IO test client invocation)
+  design:
+    - Include at least one Mermaid diagram (sequence for realtime flows, flowchart for control flow, ER for schema changes)
+    - Document architectural decisions with alternatives and rationale (esp. realtime vs REST choice, room scoping, persistence)
+    - Include API request/response schemas (JSON) and NestJS DTO definitions (class-validator decorators)
+    - Specify Prisma schema additions/modifications when new entities are introduced; show the migration name to be created
+    - Document Socket.IO events used (client→server and server→client), their payloads, and the room/user channel they target
+    - For WebRTC changes, describe the signalling sequence and how disconnects/timeouts are handled
+    - Note i18n keys to be added (one row per locale file)
+    - Include a testing strategy section, which units are tested, with which framework (Jest backend / Vitest frontend if introduced / manual QA), and what is mocked (Prisma, Socket.IO server, getUserMedia, RTCPeerConnection)
+    - For changes that touch deploy/infra, describe the impact on docker-compose.prod.yml, nginx config, and the GitHub Actions workflow
+  tasks:
+    - Break tasks into chunks of max 2 hours
+    - Every task group that implements logic MUST have a corresponding test or manual-QA verification task in the same group
+    - Separate Backend and Frontend tasks under explicit headings; add a Realtime/Socket.IO section if events change
+    - "Include Prisma migration tasks when DB schema changes (`npx prisma migrate dev --name <name>` inside lw-backend container)"
+    - "Include `.env.example` updates and GitHub Actions ENV_FILE secret notes for every new env var"
+    - Include i18n tasks for ca.json / es.json / en.json whenever user-facing copy changes
+    - 'Include a dedicated "Tests / Verification" section at the end listing: backend Jest specs to add, manual QA steps to add to doc/Proves_usuari.md, lint/build commands to run'
+    - "Verification commands to include where applicable: `npm run lint`, `npm run build`, `npm test`, `npx prisma validate`, `npx prisma migrate dev`, manual smoke against http://localhost:5173"
+    - Include a deploy-impact task whenever nginx/, docker-compose.prod.yml, or the GitHub Actions workflow is touched
+    - Always mark tasks as "Done" as you progress to reflect ongoing work
