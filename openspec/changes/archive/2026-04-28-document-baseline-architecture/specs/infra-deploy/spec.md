@@ -21,18 +21,18 @@ Nginx SHALL handle HTTP→HTTPS redirect and route `/api/*` and `/socket.io/*` t
 
 #### Scenario: HTTPS routing
 
-- **WHEN** a browser requests `https://lightweight.daw.inspedralbes.cat/api/auth/me`
+- **WHEN** a browser requests `https://lightweight.cat/api/auth/me`
 - **THEN** Nginx terminates TLS (TLS 1.2 or 1.3) using the certificate from the `letsencrypt` volume
 - **AND** the request is proxied to `backend:3000`
 
 #### Scenario: Socket.IO routing
 
-- **WHEN** the SPA opens a Socket.IO connection over `wss://lightweight.daw.inspedralbes.cat/socket.io/`
+- **WHEN** the SPA opens a Socket.IO connection over `wss://lightweight.cat/socket.io/`
 - **THEN** Nginx upgrades the connection and proxies to `backend:3000` with the upgrade headers preserved
 
 #### Scenario: HTTP request
 
-- **WHEN** a browser requests `http://lightweight.daw.inspedralbes.cat`
+- **WHEN** a browser requests `http://lightweight.cat`
 - **THEN** Nginx redirects to the HTTPS equivalent
 
 ### Requirement: SSL via dockerised Certbot
@@ -45,7 +45,7 @@ Let's Encrypt certificates SHALL be obtained and renewed by a `certbot/certbot` 
 - **THEN** Nginx briefly switches to `nginx/default-init.conf` (HTTP-only)
 - **AND** `docker compose --profile certbot run --rm certbot` obtains the certificate via the webroot challenge
 - **AND** Nginx restores `nginx/default.conf` and reloads (`nginx -s reload`)
-- **AND** `curl -I https://lightweight.daw.inspedralbes.cat` returns `HTTP/2 200`
+- **AND** `curl -I https://lightweight.cat` returns `HTTP/2 200`
 
 #### Scenario: Periodic renewal
 
@@ -93,7 +93,7 @@ WebRTC's `getUserMedia` requires HTTPS in production. The deploy spec SHALL guar
 
 #### Scenario: Production must serve HTTPS
 
-- **WHEN** the user opens https://lightweight.daw.inspedralbes.cat and accepts a video call
+- **WHEN** the user opens https://lightweight.cat and accepts a video call
 - **THEN** `getUserMedia` succeeds (assuming the user grants camera/microphone permission)
 
 #### Scenario: Localhost exemption
@@ -108,7 +108,7 @@ The production deploy SHALL be verifiable via a smoke check after every release,
 #### Scenario: Smoke check after release
 
 - **WHEN** a deploy completes
-- **THEN** the deployer runs `curl -I https://lightweight.daw.inspedralbes.cat` (expect `HTTP/2 200`), opens the SPA, and signs in
+- **THEN** the deployer runs `curl -I https://lightweight.cat` (expect `HTTP/2 200`), opens the SPA, and signs in
 - **AND** the manual smoke list in `doc/Proves_usuari.md` (deploy section, to be created if absent) is run on every release that touches `nginx/`, `docker-compose.prod.yml`, `init-ssl.sh`, or `.github/workflows/`
 
 ### Requirement: Known gap — `events-debug` controller is a security follow-up

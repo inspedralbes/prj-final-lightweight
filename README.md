@@ -59,7 +59,7 @@
 
 | Recurs            | URL                                      |
 | ----------------- | ---------------------------------------- |
-| URL de producció  | https://lightweight.daw.inspedralbes.cat |
+| URL de producció  | https://lightweight.cat |
 | Gestor de tasques | _(Jira — afegir URL)_                    |
 | Prototip gràfic   | _(Figma — afegir URL)_                   |
 
@@ -414,8 +414,8 @@ FRONTEND_URL=http://localhost:5173
 VITE_BACK_URL=http://localhost:3000
 
 # Producció (HTTPS obligatori per videollamades)
-# FRONTEND_URL=https://lightweight.daw.inspedralbes.cat
-# VITE_BACK_URL=https://lightweight.daw.inspedralbes.cat/api
+# FRONTEND_URL=https://lightweight.cat
+# VITE_BACK_URL=https://lightweight.cat/api
 ```
 
 ---
@@ -559,7 +559,7 @@ En el **primer** desplegament, Nginx falla perquè els certificats no existeixen
 **1. Connecta't per SSH:**
 
 ```bash
-ssh usuari@lightweight.daw.inspedralbes.cat
+ssh usuari@lightweight.cat
 cd /opt/lw-app
 ```
 
@@ -579,7 +579,7 @@ El script fa automàticament:
 **3. Verifica:**
 
 ```bash
-curl -I https://lightweight.daw.inspedralbes.cat
+curl -I https://lightweight.cat
 # Ha de retornar: HTTP/2 200
 ```
 
@@ -620,7 +620,7 @@ Configura a **Settings → Secrets and variables → Actions**:
 
 | Secret     | Descripció                             | Exemple                                  |
 | ---------- | -------------------------------------- | ---------------------------------------- |
-| `SSH_HOST` | IP o domini del servidor               | `lightweight.daw.inspedralbes.cat`       |
+| `SSH_HOST` | IP o domini del servidor               | `lightweight.cat`       |
 | `SSH_USER` | Usuari SSH                             | `ubuntu` / `deploy`                      |
 | `SSH_KEY`  | Clau privada SSH (format PEM, sencera) | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
 | `ENV_FILE` | Contingut complet del `.env` de prod   | veure exemple a sota                     |
@@ -633,8 +633,8 @@ POSTGRES_PASSWORD=contrasenya_molt_segura
 POSTGRES_DB=lightweight_db
 DATABASE_URL=postgresql://lightweight_user:contrasenya_molt_segura@lw-postgres:5432/lightweight_db?schema=public
 JWT_SECRET=clau_jwt_molt_llarga_i_secreta
-FRONTEND_URL=https://lightweight.daw.inspedralbes.cat
-VITE_BACK_URL=https://lightweight.daw.inspedralbes.cat/api
+FRONTEND_URL=https://lightweight.cat
+VITE_BACK_URL=https://lightweight.cat/api
 NODE_ENV=production
 ```
 

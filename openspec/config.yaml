@@ -8,7 +8,7 @@ context: |
     follow up via a P2P chat with WebRTC video calls. Clients can train solo or in
     real-time co-op sessions where multiple participants share a workout room.
 
-    Production: https://lightweight.daw.inspedralbes.cat
+    Production: https://lightweight.cat
     Status: MVP in production. Realtime is the differentiator (chat, sessions, calls,
     notifications) — every change must consider its WebSocket impact.
 
@@ -141,7 +141,7 @@ context: |
     - Socket.IO impact reviewed: any new event documented in this config and in the spec's design.md
     - i18n: any user-facing string added to the three locale files (ca.json, es.json, en.json) — Catalan is default
     - Manual QA pass against doc/Proves_usuari.md (or new entries added there)
-    - PR reviewed and merged to main; production smoke check at https://lightweight.daw.inspedralbes.cat after deploy
+    - PR reviewed and merged to main; production smoke check at https://lightweight.cat after deploy
 
   Conventions:
     - Conventional commits, trunk-based development on `main`, feature branches via PR

@@ -108,7 +108,7 @@ For each spec, read the listed source files and reconcile every divergence. If a
 - [x] 1.14.1 Read `nginx/default.conf`, `nginx/default-init.conf`, `init-ssl.sh`, `docker-compose.prod.yml`, `.github/workflows/deploy.yml`. Confirm the routing tables, the certbot profile, and the rsync target path.
 - [x] 1.14.2 **Open a Jira US for the `events-debug` security follow-up** (Q1 resolution: omit and flag). Read `src/back/src/events/events-debug.controller.ts` only to populate the follow-up description; do NOT document the controller as production surface in `infra-deploy/spec.md` (already flagged as a known gap).
 - [x] 1.14.3 Confirm the cron schedule in the host crontab template matches the spec (`0 3 * * 1`).
-- [x] 1.14.4 Smoke check: `curl -I https://lightweight.daw.inspedralbes.cat` returns `HTTP/2 200`.
+- [x] 1.14.4 Smoke check: `curl -I https://lightweight.cat` returns `HTTP/2 200`.
 
 ## 2. Spec library hygiene
 

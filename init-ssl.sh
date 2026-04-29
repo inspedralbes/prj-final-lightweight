@@ -29,7 +29,7 @@ $COMPOSE exec nginx nginx -s reload
 
 echo ""
 echo "✅ Done! The site is now running on HTTPS."
-echo "   https://lightweight.daw.inspedralbes.cat"
+echo "   https://lightweight.cat"
 echo ""
 echo "Add this to crontab (sudo crontab -e) for auto-renewal every Monday at 3am:"
 echo "   0 3 * * 1 cd $(pwd) && docker compose -f docker-compose.prod.yml --profile certbot run --rm certbot renew && docker compose -f docker-compose.prod.yml exec nginx nginx -s reload"

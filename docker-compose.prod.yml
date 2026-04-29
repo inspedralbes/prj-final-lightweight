@@ -88,7 +88,7 @@ services:
         --email admin@inspedralbes.cat
         --agree-tos
         --non-interactive
-        -d lightweight.daw.inspedralbes.cat
+        -d lightweight.cat
     profiles:
       - certbot
 

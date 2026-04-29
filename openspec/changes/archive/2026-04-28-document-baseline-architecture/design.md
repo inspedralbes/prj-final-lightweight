@@ -273,7 +273,7 @@ This change has no runtime migration. The deploy plan is:
 2. Author each `openspec/specs/<capability>/spec.md` per the template in D2 (one commit per spec is recommended for review granularity, but a single squash-merge is acceptable since none of these affect runtime).
 3. Run `openspec validate` locally; iterate until clean.
 4. Open PR; reviewers spot-check three random specs against the live code.
-5. Merge to `main`. Production redeploy is unaffected (no `src/` changes), but it will run because GitHub Actions triggers on every push to `main` — confirm the smoke check at https://lightweight.daw.inspedralbes.cat after deploy as per the Definition of Done.
+5. Merge to `main`. Production redeploy is unaffected (no `src/` changes), but it will run because GitHub Actions triggers on every push to `main` — confirm the smoke check at https://lightweight.cat after deploy as per the Definition of Done.
 
 **Rollback:** revert the merge commit. There is no schema/runtime impact, so rollback is purely a `git revert` of the spec/doc changes.
 
