@@ -123,7 +123,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const users = this.roomUsers.get(roomId)!;
       const userExists = users.find((u) => u.id === userId);
 
-      let isHost = requestedIsHost ?? false;
+      const isHost = requestedIsHost ?? false;
 
       if (!userExists) {
         users.push({
