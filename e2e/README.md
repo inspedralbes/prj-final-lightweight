@@ -1,6 +1,6 @@
 # LightWeight E2E Tests
 
-> Harness mínimo de Playwright para tests end-to-end. Cubre **LW-438**.
+> Harness Playwright para tests end-to-end. Cubre **LW-438** (workspace + smoke) y **LW-440** (seed determinista + fixtures multi-usuario).
 
 ## Instalación
 
@@ -24,8 +24,90 @@ Luego, desde `e2e/`:
 npm run test:e2e:browser
 ```
 
-Resultado esperado: `1 passed`.
+Resultado esperado: `2 passed` (smoke + seed).
 
 ---
 
-> La guía completa (Trace Viewer, convenciones, debugging, fixtures) llegará con **LW-446**.
+## Datos de prueba
+
+### 1. Arrancar el back con el flag `E2E_TESTING`
+
+Los tests que usan las fixtures (`loginAs`, `resetDatabase`) necesitan que el backend exponga los endpoints `/testing/reset`, `/testing/seed` y `/testing/login`. Estos endpoints solo se montan si el back arranca con `E2E_TESTING=true`:
+
+```bash
+# Local (sin Docker):
+cd src/back
+E2E_TESTING=true npm run start:dev
+
+# O dentro de Docker (añade E2E_TESTING=true al .env de la raíz y reinicia):
+docker compose up -d --build backend
+```
+
+> ⚠️ **Nunca** establezcas `E2E_TESTING=true` en producción. El back tiene una doble guarda: si `NODE_ENV=production`, ignora el flag y los endpoints devuelven 404.
+
+> ⚠️ El secret `ENV_FILE` que la GitHub Action `deploy.yml` inyecta en producción **no debe** contener `E2E_TESTING=true`. Antes de mergear a `main`, comprueba el contenido del secret en GitHub.
+
+### 2. Ejecutar el seed inicial
+
+Desde `src/back/`, con la DB arrancada:
+
+```bash
+cd src/back
+npx prisma db seed
+```
+
+El seed es idempotente (usa `upsert`), así que se puede correr varias veces sin error.
+
+### 3. Usuarios disponibles
+
+| Username | Role | Vínculo | Password |
+|---|---|---|---|
+| `e2e_coach` | COACH | — | `E2eP@ss123!` |
+| `e2e_client_linked` | CLIENT | `coachId = e2e_coach.id` | `E2eP@ss123!` |
+| `e2e_client_unlinked` | CLIENT | `coachId = null` | `E2eP@ss123!` |
+
+Además, el seed crea: una rutina `e2e_routine_basic` propiedad de `e2e_coach`, una asignación a `e2e_client_linked`, y una invitación pendiente con código `E2E-INVITE-001`.
+
+### 4. Usar las fixtures en un test
+
+```ts
+// e2e/tests/mi-flow.spec.ts
+import { test, expect } from "../fixtures";
+
+test("coach ve su dashboard", async ({ loginAs }) => {
+  const page = await loginAs("coach");
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/dashboard/);
+});
+```
+
+- `loginAs(role)` ⇒ `Page` ya autenticada (token + datos en `localStorage`). Roles: `'coach' | 'clientLinked' | 'clientUnlinked'`.
+- `freshDb` ⇒ fixture auto-run (`auto: true`) que llama a `resetDatabase()` antes de cada test. Para desactivarla en un bloque concreto, `test.use({ freshDb: false })`.
+- `resetDatabase()` ⇒ helper directo si necesitas resetear a mano dentro de un test.
+
+### 5. Convención de prefijo `e2e_*`
+
+`POST /testing/reset` solo borra usuarios cuyo `username` empieza por `e2e_` (y todo lo que cuelga de ellos en cascada). Si tu test crea datos extra a mano, **respeta el prefijo** (`e2e_extra_user`, `e2e_routine_xyz`) para que el reset los limpie.
+
+### 6. Reset / login manual desde la línea de comandos
+
+```bash
+# Reset completo (borra e2e_*, vuelve a sembrar)
+curl -X POST http://localhost:3000/testing/reset
+
+# Login as coach (devuelve { access_token, user })
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"username":"e2e_coach"}' \
+  http://localhost:3000/testing/login
+
+# Username no permitido (HTTP 400)
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"username":"admin"}' \
+  http://localhost:3000/testing/login
+```
+
+> En dev local el back vive en `:3000` directamente (sin `/api`). El prefijo `/api` solo lo añade Nginx en producción.
+
+---
+
+> La guía completa (Trace Viewer, convenciones, debugging, page objects) llegará con **LW-446**.
