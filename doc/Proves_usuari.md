@@ -33,6 +33,12 @@ Si alguna verificació falla, revisar els logs: `docker compose -f docker-compos
 
 ---
 
+## E2E Test Reference
+
+Per a la planificació de cobertura E2E, veure: `doc/E2E_critical_flows.md`
+
+---
+
 ## E2E – datos de prueba (LW-440)
 
 Verificación manual del módulo de testing y del seed determinista. Solo aplicable en local — **nunca** en producción.
