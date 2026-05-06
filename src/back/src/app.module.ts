@@ -13,6 +13,10 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { RoomModule } from './room/room.module';
 import { ClientsModule } from './clients/clients.module';
 import { ChatModule } from './chat/chat.module';
+import { TestingModule } from './testing/testing.module';
+
+const e2eTestingEnabled =
+  process.env.E2E_TESTING === 'true' && process.env.NODE_ENV !== 'production';
 
 @Module({
   imports: [
@@ -30,6 +34,7 @@ import { ChatModule } from './chat/chat.module';
     ClientsModule,
     ChatModule,
     EventsModule,
+    ...(e2eTestingEnabled ? [TestingModule] : []),
   ],
   controllers: [AppController, EventsDebugController],
   providers: [AppService],

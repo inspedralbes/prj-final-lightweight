@@ -8,5 +8,10 @@
     "skipLibCheck": true,
     "outDir": "./dist"
   },
-  "include": ["tests/**/*.ts", "playwright.config.ts"]
+  "include": [
+    "tests/**/*.ts",
+    "fixtures/**/*.ts",
+    "global-setup.ts",
+    "playwright.config.ts"
+  ]
 }
