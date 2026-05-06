@@ -30,3 +30,9 @@ Verificació mínima a executar després de cada desplegament a producció:
 | 7   | Obrir xat P2P entre coach i client              | Missatges arriben en temps real (WebSocket) |
 
 Si alguna verificació falla, revisar els logs: `docker compose -f docker-compose.prod.yml logs --tail=50 <servei>`.
+
+---
+
+## E2E Test Reference
+
+Per a la planificació de cobertura E2E, veure: `doc/E2E_critical_flows.md`
