@@ -22,9 +22,7 @@ export interface SeedSnapshot {
   invitations: number;
 }
 
-export async function seedE2EData(
-  client: PrismaClient,
-): Promise<SeedSnapshot> {
+export async function seedE2EData(client: PrismaClient): Promise<SeedSnapshot> {
   const passwordHash = await bcrypt.hash(E2E_PASSWORD, 10);
 
   for (const ex of EXERCISES) {
