@@ -29,5 +29,11 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    environmentOptions: {
+      jsdom: {
+        // Necessari perquè jsdom inicialitzi localStorage amb un origen vàlid
+        url: "http://localhost",
+      },
+    },
   },
 });
