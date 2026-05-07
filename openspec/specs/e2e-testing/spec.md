@@ -188,7 +188,17 @@ The system SHALL ship a NestJS module `TestingModule` at `src/back/src/testing/`
 
 ### Requirement: Endpoint de reset E2E
 
-The system SHALL expose `POST /api/testing/reset` (when the testing module is active) that deletes every row in `Invitation`, `Routine`, `RoutineExercise`, `RoutineAssignment`, `ClientProfile`, `P2PChatMessage`, `LiveSession`, `LiveParticipant`, `WorkoutEvent`, `ChatMessage` whose foreign keys reach a `User` whose `username` starts with `e2e_`, then deletes those `User` rows themselves, and finally re-applies the deterministic seed. The endpoint SHALL NOT delete any `User` whose username does not match `^e2e_`. The endpoint SHALL complete in less than 2000 ms on a local PostgreSQL with fewer than 1000 rows per table.
+The system SHALL expose `POST /api/testing/reset` (when the testing module is active) that deletes every row in `LiveSession`, `LiveParticipant`, `WorkoutEvent`, `ChatMessage`, `Invitation`, `Routine`, `RoutineExercise`, `RoutineAssignment`, `ClientProfile`, `P2PChatMessage` whose foreign keys reach a `User` whose `username` starts with `e2e_`, then deletes those `User` rows themselves, and finally re-applies the deterministic seed. The endpoint SHALL NOT delete any `User` whose username does not match `^e2e_`. The endpoint SHALL complete in less than 2000 ms on a local PostgreSQL with fewer than 1000 rows per table. **The explicit deletion order for `LiveSession`-scoped rows SHALL be: `WorkoutEvent` → `ChatMessage` (session-level) → `LiveParticipant` → `LiveSession`**, to respect foreign key constraints before `User` rows are deleted.
+
+#### Scenario: Reset limpia LiveSessions de usuarios e2e
+
+- **GIVEN** la DB contiene un `LiveSession` creado durante un test de co-op con `hostId = e2e_coach.id`
+- **AND** la DB contiene `LiveParticipant`, `WorkoutEvent` y `ChatMessage` (de sesión) asociados a esa `LiveSession`
+- **WHEN** se hace `POST /api/testing/reset`
+- **THEN** la respuesta es HTTP 200
+- **AND** `SELECT COUNT(*) FROM live_sessions WHERE host_id = (SELECT id FROM users WHERE username = 'e2e_coach')` devuelve 0
+- **AND** `SELECT COUNT(*) FROM live_participants WHERE session_id IN (...)` devuelve 0
+- **AND** los tres usuarios `e2e_*` han sido recreados con sus relaciones base
 
 #### Scenario: Reset no toca usuarios reales
 

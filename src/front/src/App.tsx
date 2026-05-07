@@ -290,7 +290,7 @@ const AppContent = () => {
           <Route
             path="/friend-session"
             element={
-              <ProtectedRoute requiredRole="CLIENT">
+              <ProtectedRoute>
                 <CoopSessionLobby />
               </ProtectedRoute>
             }
@@ -298,7 +298,7 @@ const AppContent = () => {
           <Route
             path="/room/:roomId"
             element={
-              <ProtectedRoute requiredRole="CLIENT">
+              <ProtectedRoute>
                 <WorkoutRoom />
               </ProtectedRoute>
             }
