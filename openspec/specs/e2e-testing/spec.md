@@ -188,7 +188,17 @@ The system SHALL ship a NestJS module `TestingModule` at `src/back/src/testing/`
 
 ### Requirement: Endpoint de reset E2E
 
-The system SHALL expose `POST /api/testing/reset` (when the testing module is active) that deletes every row in `Invitation`, `Routine`, `RoutineExercise`, `RoutineAssignment`, `ClientProfile`, `P2PChatMessage`, `LiveSession`, `LiveParticipant`, `WorkoutEvent`, `ChatMessage` whose foreign keys reach a `User` whose `username` starts with `e2e_`, then deletes those `User` rows themselves, and finally re-applies the deterministic seed. The endpoint SHALL NOT delete any `User` whose username does not match `^e2e_`. The endpoint SHALL complete in less than 2000 ms on a local PostgreSQL with fewer than 1000 rows per table.
+The system SHALL expose `POST /api/testing/reset` (when the testing module is active) that deletes every row in `LiveSession`, `LiveParticipant`, `WorkoutEvent`, `ChatMessage`, `Invitation`, `Routine`, `RoutineExercise`, `RoutineAssignment`, `ClientProfile`, `P2PChatMessage` whose foreign keys reach a `User` whose `username` starts with `e2e_`, then deletes those `User` rows themselves, and finally re-applies the deterministic seed. The endpoint SHALL NOT delete any `User` whose username does not match `^e2e_`. The endpoint SHALL complete in less than 2000 ms on a local PostgreSQL with fewer than 1000 rows per table. **The explicit deletion order for `LiveSession`-scoped rows SHALL be: `WorkoutEvent` → `ChatMessage` (session-level) → `LiveParticipant` → `LiveSession`**, to respect foreign key constraints before `User` rows are deleted.
+
+#### Scenario: Reset limpia LiveSessions de usuarios e2e
+
+- **GIVEN** la DB contiene un `LiveSession` creado durante un test de co-op con `hostId = e2e_coach.id`
+- **AND** la DB contiene `LiveParticipant`, `WorkoutEvent` y `ChatMessage` (de sesión) asociados a esa `LiveSession`
+- **WHEN** se hace `POST /api/testing/reset`
+- **THEN** la respuesta es HTTP 200
+- **AND** `SELECT COUNT(*) FROM live_sessions WHERE host_id = (SELECT id FROM users WHERE username = 'e2e_coach')` devuelve 0
+- **AND** `SELECT COUNT(*) FROM live_participants WHERE session_id IN (...)` devuelve 0
+- **AND** los tres usuarios `e2e_*` han sido recreados con sus relaciones base
 
 #### Scenario: Reset no toca usuarios reales
 
@@ -324,3 +334,29 @@ The E2E workspace SHALL define `e2e/global-setup.ts`, referenced from `playwrigh
 ### Requirement: Variable de entorno `E2E_TESTING` documentada y `fail-closed` en producción
 
 The repository SHALL document the `E2E_TESTING` environment variable in `.env.example` (root), `src/back/.env.example`, the GitHub Actions `ENV_FILE` template note, and the `e2e/.env.example` README. Each occurrence SHALL include an inline comment marking it as **never enable in production**. The backend SHALL refuse to load `TestingModule` when `process.env.NODE_ENV === 'production'`, even if `E2E_TESTING=true` is forced.
+
+---
+
+### Requirement: El badge d'invitacions pendents exposa data-testid per a la selecció E2E
+
+El component Layout HA DE renderitzar l'element del badge d'invitacions pendents amb `data-testid="pending-invites-badge"` sempre que el comptador del badge sigui superior a zero, perquè els tests Playwright el puguin localitzar de forma fiable sense dependre de selectors CSS fràgils o de text.
+
+#### Scenario: L'element del badge és consultable per data-testid quan el comptador és > 0
+
+- **GIVEN** el frontend s'està executant i `e2e_client_unlinked` ha iniciat sessió
+- **AND** hi ha almenys una invitació `PENDING` per a aquest client
+- **WHEN** Playwright consulta `page.locator('[data-testid="pending-invites-badge"]')`
+- **THEN** es troba exactament un element
+- **AND** el seu `textContent` és igual a la representació en cadena del comptador de pendents (p. ex. `"1"`)
+
+#### Scenario: L'element del badge és absent quan el comptador és 0
+
+- **GIVEN** `e2e_client_linked` ha iniciat sessió (ja té un coach, cap invitació pendent)
+- **WHEN** Playwright consulta `page.locator('[data-testid="pending-invites-badge"]')`
+- **THEN** el comptador d'elements és 0 (element no al DOM o ocult)
+
+#### Scenario: Testabilitat — l'atribut és present al HTML renderitzat
+
+- **GIVEN** la compilació del frontend finalitza correctament (`npm run build` a `src/front/`)
+- **WHEN** un desenvolupador inspecciona el nav de Layout a DevTools amb una invitació pendent present
+- **THEN** el `<span>` del badge (o element equivalent) té `data-testid="pending-invites-badge"` als seus atributs
