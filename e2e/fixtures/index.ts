@@ -20,6 +20,12 @@ export const test = base.extend<Fixtures>({
     },
     { auto: true },
   ],
+  page: async ({ page }, use) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('language', 'ca');
+    });
+    await use(page);
+  },
   loginAs: async ({ page }, use) => {
     await use(async (role: E2eRole) => {
       await loginViaApi(page, e2eUsers[role]);

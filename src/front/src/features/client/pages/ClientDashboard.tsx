@@ -25,15 +25,6 @@ const ClientHome = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // avoid running component logic when there is no authenticated user
-  if (!user) {
-    return (
-      <Layout>
-        <LoadingScreen isVisible={true} message={t("common.loading")} />
-      </Layout>
-    );
-  }
-
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -43,8 +34,9 @@ const ClientHome = () => {
   const toast = useToast();
   const { notifications, markAsRead } = useNotification();
 
-  const myRoomId = `chat_client_${user.id}`;
+  const myRoomId = user ? `chat_client_${user.id}` : null;
   const unreadFromCoach = (() => {
+    if (!myRoomId) return 0;
     const n = notifications.find(
       (
         n,
@@ -53,13 +45,16 @@ const ClientHome = () => {
     );
     return n ? n.count : 0;
   })();
-  const markCoachChatRead = () =>
+
+  const markCoachChatRead = () => {
+    if (!myRoomId) return;
     notifications
       .filter((n) => n.type === "chat" && n.roomId === myRoomId && !n.read)
       .forEach((n) => markAsRead(n.id));
+  };
 
   // Solo mode: modal & confirm state
-  const isSoloMode = !user.coachId && hasCoach === false;
+  const isSoloMode = !user?.coachId && hasCoach === false;
 
   // Routine filter — only relevant when client has both self-created and coach-assigned
   const soloRoutines = routines.filter((r) => r.coachId === null);
@@ -179,6 +174,14 @@ const ClientHome = () => {
       window.removeEventListener("openChat", handleOpenChat);
     };
   }, [fetchClientRoutines, user]);
+
+  if (!user) {
+    return (
+      <Layout>
+        <LoadingScreen isVisible={true} message={t("common.loading")} />
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
