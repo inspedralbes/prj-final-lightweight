@@ -164,8 +164,9 @@ const Clients = () => {
       await coachClientService.inviteByUser(inviteUsername.trim());
       setInviteSentTo(inviteUsername.trim());
       setInviteUsername("");
-    } catch (err: any) {
-      const msg = err?.message || t("messages.errorOccurred");
+    } catch (err: unknown) {
+      const error = err as Error;
+      const msg = error?.message || t("messages.errorOccurred");
       toast.error(msg);
     } finally {
       setSendingInvite(false);

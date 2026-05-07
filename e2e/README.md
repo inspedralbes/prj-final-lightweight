@@ -110,4 +110,49 @@ curl -X POST -H "Content-Type: application/json" \
 
 ---
 
-> La guía completa (Trace Viewer, convenciones, debugging, page objects) llegará con **LW-446**.
+## Tests de Autenticación (LW-441)
+
+Los tests de autenticación cubren el flujo completo de registro, inicio de sesión, cierre de sesión y persistencia.
+
+### Qué cubren:
+- **Login**: Éxito como COACH y CLIENT, errores por credenciales incorrectas o usuario inexistente.
+- **Registre**: Creación de nuevos usuarios con rol dinámico, validación de errores (usuario duplicado, contraseñas no coincidentes).
+- **Logout**: Cierre de sesión correcto y limpieza de `localStorage`.
+- **Persistència**: Verificación de que la sesión se mantiene tras recargar la página.
+
+### Ejecución:
+
+Para ejecutar exclusivamente los tests de autenticación:
+
+```bash
+cd e2e
+npx playwright test tests/auth.spec.ts
+```
+
+Para ver la ejecución en tiempo real (modo UI):
+```bash
+npx playwright test tests/auth.spec.ts --ui
+```
+
+Si se quiere hacer todos los test en conjunto, hay que añadir --workers=1:
+```bash
+npx playwright test --workers=1
+```
+
+### Page Objects
+Se han introducido Page Objects para mejorar la mantenibilidad:
+- `LoginPage`: `/e2e/fixtures/pages/LoginPage.ts`
+- `RegisterPage`: `/e2e/fixtures/pages/RegisterPage.ts`
+
+Uso en tests:
+```ts
+test('ejemplo login', async ({ loginPage, page }) => {
+  await loginPage.goto();
+  await loginPage.login('usuario', 'password');
+  await expect(page).toHaveURL(/\/dashboard/);
+});
+```
+
+---
+
+> La guía completa de debugging y Page Objects avanzados llegará con **LW-446**.

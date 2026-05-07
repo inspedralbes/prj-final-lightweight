@@ -127,14 +127,14 @@ export const ExercisesForm = ({
     // Solo enviar los campos que el backend espera (el servidor en docker no acepta exerciseId ni otros metadatos)
     const cleanExercises = exercises.map(
       ({
-        exerciseId,
-        level,
-        category,
-        forceType,
-        mechanic,
-        equipment,
-        primaryMuscle,
-        description,
+        exerciseId: _exerciseId,
+        level: _level,
+        category: _category,
+        forceType: _forceType,
+        mechanic: _mechanic,
+        equipment: _equipment,
+        primaryMuscle: _primaryMuscle,
+        description: _description,
         ...rest
       }) => ({
         ...rest,

@@ -149,7 +149,7 @@ const AppContent = () => {
     );
 
     // Escuchar notificaciones de chat P2P con preview de mensaje
-    socket.on("p2p-message-notification", (data: any) => {
+    socket.on("p2p-message-notification", (data: { text: string; fromUsername?: string; from?: string }) => {
       console.log("[P2P Message Notification]", data);
       const preview =
         data.text.length > 50 ? data.text.substring(0, 50) + "..." : data.text;

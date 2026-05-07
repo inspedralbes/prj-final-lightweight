@@ -114,7 +114,7 @@ export default function ExerciseSearchModal({
   };
 
   const buildQuery = (f: Filters) => {
-    const params: Record<string, any> = {};
+    const params: Record<string, string | number> = {};
     if (f.search && f.search.trim()) params.search = f.search.trim();
     if (f.page) params.page = f.page;
     if (f.limit) params.limit = f.limit;
@@ -149,12 +149,10 @@ export default function ExerciseSearchModal({
   return (
     <>
       {/* Overlay that closes modal when clicked outside */}
-      {true && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={onClose}
-        />
-      )}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 z-40"
+        onClick={onClose}
+      />
 
       {/* Search Modal - flows with page, not fixed */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">

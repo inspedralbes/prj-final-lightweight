@@ -13,6 +13,15 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setThemeState] = useState<Theme>('dark');
 
+  const applyTheme = (newTheme: Theme) => {
+    const htmlElement = document.documentElement;
+    if (newTheme === 'dark') {
+      htmlElement.classList.add('dark');
+    } else {
+      htmlElement.classList.remove('dark');
+    }
+  };
+
   // Cargar tema del localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
@@ -27,15 +36,6 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       applyTheme(initialTheme);
     }
   }, []);
-
-  const applyTheme = (newTheme: Theme) => {
-    const htmlElement = document.documentElement;
-    if (newTheme === 'dark') {
-      htmlElement.classList.add('dark');
-    } else {
-      htmlElement.classList.remove('dark');
-    }
-  };
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
