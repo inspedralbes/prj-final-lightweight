@@ -46,13 +46,14 @@ Tota l’experiència es realitza en **entorn web**.
 - Sincronització en temps real (només Friend Session)
 - Xat WebRTC opcional per coach–client
 - Estat de progrés en viu (només Friend Session)
+- Seguiment de progrés i analytics bàsics al dashboard web (historial de sessions, estadístiques de completitud per coach i client)
 
 ## Fora d’abast del MVP
 
 - App mobile
 - Dieta avançada
 - APIs de macros
-- Gràfiques complexes
+- Gràfiques complexes i analytics avançats (BI)
 - Multi-coach
 - Múltiples clients per sessió
 
@@ -252,6 +253,14 @@ La senyalització WebRTC es realitza mitjançant:
 
 ---
 
+## Seguiment i Analytics
+
+- historial de sessions completades per client
+- resum de rutines executades (data, % completat)
+- visualització bàsica de progrés del client (taula o gràfic simple)
+
+---
+
 # 10. Funcionalitats Web — Client
 
 ## Accés per codi
@@ -274,6 +283,13 @@ La senyalització WebRTC es realitza mitjançant:
 
 - xat WebRTC
 - videotrucada WebRTC (si està activada)
+
+---
+
+## Seguiment
+
+- historial de sessions completades
+- estadístiques bàsiques (sèries, exercicis, sessions)
 
 ---
 
@@ -315,4 +331,4 @@ La senyalització WebRTC es realitza mitjançant:
 
 # 13. Declaració Final
 
-> La plataforma permet planificació d’entrenament i execució guiada en temps real per amics mitjançant sincronització amb sockets, i comunicació opcional coach–client via WebRTC, proporcionant una experiència de coaching remot funcional i demostrable tècnicament.
+> La plataforma permet planificació d’entrenament i execució guiada en temps real per amics mitjançant sincronització amb sockets, comunicació opcional coach–client via WebRTC, i seguiment de progrés amb analytics bàsics al dashboard web, proporcionant una experiència de coaching remot funcional i demostrable tècnicament. Tota l’experiència és exclusivament web; l’app mobile queda fora d’abast.
