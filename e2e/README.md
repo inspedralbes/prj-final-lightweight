@@ -121,6 +121,7 @@ Los tests de autenticación cubren el flujo completo de registro, inicio de sesi
 - **Persistència**: Verificación de que la sesión se mantiene tras recargar la página.
 
 ### Ejecución:
+
 Para ejecutar exclusivamente los tests de autenticación:
 
 ```bash
@@ -131,6 +132,11 @@ npx playwright test tests/auth.spec.ts
 Para ver la ejecución en tiempo real (modo UI):
 ```bash
 npx playwright test tests/auth.spec.ts --ui
+```
+
+Si se quiere hacer todos los test en conjunto, hay que añadir --workers=1:
+```bash
+npx playwright test --workers=1
 ```
 
 ### Page Objects
