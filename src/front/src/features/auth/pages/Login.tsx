@@ -122,6 +122,7 @@ export default function Login() {
                     placeholder={t("auth.usernamePlaceholder")}
                     className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                     required
+                    data-testid="username-input"
                   />
                 </div>
               </div>
@@ -148,6 +149,7 @@ export default function Login() {
                     placeholder={t("auth.passwordPlaceholder")}
                     className="w-full pl-10 pr-10 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                     required
+                    data-testid="password-input"
                   />
                   <button
                     type="button"
@@ -168,6 +170,7 @@ export default function Login() {
                 type="submit"
                 disabled={isLoading}
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-700 text-black font-bold rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
+                data-testid="login-submit"
               >
                 {isLoading ? t("common.loading") : t("auth.loginButton")}
                 {!isLoading && <ArrowRight className="w-5 h-5" />}
