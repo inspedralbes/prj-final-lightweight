@@ -13,6 +13,7 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { RoomModule } from './room/room.module';
 import { ClientsModule } from './clients/clients.module';
 import { ChatModule } from './chat/chat.module';
+import { ProgressModule } from './progress/progress.module';
 import { TestingModule } from './testing/testing.module';
 
 const e2eTestingEnabled =
@@ -33,6 +34,7 @@ const e2eTestingEnabled =
     RoomModule,
     ClientsModule,
     ChatModule,
+    ProgressModule,
     EventsModule,
     ...(e2eTestingEnabled ? [TestingModule] : []),
   ],
