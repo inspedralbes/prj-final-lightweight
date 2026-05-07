@@ -37,6 +37,7 @@ api.interceptors.response.use(
       localStorage.removeItem('userId');
       window.location.href = '/login';
     }
+
     return Promise.reject(error);
   }
 );
