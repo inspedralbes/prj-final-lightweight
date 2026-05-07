@@ -106,6 +106,7 @@ const RoutineCard = ({
   return (
     <>
       <div
+        data-testid={`routine-card-${id}`}
         className="relative bg-[#111] rounded-2xl border border-[#222] p-5 md:p-6 hover:border-orange-500/50 hover:bg-[#151515] transition-all duration-300 group cursor-pointer flex flex-col h-full shadow-lg shadow-black/20"
         onClick={handleCardClick}
       >
@@ -118,6 +119,7 @@ const RoutineCard = ({
             {/* Solo client management icons — top-right overlay */}
             {isSoloClient && onEdit && (
               <button
+                data-testid={`routine-card-edit-btn-${id}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit(id);
@@ -130,6 +132,7 @@ const RoutineCard = ({
             )}
             {isSoloClient && onDelete && (
               <button
+                data-testid={`routine-card-delete-btn-${id}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(id);
@@ -301,6 +304,7 @@ const RoutineCard = ({
           <div className="mt-6 pt-4 border-t border-[#222] flex gap-2">
             {onEdit && (
               <button
+                data-testid={`routine-card-edit-btn-${id}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit(id);
@@ -313,6 +317,7 @@ const RoutineCard = ({
             )}
             {onDelete && (
               <button
+                data-testid={`routine-card-delete-btn-${id}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(id);
