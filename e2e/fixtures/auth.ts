@@ -42,3 +42,33 @@ export async function loginViaApi(page: Page, user: E2eUser): Promise<void> {
     { access_token, u },
   );
 }
+
+export async function registerNewUser(data: {
+  username: string;
+  email: string;
+  password?: string;
+  role: 'COACH' | 'CLIENT';
+}): Promise<LoginResponse> {
+  const url = `${apiUrl()}/auth/register`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: data.username,
+      email: data.email,
+      password: data.password || 'E2eP@ss123!',
+      role: data.role,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`POST ${url} failed (${res.status}): ${text}`);
+  }
+  return (await res.json()) as LoginResponse;
+}
+
+export function generateUniqueUsername(prefix: string = 'user'): string {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 1000);
+  return `${prefix}_${timestamp}_${random}`;
+}

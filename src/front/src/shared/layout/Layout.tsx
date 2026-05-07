@@ -124,9 +124,8 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Sidebar */}
       <aside
-        className={`${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 transform transition-transform duration-300 ease-in-out fixed md:static inset-y-0 left-0 w-64 bg-[#0a0a0a] border-r border-[#1a1a1a] flex flex-col z-40`}
+        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0 transform transition-transform duration-300 ease-in-out fixed md:static inset-y-0 left-0 w-64 bg-[#0a0a0a] border-r border-[#1a1a1a] flex flex-col z-40`}
       >
         {/* Header */}
         <div className="p-6 flex items-center justify-between">
@@ -163,19 +162,17 @@ const Layout = ({ children }: LayoutProps) => {
                   navigate(path);
                   setSidebarOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${
-                  isActive(path)
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${isActive(path)
                     ? "bg-[#1a1a1a] text-orange-500"
                     : "text-gray-400 hover:bg-[#1a1a1a] hover:text-white"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon
-                    className={`w-5 h-5 ${
-                      isActive(path)
+                    className={`w-5 h-5 ${isActive(path)
                         ? "text-orange-500"
                         : "text-gray-500 group-hover:text-white"
-                    }`}
+                      }`}
                   />
                   {label}
                 </div>
@@ -220,6 +217,7 @@ const Layout = ({ children }: LayoutProps) => {
                 onClick={handleLogout}
                 className="text-gray-400 hover:text-orange-500 hover:bg-[#1a1a1a] p-2 rounded-lg transition-all"
                 title={t("common.logout") || "Cerrar sesión"}
+                data-testid="logout-button"
               >
                 <LogOut className="w-5 h-5" />
               </button>

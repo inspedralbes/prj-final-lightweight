@@ -102,7 +102,9 @@ export default function Register() {
             {/* Selector de Rol */}
             <div className="mb-5 flex gap-3">
               <button
+                type="button"
                 onClick={() => setRole("CLIENT")}
+                data-testid="role-client"
                 className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
                   role === "CLIENT"
                     ? "bg-orange-500 text-black"
@@ -112,7 +114,9 @@ export default function Register() {
                 {t("auth.roleClient")}
               </button>
               <button
+                type="button"
                 onClick={() => setRole("COACH")}
+                data-testid="role-coach"
                 className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
                   role === "COACH"
                     ? "bg-orange-500 text-black"
@@ -139,6 +143,7 @@ export default function Register() {
                     placeholder={t("auth.usernamePlaceholder")}
                     className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                     required
+                    data-testid="username-input"
                   />
                 </div>
               </div>
@@ -157,6 +162,7 @@ export default function Register() {
                     placeholder={t("auth.emailPlaceholder")}
                     className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                     required
+                    data-testid="email-input"
                   />
                 </div>
               </div>
@@ -173,11 +179,9 @@ export default function Register() {
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
-                      // clear any custom validity when user types
                       (e.currentTarget as HTMLInputElement).setCustomValidity("");
                     }}
                     onInvalid={(e) => {
-                      // override browser message to only show the static hint
                       (e.currentTarget as HTMLInputElement).setCustomValidity(
                         t("auth.passwordMinLength", { count: 6 }),
                       );
@@ -186,6 +190,7 @@ export default function Register() {
                     className="w-full pl-10 pr-10 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                     required
                     minLength={6}
+                    data-testid="password-input"
                   />
                   <button
                     type="button"
@@ -218,6 +223,7 @@ export default function Register() {
                     placeholder={t("auth.passwordConfirmPlaceholder")}
                     className="w-full pl-10 pr-10 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                     required
+                    data-testid="confirm-password-input"
                   />
                   <button
                     type="button"
@@ -243,6 +249,7 @@ export default function Register() {
                   !password ||
                   !confirmPassword
                 }
+                data-testid="register-submit"
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-700 text-black font-bold rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
               >
                 {isLoading

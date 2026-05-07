@@ -2,7 +2,6 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   type ReactNode,
 } from "react";
 
@@ -25,28 +24,28 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // true mientras leemos localStorage
+  const getInitialUser = (): AuthUser | null => {
+    if (typeof window === "undefined") return null;
 
-  // Al montar, restaurar sesión guardada en localStorage
-  useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("userRole") as "COACH" | "CLIENT" | null;
     const username = localStorage.getItem("username");
     const userId = localStorage.getItem("userId");
     const coachId = localStorage.getItem("coachId");
 
-    if (token && role && username && userId) {
-      setUser({
-        id: Number(userId),
-        username,
-        role,
-        token,
-        coachId: coachId ? Number(coachId) : undefined,
-      });
-    }
-    setIsLoading(false);
-  }, []);
+    if (!token || !role || !username || !userId) return null;
+
+    return {
+      id: Number(userId),
+      username,
+      role,
+      token,
+      coachId: coachId ? Number(coachId) : undefined,
+    };
+  };
+
+  const [user, setUser] = useState<AuthUser | null>(() => getInitialUser());
+  const [isLoading] = useState(false);
 
   const login = (userData: AuthUser) => {
     localStorage.setItem("token", userData.token);
