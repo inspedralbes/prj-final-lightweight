@@ -6,7 +6,6 @@ export default defineConfig({
   // execucions paral·leles provocarien race conditions en POST /testing/reset.
   workers: 1,
   timeout: 30_000,
-  workers: 1,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [["list"], ["html"]] : "list",
   globalSetup: require.resolve("./global-setup"),
@@ -17,6 +16,6 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  // webServer queda comentado: el dev arranca front+back manualmente.
-  // Se decide cómo orquestarlo cuando llegue LW-445 (CI).
+  // webServer no se usa: en local el dev arranca front+back manualmente;
+  // en CI el orquestado lo gestiona .github/workflows/e2e.yml.
 });

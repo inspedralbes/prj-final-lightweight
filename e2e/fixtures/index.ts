@@ -1,7 +1,6 @@
 import { test as base, type Page } from '@playwright/test';
 import { e2eUsers, type E2eRole } from './users';
 import { loginViaApi } from './auth';
-import { resetDatabase } from './reset';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { resetDatabase, baseUrl } from './reset';
@@ -40,6 +39,7 @@ export const test = base.extend<Fixtures>({
   },
   registerPage: async ({ page }, use) => {
     await use(new RegisterPage(page));
+  },
   twoContexts: async ({ browser }, use) => {
     const contexts = await buildTwoContexts(browser);
     await use(contexts);
