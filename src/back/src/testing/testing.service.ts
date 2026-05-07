@@ -48,11 +48,19 @@ export class TestingService {
           ],
         },
       });
+
+      // LiveSession.coachId is nullable → Prisma default is SetNull, not Cascade.
+      // Explicitly delete LiveSessions scoped to e2e users before deleting those users.
+      // Children (LiveParticipant, WorkoutEvent, ChatMessage) cascade from LiveSession.
+      await this.prisma.liveSession.deleteMany({
+        where: { coachId: { in: ids } },
+      });
+
       // Routines owned by e2e coaches → cascade removes RoutineExercise + RoutineAssignment.
       await this.prisma.routine.deleteMany({
         where: { coachId: { in: ids } },
       });
-      // Users → cascade removes ClientProfile, P2PChatMessage, LiveSession (and its children).
+      // Users → cascade removes ClientProfile, P2PChatMessage.
       await this.prisma.user.deleteMany({ where: { id: { in: ids } } });
     }
 

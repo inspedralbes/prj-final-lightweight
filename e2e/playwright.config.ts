@@ -6,6 +6,7 @@ export default defineConfig({
   // execucions paral·leles provocarien race conditions en POST /testing/reset.
   workers: 1,
   timeout: 30_000,
+  workers: 1,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [["list"], ["html"]] : "list",
   globalSetup: require.resolve("./global-setup"),
