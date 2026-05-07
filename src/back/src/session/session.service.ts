@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CompleteSessionDto } from './dto/complete-session.dto';
 
 @Injectable()
 export class SessionService {
@@ -79,6 +80,7 @@ export class SessionService {
     status: 'PENDING' | 'ACTIVE' | 'COMPLETED',
     userId: number,
     role: string,
+    completionStats?: CompleteSessionDto,
   ) {
     const session = await this.prisma.liveSession.findUnique({
       where: { sessionCode },
@@ -98,9 +100,20 @@ export class SessionService {
       if (!assignment) throw new ForbiddenException('No tienes permiso');
     }
 
+    const data: Record<string, unknown> = { status };
+    if (status === 'COMPLETED') {
+      data.completedAt = new Date();
+      if (completionStats) {
+        data.completionPercentage =
+          completionStats.completionPercentage ?? null;
+        data.completedSets = completionStats.completedSets ?? null;
+        data.completedExercises = completionStats.completedExercises ?? null;
+      }
+    }
+
     return this.prisma.liveSession.update({
       where: { sessionCode },
-      data: { status },
+      data,
     });
   }
 

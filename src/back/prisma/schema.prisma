@@ -165,13 +165,16 @@ model Invitation {
 }
 
 model LiveSession {
-  id          Int           @id @default(autoincrement())
-  coachId     Int?          @map("coach_id")
-  routineId   Int           @map("routine_id")
-  sessionCode String        @unique @map("session_code")
-  status      SessionStatus @default(PENDING)
-  createdAt   DateTime      @default(now()) @map("created_at")
-  completedAt DateTime?     @map("completed_at")
+  id                   Int           @id @default(autoincrement())
+  coachId              Int?          @map("coach_id")
+  routineId            Int           @map("routine_id")
+  sessionCode          String        @unique @map("session_code")
+  status               SessionStatus @default(PENDING)
+  createdAt            DateTime      @default(now()) @map("created_at")
+  completedAt          DateTime?     @map("completed_at")
+  completionPercentage Int?          @map("completion_percentage")
+  completedSets        Int?          @map("completed_sets")
+  completedExercises   Int?          @map("completed_exercises")
 
   // Relaciones
   coach        User?             @relation(fields: [coachId], references: [id])
