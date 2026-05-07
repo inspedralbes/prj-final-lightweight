@@ -57,3 +57,19 @@ Verificación manual del módulo de testing y del seed determinista. Solo aplica
 | 8   | Build prod + arrancar con `NODE_ENV=production E2E_TESTING=true npm run start:prod` y `curl -X POST http://localhost:3000/testing/reset` | HTTP 404 — la doble guarda funciona |
 
 Si algún paso falla, revisar `docker compose logs lw-backend` y comprobar que `E2E_TESTING` se está leyendo correctamente (`echo $E2E_TESTING` antes de `npm run start:dev`).
+
+---
+
+## E2E – Flux d'invitacions i notificacions (LW-444)
+
+Verificació manual del flux d'invitació coach→client i la notificació en temps real. Requereix el harness E2E actiu (`E2E_TESTING=true`, seed aplicat, front en `:5173`).
+
+| #   | Pas | Resultat esperat |
+| --- | --- | --- |
+| 1   | Executa `cd e2e && npm run test:e2e:browser` amb back i front en marxa | Tots els tests de `invitations.spec.ts` passen (verd); `1 passed` al smoke de referència |
+| 2   | Coach inicia sessió (usuari qualsevol), va a `/clients`, clica "Convidar client", introdueix el nom d'un client sense coach i clica "Enviar invitació" | El modal mostra l'estat d'èxit; el client rep el badge d'invitació pendent al nav (incrementa sense recarregar) |
+| 3   | Client navega a `/clients/invitations` | L'entrada de la invitació pendent del coach apareix a la llista amb el nom del coach |
+| 4   | Client clica "Acceptar" | La invitació desapareix de la llista; la pàgina mostra la informació del coach vinculat |
+| 5   | Coach torna a `/clients` | El nom d'usuari del client apareix a la llista de clients |
+| 6   | Repeteix els passos 2–3 amb un client diferent; client clica "Rebutjar" | La invitació desapareix; el client roman desvinculat (sense info de coach); el coach no el veu a `/clients` |
+| 7   | Comprova el badge: `e2e_client_linked` (ja té coach) ha de tenir badge 0 a qualsevol pàgina del nav | Cap badge visible per a clients amb coach assignat |
