@@ -2,7 +2,7 @@ import { test, expect, e2eUsers } from '../fixtures';
 import { generateUniqueUsername } from '../fixtures/auth';
 
 test.describe('Autenticació (LW-441)', () => {
-  
+
   test.beforeEach(async ({ page }) => {
     // La fixture freshDb ya se encarga de resetear la DB antes de cada test (auto: true)
     await page.goto('/login');
@@ -11,11 +11,11 @@ test.describe('Autenticació (LW-441)', () => {
   test.describe('Login', () => {
     test('Login exitós com a COACH', async ({ loginPage, page }) => {
       await loginPage.login(e2eUsers.coach.username, e2eUsers.coach.password);
-      
+
       // Verificacions
       await expect(page).toHaveURL(/\/dashboard/);
       await expect(page.locator('text=Sessió iniciada correctament')).toBeVisible();
-      
+
       // Verificar persistència a localStorage
       const token = await page.evaluate(() => localStorage.getItem('token'));
       expect(token).toBeTruthy();
@@ -23,7 +23,7 @@ test.describe('Autenticació (LW-441)', () => {
 
     test('Login exitós com a CLIENT', async ({ loginPage, page }) => {
       await loginPage.login(e2eUsers.clientLinked.username, e2eUsers.clientLinked.password);
-      
+
       // Verificacions
       await expect(page).toHaveURL(/\/client-home/);
       await expect(page.locator('text=Sessió iniciada correctament')).toBeVisible();
@@ -31,19 +31,19 @@ test.describe('Autenticació (LW-441)', () => {
 
     test('Login fallit amb contrasenya incorrecta', async ({ loginPage, page }) => {
       await loginPage.login(e2eUsers.coach.username, 'wrong_password');
-      
+
       // Verificacions
-      await expect(page.locator('text=Usuari o contrasenya invàlids')).toBeVisible();
+      await expect(page.locator('[role="alert"]:has-text("Usuari o contrasenya invàlids")')).toBeVisible();
       await expect(page).toHaveURL(/\/login/);
-      
+
       const token = await page.evaluate(() => localStorage.getItem('token'));
       expect(token).toBeNull();
     });
 
     test('Login fallit amb usuari inexistent', async ({ loginPage, page }) => {
       await loginPage.login('non_existent_user', 'any_password');
-      
-      await expect(page.locator('text=Usuari o contrasenya invàlids')).toBeVisible();
+
+      await expect(page.locator('[role="alert"]:has-text("Usuari o contrasenya invàlids")')).toBeVisible();
       await expect(page).toHaveURL(/\/login/);
     });
   });
@@ -52,7 +52,7 @@ test.describe('Autenticació (LW-441)', () => {
     test('Registre exitós de nou usuari COACH', async ({ registerPage, page }) => {
       await registerPage.goto();
       const newUser = generateUniqueUsername('new_coach');
-      
+
       await registerPage.register({
         role: 'COACH',
         username: newUser,
@@ -99,9 +99,8 @@ test.describe('Autenticació (LW-441)', () => {
       await loginPage.login(e2eUsers.coach.username, e2eUsers.coach.password);
       await expect(page).toHaveURL(/\/dashboard/);
 
-      // Clic a logout (botó de la sidebar/navbar)
-      // Busquem el botó que contingui el text de tancar sessió o icona
-      const logoutBtn = page.locator('button:has-text("Tancar sessió"), a:has-text("Tancar sessió")');
+      // Clic a logout (botó de la sidebar/navbar) - té data-testid="logout-button"
+      const logoutBtn = page.getByTestId('logout-button');
       await logoutBtn.click();
 
       await expect(page).toHaveURL(/\/login/);
@@ -114,7 +113,7 @@ test.describe('Autenticació (LW-441)', () => {
       await expect(page).toHaveURL(/\/dashboard/);
 
       await page.reload();
-      
+
       // Seguim al dashboard sense haver de fer login de nou
       await expect(page).toHaveURL(/\/dashboard/);
       const username = await page.evaluate(() => localStorage.getItem('username'));

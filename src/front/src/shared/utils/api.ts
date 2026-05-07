@@ -27,8 +27,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isLoginRequest = error.config?.url?.includes('/auth/login');
+    if (error.response?.status === 401 && !isLoginRequest) {
       // Token expirado o inválido - limpiar localStorage y redirigir
+      // (no redirigir si el error viene del propio login, para que el toast sea visible)
       localStorage.removeItem('token');
       localStorage.removeItem('username');
       localStorage.removeItem('userRole');
