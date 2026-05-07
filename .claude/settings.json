@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(docker compose -f \"c:\\\\Users\\\\HP\\\\prj-final-lightweight\\\\docker-compose.yml\" ps 2>&1)"
+    ]
+  }
+}

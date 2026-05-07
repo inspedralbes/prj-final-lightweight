@@ -51,12 +51,17 @@ const RoutineCard = ({
   const [showExercisesModal, setShowExercisesModal] = useState(false);
   const [expandedDescs, setExpandedDescs] = useState<Set<number>>(new Set());
 
-  const toggleDesc = (i: number) =>
+  const toggleDesc = (i: number) => {
     setExpandedDescs((prev) => {
       const next = new Set(prev);
-      next.has(i) ? next.delete(i) : next.add(i);
+      if (next.has(i)) {
+        next.delete(i);
+      } else {
+        next.add(i);
+      }
       return next;
     });
+  };
 
   // Escape key + body scroll lock
   useEffect(() => {

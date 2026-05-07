@@ -60,16 +60,18 @@ Si algún paso falla, revisar `docker compose logs lw-backend` y comprobar que `
 
 ---
 
-## E2E – Flux d'invitacions i notificacions (LW-444)
+## E2E – Co-op session FriendSession / VirtualGymRoom (LW-443)
 
-Verificació manual del flux d'invitació coach→client i la notificació en temps real. Requereix el harness E2E actiu (`E2E_TESTING=true`, seed aplicat, front en `:5173`).
+Smoke manual del flujo multi-usuario en tiempo real. Requiere dos ventanas de navegador simultáneas.
 
-| #   | Pas | Resultat esperat |
+> Prerequisites: back con `E2E_TESTING=true`, seed aplicado (`npx prisma db seed`), frontend corriendo en `:5173`.
+
+| #   | Paso | Resultado esperado |
 | --- | --- | --- |
-| 1   | Executa `cd e2e && npm run test:e2e:browser` amb back i front en marxa | Tots els tests de `invitations.spec.ts` passen (verd); `1 passed` al smoke de referència |
-| 2   | Coach inicia sessió (usuari qualsevol), va a `/clients`, clica "Convidar client", introdueix el nom d'un client sense coach i clica "Enviar invitació" | El modal mostra l'estat d'èxit; el client rep el badge d'invitació pendent al nav (incrementa sense recarregar) |
-| 3   | Client navega a `/clients/invitations` | L'entrada de la invitació pendent del coach apareix a la llista amb el nom del coach |
-| 4   | Client clica "Acceptar" | La invitació desapareix de la llista; la pàgina mostra la informació del coach vinculat |
-| 5   | Coach torna a `/clients` | El nom d'usuari del client apareix a la llista de clients |
-| 6   | Repeteix els passos 2–3 amb un client diferent; client clica "Rebutjar" | La invitació desapareix; el client roman desvinculat (sense info de coach); el coach no el veu a `/clients` |
-| 7   | Comprova el badge: `e2e_client_linked` (ja té coach) ha de tenir badge 0 a qualsevol pàgina del nav | Cap badge visible per a clients amb coach assignat |
+| 1   | Abre ventana A como `e2e_coach`. Navega a `/friend-session`. Haz clic en "Generate session code". | Aparece un código alfanumérico en el recuadro gris. |
+| 2   | Haz clic en "Enter Virtual Gym" (ventana A). | Navegas a `/room/<código>`. Se muestra "1 online", badge **Host**, botón "START SESSION" deshabilitado. |
+| 3   | Abre ventana B como `e2e_client_linked`. Navega a `/friend-session`. Introduce el código del paso 1 en el input. Haz clic en "Join". | Ventana B navega a `/room/<código>`. Ambas ventanas muestran "2 online". Ventana A muestra badge **Host** y botón "START SESSION" habilitado (naranja). Ventana B muestra badge **Guest** y no muestra el botón Start. |
+| 4   | En ventana A, haz clic en "START SESSION". En el modal, selecciona `e2e_routine_basic`. Haz clic en "Start Session". | Ambas ventanas muestran una cuenta atrás (3, 2, 1) y luego pasan a la vista de ejercicio activo con inputs de weight y reps. |
+| 5   | En ventana A (coach), rellena weight=20 y reps=10, haz clic en "Complete Set". | En ventana B, la sección "Room progress" actualiza el progreso del compañero (porcentaje > 0). |
+| 6   | Completa las 3 series en ventana A y luego las 3 series en ventana B (cada una con weight y reps > 0). | Ambas ventanas muestran el componente `SessionSummary` con el título "Session Completed". |
+| 7   | Repite los pasos 1–3 (nuevo código, nueva sesión). Una vez ambos en sala, cierra o mata la ventana A (coach). | Ventana B (cliente) muestra mensaje de desconexión del host y/o redirige a `/friend-session` en un máximo de 8 s. |
