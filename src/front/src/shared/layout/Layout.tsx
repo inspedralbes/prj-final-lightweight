@@ -181,7 +181,10 @@ const Layout = ({ children }: LayoutProps) => {
                 </div>
                 <div className="flex items-center gap-2">
                   {badge != null && badge > 0 && (
-                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    <span
+                      data-testid="pending-invites-badge"
+                      className="min-w-[20px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center"
+                    >
                       {badge}
                     </span>
                   )}
