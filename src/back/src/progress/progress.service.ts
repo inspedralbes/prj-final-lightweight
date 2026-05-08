@@ -83,27 +83,29 @@ export class ProgressService {
   async getClientOwnSessionHistory(
     clientId: number,
   ): Promise<SessionHistoryItemDto[]> {
-    const soloSessions = await this.prisma.liveSession.findMany({
+    // All sessions initiated by this client (solo own + solo assigned by coach)
+    const assignedSessions = await this.prisma.liveSession.findMany({
       where: {
         status: SessionStatus.COMPLETED,
-        coachId: null,
         routine: { assignments: { some: { clientId } } },
       },
       include: { routine: { select: { name: true } } },
       orderBy: { completedAt: 'desc' },
     });
 
+    // Co-op sessions where client was a participant
     const coopSessions = await this.prisma.liveSession.findMany({
       where: {
         status: SessionStatus.COMPLETED,
-        coachId: { not: null },
         participants: { some: { participantId: String(clientId) } },
+        // Exclude sessions already covered by assignedSessions to avoid duplicates
+        routine: { assignments: { none: { clientId } } },
       },
       include: { routine: { select: { name: true } } },
       orderBy: { completedAt: 'desc' },
     });
 
-    const allSessions = [...soloSessions, ...coopSessions].sort(
+    const allSessions = [...assignedSessions, ...coopSessions].sort(
       (a, b) =>
         (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0),
     );
@@ -118,10 +120,9 @@ export class ProgressService {
   }
 
   async getClientStats(clientId: number): Promise<ClientStatsDto> {
-    const soloSessions = await this.prisma.liveSession.findMany({
+    const assignedSessions = await this.prisma.liveSession.findMany({
       where: {
         status: SessionStatus.COMPLETED,
-        coachId: null,
         routine: { assignments: { some: { clientId } } },
       },
       select: { completedSets: true, completedExercises: true },
@@ -130,13 +131,13 @@ export class ProgressService {
     const coopSessions = await this.prisma.liveSession.findMany({
       where: {
         status: SessionStatus.COMPLETED,
-        coachId: { not: null },
         participants: { some: { participantId: String(clientId) } },
+        routine: { assignments: { none: { clientId } } },
       },
       select: { completedSets: true, completedExercises: true },
     });
 
-    const allSessions = [...soloSessions, ...coopSessions];
+    const allSessions = [...assignedSessions, ...coopSessions];
 
     return {
       totalSessions: allSessions.length,

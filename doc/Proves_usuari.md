@@ -102,3 +102,38 @@ A la pàgina del PR, a la secció **Checks**, trobaràs el check `e2e / playwrig
   Si un test falla constantment, obre una issue i assigna-la a la pròxima sprint.
 - **Mai activar `E2E_TESTING=true` en producció** — aquest flag habilita endpoints que esborra dades.
 
+---
+
+## LW-270 — Web Client: Vista de Historial y Estadísticas
+
+### Prerequisits
+- Stack en marxa: `docker compose up`
+- Usuari CLIENT de prova amb almenys una sessió completada
+
+### Escenaris
+
+#### 1. Navegació al historial
+- Inicia sessió com a CLIENT
+- Al dashboard (`/client-home`), verifica que apareix el botó "Historial i Estadístiques" a la capçalera
+- Fes clic al botó → confirma que navega a `/client/history` sense recàrrega completa de la pàgina
+
+#### 2. Visualització de l'historial
+- A `/client/history`, confirma que:
+  - Els comptadors d'estadístiques mostren valors reals (sessions, sèries, exercicis)
+  - La taula mostra les sessions completades ordenades per data descendent
+  - Cada fila inclou: nom de la rutina, data i % completat
+  - Si no hi ha sessions, apareix el missatge d'estat buit
+
+#### 3. Sessió completada apareix a l'historial
+- Completa un entrenament en solitari des de `/client-home`
+- Torna a `/client/history`
+- Confirma que la nova sessió apareix com a primera fila amb data i % correctes
+- Confirma que el comptador "Sessions completades" s'ha incrementat en 1
+
+#### 4. Control d'accés
+- Tanca sessió i navega directament a `/client/history` → ha de redirigir al login
+- Inicia sessió com a COACH i navega a `/client/history` → ha de redirigir al dashboard del coach
+
+#### 5. Botó Tornar
+- A `/client/history`, fes clic al botó "Volver" → confirma que torna a `/client-home`
+
