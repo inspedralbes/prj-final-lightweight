@@ -61,6 +61,8 @@ export default function VirtualGymRoom() {
     time: number;
     volume: number;
     exercises: number;
+    completedSets: number;
+    completionPercentage: number;
   } | null>(null);
 
   // STRICT STATE SEPARATION: Partner finish state
@@ -190,6 +192,8 @@ export default function VirtualGymRoom() {
     time: number;
     volume: number;
     exercises: number;
+    completedSets: number;
+    completionPercentage: number;
   }) => {
     // STRICT: Mark this user as locally finished and save their stats
     setIsLocalFinished(true);

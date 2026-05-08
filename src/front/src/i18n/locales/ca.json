@@ -357,5 +357,16 @@
     "unmute": "Activar micròfon",
     "userOffline": "{{name}} no està connectat/ada",
     "callMissed": "{{name}} no ha respost"
+  },
+  "history": {
+    "navLabel": "Historial i Estadístiques",
+    "title": "El meu progrés",
+    "totalSessions": "Sessions completades",
+    "totalSets": "Sèries completades",
+    "totalExercises": "Exercicis completats",
+    "noSessions": "Encara no has completat cap sessió d'entrenament.",
+    "colRoutine": "Rutina",
+    "colDate": "Data",
+    "colCompletion": "% Completat"
   }
 }
