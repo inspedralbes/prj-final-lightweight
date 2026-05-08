@@ -1,6 +1,6 @@
 # Diagrama del Modelo de Datos
 
-**Actualizado**: 2026-02-24 — Añadida tabla `invitations` para gestionar el ciclo de vida de invitaciones coach→cliente. Eliminado `invitationCode` de `users` (single responsibility). Tablas en negrita son core para MVP. Tablas en cursiva son para expansiones post-MVP.
+**Actualizado**: 2026-05-08 — Añadida tabla `session_progress` para persistir progreso por usuario en Friend Sessions (LW-288). Tablas en negrita son core para MVP. Tablas en cursiva son para expansiones post-MVP.
 
 ## Tablas y Campos
 
@@ -86,6 +86,18 @@
 - message (String)
 - timestamp (DateTime)
 
+### **session_progress** (LW-288)
+
+- id (Int, PK)
+- sessionId (Int, FK to live_sessions.id) — FK a la sesión
+- userId (Int, FK to users.id) — Usuario que completó el progreso
+- completedExercises (Int) — Número de ejercicios completados
+- completedSets (Int) — Número de series completadas
+- completionPercentage (Float) — Porcentaje de progreso (0-100)
+- completedAt (DateTime?) — Momento de finalización
+- isPartial (Boolean) — true si la sesión fue abandonada prematuramente
+- Unique: (sessionId, userId)
+
 ### _food_catalog_
 
 - id (Int, PK)
@@ -133,6 +145,8 @@
 - live_participants.sessionId -> live_sessions.id
 - workout_events.sessionId -> live_sessions.id
 - chat_messages.sessionId -> live_sessions.id
+- session_progress.sessionId -> live_sessions.id (CASCADE)
+- session_progress.userId -> users.id (CASCADE)
 - diet_plans.coachId -> users.id
 - diet_meals.dietPlanId -> diet_plans.id
 - diet_meal_items.dietMealId -> diet_meals.id
@@ -147,12 +161,14 @@ erDiagram
     users ||--o{ routines : coachId
     users ||--o{ live_sessions : coachId
     users ||--o{ diet_plans : coachId
+    users ||--o{ session_progress : userId
     routines ||--o{ live_sessions : routineId
     routines ||--o{ routine_exercises : routineId
     exercise_catalog ||--o{ routine_exercises : exerciseId
     live_sessions ||--o{ live_participants : sessionId
     live_sessions ||--o{ workout_events : sessionId
     live_sessions ||--o{ chat_messages : sessionId
+    live_sessions ||--o{ session_progress : sessionId
     diet_plans ||--o{ diet_meals : dietPlanId
     diet_meals ||--o{ diet_meal_items : dietMealId
     food_catalog ||--o{ diet_meal_items : foodId
@@ -212,6 +228,9 @@ erDiagram
         enum status "PENDING/ACTIVE/COMPLETED"
         datetime createdAt
         datetime completedAt
+        int completionPercentage
+        int completedSets
+        int completedExercises
     }
 
     live_participants {
@@ -237,6 +256,17 @@ erDiagram
         string sender
         string message
         datetime timestamp
+    }
+
+    session_progress {
+        int id PK
+        int sessionId FK
+        int userId FK
+        int completedExercises
+        int completedSets
+        float completionPercentage
+        datetime completedAt
+        bool isPartial
     }
 
     food_catalog {

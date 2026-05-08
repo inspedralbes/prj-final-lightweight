@@ -71,9 +71,54 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.socketToUser.delete(client.id);
 
       if (wasHost) {
-        // host destroyed the room
         this.server.to(roomId).emit('hostDisconnected');
-        // marcar la invitación como cerrada en la base de datos
+
+        const lastProgress = this.roomLastProgress.get(roomId);
+        if (lastProgress) {
+          try {
+            const session = await this.prisma.liveSession.findUnique({
+              where: { sessionCode: roomId },
+            });
+            if (session) {
+              const userIdInt = parseInt(lastProgress.userId, 10);
+              await this.prisma.sessionProgress.upsert({
+                where: {
+                  sessionId_userId: {
+                    sessionId: session.id,
+                    userId: userIdInt,
+                  },
+                },
+                create: {
+                  sessionId: session.id,
+                  userId: userIdInt,
+                  completedExercises:
+                    lastProgress.completedExercises?.length || 0,
+                  completedSets: lastProgress.currentSet || 0,
+                  completionPercentage: lastProgress.progressPercentage || 0,
+                  completedAt: new Date(),
+                  isPartial: true,
+                },
+                update: {
+                  completedExercises:
+                    lastProgress.completedExercises?.length || 0,
+                  completedSets: lastProgress.currentSet || 0,
+                  completionPercentage: lastProgress.progressPercentage || 0,
+                  completedAt: new Date(),
+                  isPartial: true,
+                },
+              });
+              console.log(
+                `[Room] Partial progress persisted for user ${lastProgress.userId} in session ${session.id}`,
+              );
+            }
+          } catch (e) {
+            console.warn(
+              '[Room] Error persisting partial progress on host disconnect:',
+              e,
+            );
+          }
+        }
+
         try {
           await this.prisma.invitation.update({
             where: { code: roomId },
@@ -85,9 +130,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
             e,
           );
         }
-        // limpiar cualquier progreso almacenado
         this.roomLastProgress.delete(roomId);
-        // también limpiar la lista completa
         this.roomUsers.delete(roomId);
       } else {
         // guest disconnected, notify host alone
@@ -285,9 +328,77 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     payload: { roomId: string; userId: string; finalStats: any },
   ) {
     const { roomId, userId, finalStats } = payload;
-    // reenviar al resto de la sala que este usuario terminó.
     client.to(roomId).emit('partnerFinished', { userId, finalStats });
     return { success: true };
+  }
+
+  @SubscribeMessage('sessionComplete')
+  async handleSessionComplete(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    payload: {
+      roomId: string;
+      userId: string;
+      completedExercises: number;
+      completedSets: number;
+      completionPercentage: number;
+    },
+  ) {
+    const {
+      roomId,
+      userId,
+      completedExercises,
+      completedSets,
+      completionPercentage,
+    } = payload;
+
+    try {
+      const session = await this.prisma.liveSession.findUnique({
+        where: { sessionCode: roomId },
+      });
+
+      if (!session) {
+        console.warn(
+          `[Room] sessionComplete: Session not found for roomId ${roomId}`,
+        );
+        return { success: false, error: 'Session not found' };
+      }
+
+      const userIdInt = parseInt(userId, 10);
+
+      await this.prisma.sessionProgress.upsert({
+        where: {
+          sessionId_userId: {
+            sessionId: session.id,
+            userId: userIdInt,
+          },
+        },
+        create: {
+          sessionId: session.id,
+          userId: userIdInt,
+          completedExercises,
+          completedSets,
+          completionPercentage,
+          completedAt: new Date(),
+          isPartial: false,
+        },
+        update: {
+          completedExercises,
+          completedSets,
+          completionPercentage,
+          completedAt: new Date(),
+          isPartial: false,
+        },
+      });
+
+      console.log(
+        `[Room] Progress persisted for user ${userId} in session ${session.id}`,
+      );
+      return { success: true };
+    } catch (error) {
+      console.error('[Room] Error persisting session progress:', error);
+      return { success: false, error: 'Failed to persist progress' };
+    }
   }
 
   @SubscribeMessage('getRoomUsers')

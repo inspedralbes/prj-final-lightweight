@@ -49,18 +49,19 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
 
   // Relaciones
-  coach            User?        @relation("CoachClients", fields: [coachId], references: [id])
-  clients          User[]       @relation("CoachClients")
-  routinesCreated  Routine[]    @relation("CoachRoutines")
-  routineAssignments RoutineAssignment[]
-  liveSessions     LiveSession[]
-  dietPlans        DietPlan[]
-  invitationsAsCoach         Invitation[] @relation("CoachInvitations")
-  invitationsAsClient        Invitation[] @relation("ClientInvitations")
-  invitationsAsTargetClient  Invitation[] @relation("TargetClientInvitations")
-  clientProfile    ClientProfile?
-  sentMessages     P2PChatMessage[] @relation("SentMessages")
-  receivedMessages P2PChatMessage[] @relation("ReceivedMessages")
+  coach                  User?        @relation("CoachClients", fields: [coachId], references: [id])
+  clients                User[]       @relation("CoachClients")
+  routinesCreated        Routine[]    @relation("CoachRoutines")
+  routineAssignments     RoutineAssignment[]
+  liveSessions           LiveSession[]
+  dietPlans              DietPlan[]
+  invitationsAsCoach     Invitation[] @relation("CoachInvitations")
+  invitationsAsClient    Invitation[] @relation("ClientInvitations")
+  invitationsAsTargetClient Invitation[] @relation("TargetClientInvitations")
+  clientProfile          ClientProfile?
+  sentMessages           P2PChatMessage[] @relation("SentMessages")
+  receivedMessages       P2PChatMessage[] @relation("ReceivedMessages")
+  sessionProgress        SessionProgress[]
 
   @@map("users")
 }
@@ -177,11 +178,12 @@ model LiveSession {
   completedExercises   Int?          @map("completed_exercises")
 
   // Relaciones
-  coach        User?             @relation(fields: [coachId], references: [id])
-  routine      Routine           @relation(fields: [routineId], references: [id], onDelete: Cascade)
-  participants LiveParticipant[]
-  events       WorkoutEvent[]
-  messages     ChatMessage[]
+  coach          User?             @relation(fields: [coachId], references: [id])
+  routine        Routine           @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  participants   LiveParticipant[]
+  events         WorkoutEvent[]
+  messages       ChatMessage[]
+  sessionProgress SessionProgress[]
 
   @@map("live_sessions")
 }
@@ -224,6 +226,23 @@ model ChatMessage {
   session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("chat_messages")
+}
+
+model SessionProgress {
+  id                 Int       @id @default(autoincrement())
+  sessionId          Int       @map("session_id")
+  userId             Int       @map("user_id")
+  completedExercises Int       @default(0) @map("completed_exercises")
+  completedSets      Int       @default(0) @map("completed_sets")
+  completionPercentage Float   @default(0) @map("completion_percentage")
+  completedAt        DateTime? @map("completed_at")
+  isPartial          Boolean   @default(false) @map("is_partial")
+
+  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id])
+
+  @@unique([sessionId, userId])
+  @@map("session_progress")
 }
 
 model P2PChatMessage {
