@@ -1,5 +1,7 @@
 import { type Page, type Locator, expect } from '@playwright/test';
 
+// Selectors use data-testid attributes defined in src/front/src/features/auth/pages/Register.tsx.
+
 export class RegisterPage {
   readonly page: Page;
   readonly roleClientButton: Locator;
