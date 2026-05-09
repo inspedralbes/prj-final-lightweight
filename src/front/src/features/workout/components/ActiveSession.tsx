@@ -43,6 +43,8 @@ interface ActiveSessionProps {
     time: number;
     volume: number;
     exercises: number;
+    completedSets: number;
+    completionPercentage: number;
   }) => void;
   onLeave: () => void;
   isSoloMode?: boolean;
@@ -75,6 +77,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
   const [progress, setProgress] = useState(0);
   const [completedExercises, setCompletedExercises] = useState<number[]>([]);
   const [volumeTotal, setVolumeTotal] = useState(0);
+  const [setsCompleted, setSetsCompleted] = useState(0);
 
   // Timer
   const [time, setTime] = useState(0);
@@ -161,6 +164,8 @@ const ActiveSession: FC<ActiveSessionProps> = ({
     let updatedSet = currentSet;
     let justFinishedExercise = false;
 
+    setSetsCompleted((prev) => prev + 1);
+
     if (currentSet < currentEx.sets) {
       updatedSet = currentSet + 1;
       toast.success(t("virtualRoom.setCompleted"));
@@ -193,6 +198,8 @@ const ActiveSession: FC<ActiveSessionProps> = ({
           time,
           volume: volumeTotal + k * r,
           exercises: completedExercises.length + 1,
+          completedSets: setsCompleted + 1,
+          completionPercentage: 100,
         });
         return;
       }
@@ -376,6 +383,8 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                           time,
                           volume: volumeTotal,
                           exercises: completedExercises.length,
+                          completedSets: setsCompleted,
+                          completionPercentage: progress,
                         });
                       } else {
                         completeSet();

@@ -374,5 +374,16 @@
       "totalSets": "Series totales",
       "totalExercises": "Ejercicios totales"
     }
+  },
+  "history": {
+    "navLabel": "Historial y Estadísticas",
+    "title": "Mi progreso",
+    "totalSessions": "Sesiones completadas",
+    "totalSets": "Series completadas",
+    "totalExercises": "Ejercicios completados",
+    "noSessions": "Todavía no has completado ninguna sesión de entrenamiento.",
+    "colRoutine": "Rutina",
+    "colDate": "Fecha",
+    "colCompletion": "% Completado"
   }
 }

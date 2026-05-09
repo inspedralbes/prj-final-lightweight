@@ -12,6 +12,7 @@ import ClientProgressDetailPage from "@/features/coach/pages/ClientProgressDetai
 import RoutineExercisesEdit from "@/features/routines/pages/RoutineExercisesEdit";
 import CoopSessionLobby from "@/features/workout/pages/CoopSessionLobby";
 import ClientMyCoach from "@/features/client/pages/ClientMyCoach";
+import ClientHistoryStats from "@/features/client/pages/ClientHistoryStats";
 import WorkoutRoom from "@/features/workout/pages/WorkoutRoom";
 import SoloWorkoutSession from "@/features/workout/pages/SoloWorkoutSession";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
@@ -302,6 +303,14 @@ const AppContent = () => {
             element={
               <ProtectedRoute requiredRole="CLIENT">
                 <ClientMyCoach />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/client/history"
+            element={
+              <ProtectedRoute requiredRole="CLIENT">
+                <ClientHistoryStats />
               </ProtectedRoute>
             }
           />

@@ -374,5 +374,16 @@
       "totalSets": "Total sets",
       "totalExercises": "Total exercises"
     }
+  },
+  "history": {
+    "navLabel": "History & Stats",
+    "title": "My Progress",
+    "totalSessions": "Completed sessions",
+    "totalSets": "Completed sets",
+    "totalExercises": "Completed exercises",
+    "noSessions": "You haven't completed any training sessions yet.",
+    "colRoutine": "Routine",
+    "colDate": "Date",
+    "colCompletion": "% Complete"
   }
 }

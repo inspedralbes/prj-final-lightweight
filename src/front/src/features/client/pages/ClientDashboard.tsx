@@ -207,16 +207,25 @@ const ClientHome = () => {
             )}
           </div>
         </div>
-        {/* Solo mode: create button */}
-        {isSoloMode && (
+        {/* History & Stats link + Solo create button */}
+        <div className="flex items-center gap-3 shrink-0">
           <button
-            onClick={handleOpenCreate}
-            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-orange-500/20 shrink-0"
+            onClick={() => navigate("/client/history")}
+            className="flex items-center gap-2 bg-[#1a1a1a] hover:bg-[#252525] border border-[#2a2a2a] hover:border-orange-500/40 text-gray-300 hover:text-white font-medium px-4 py-2.5 rounded-xl transition-all text-sm"
           >
-            <Plus className="w-4 h-4" />
-            {t("routines.createNew")}
+            {t("history.navLabel")}
           </button>
-        )}
+          {/* Solo mode: create button */}
+          {isSoloMode && (
+            <button
+              onClick={handleOpenCreate}
+              className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-orange-500/20"
+            >
+              <Plus className="w-4 h-4" />
+              {t("routines.createNew")}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Grid de Tarjetas de Rutinas */}
