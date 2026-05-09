@@ -1,6 +1,7 @@
-import { type FC, useState, useEffect } from "react";
+import { type FC, useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import axios from "axios";
 import Layout from "@/shared/layout/Layout";
 import { LoadingScreen } from "@/shared/components/LoadingScreen";
 import { useToast } from "@/shared/hooks/useToast";
@@ -11,6 +12,8 @@ import {
 import ActiveSession from "@/features/workout/components/ActiveSession";
 import SessionSummary from "@/features/workout/components/SessionSummary";
 
+const API_BASE_URL = import.meta.env.VITE_BACK_URL as string;
+
 const SoloGymSession: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -19,6 +22,7 @@ const SoloGymSession: FC = () => {
 
   const [routine, setRoutine] = useState<Routine | null>(null);
   const [loading, setLoading] = useState(true);
+  const sessionCodeRef = useRef<string | null>(null);
 
   // Session states
   const [isCountingDown, setIsCountingDown] = useState(true);
@@ -38,6 +42,20 @@ const SoloGymSession: FC = () => {
         setLoading(true);
         const data = await routineService.getById(parseInt(id));
         setRoutine(data);
+        // Create a session record in the background (non-blocking)
+        const token = localStorage.getItem("token");
+        axios
+          .post(
+            `${API_BASE_URL}/session/create`,
+            { routineId: parseInt(id) },
+            { headers: { Authorization: `Bearer ${token}` } },
+          )
+          .then((res) => {
+            sessionCodeRef.current = res.data.sessionCode;
+          })
+          .catch(() => {
+            // Non-blocking: workout continues without persistence if creation fails
+          });
       } catch (error) {
         console.error("Failed to fetch routine:", error);
         toast.error(t("messages.errorOccurred"));
@@ -73,6 +91,27 @@ const SoloGymSession: FC = () => {
     setFinalStats(stats);
     setIsSessionActive(false);
     setIsSessionFinished(true);
+
+    const code = sessionCodeRef.current;
+    if (code && routine) {
+      const totalSets =
+        routine.exercises?.reduce((acc, ex) => acc + ex.sets, 0) ?? 0;
+      const token = localStorage.getItem("token");
+      axios
+        .post(
+          `${API_BASE_URL}/session/${code}/status`,
+          {
+            status: "COMPLETED",
+            completionPercentage: 100,
+            completedSets: totalSets,
+            completedExercises: stats.exercises,
+          },
+          { headers: { Authorization: `Bearer ${token}` } },
+        )
+        .catch(() => {
+          // Non-blocking: summary is shown regardless
+        });
+    }
   };
 
   const handleExit = () => {

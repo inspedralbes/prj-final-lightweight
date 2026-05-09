@@ -357,5 +357,22 @@
     "unmute": "Activar micrófono",
     "userOffline": "{{name}} no está conectado/a",
     "callMissed": "{{name}} no ha respondido"
+  },
+  "progress": {
+    "title": "Progreso de clientes",
+    "lastSession": "Última sesión",
+    "totalSessions": "Sesiones totales",
+    "noSessions": "Sin sesiones completadas",
+    "sessionHistory": "Historial de sesiones",
+    "completionChart": "Evolución del % completado",
+    "routine": "Rutina",
+    "date": "Fecha",
+    "completion": "% completado",
+    "sets": "Series",
+    "backToList": "Volver a la lista",
+    "stats": {
+      "totalSets": "Series totales",
+      "totalExercises": "Ejercicios totales"
+    }
   }
 }

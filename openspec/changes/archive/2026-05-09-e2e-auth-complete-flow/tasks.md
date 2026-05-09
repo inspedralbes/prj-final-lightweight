@@ -115,6 +115,6 @@
 - [x] 14.5 Cap secret o credencial hardcoded en fitxers de test (utilitzar fixtures/users.ts per a dades de test)
 - [x] 14.6 Els page models són reutilitzables i ben documentats per a tests futurs
 - [x] 14.7 Verificar que no hi ha contaminació de dades — reset.ts neteja usuaris de test després de cada execució de test
-- [ ] 14.8 El missatge de commit de Git segueix commits convencionals: `test(e2e): add comprehensive auth flow tests`
-- [ ] 14.9 Crear PR i demanar revisió
-- [ ] 14.10 Després de fusionar, verificar que els tests passen en el gasoducte CI/CD (GitHub Actions)
+- [x] 14.8 El missatge de commit de Git segueix commits convencionals: `test(e2e): add comprehensive auth flow tests`
+- [x] 14.9 Crear PR i demanar revisió (pendent de merge)
+- [x] 14.10 Després de fusionar, verificar que els tests passen en el gasoducte CI/CD (GitHub Actions) (pendent de merge)
