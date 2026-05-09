@@ -7,6 +7,8 @@ import ForgotPassword from "@/features/auth/pages/ForgotPassword";
 import CoachDashboard from "@/features/coach/pages/CoachDashboard";
 import ClientDashboard from "@/features/client/pages/ClientDashboard";
 import CoachClientList from "@/features/coach/pages/CoachClientList";
+import ClientsProgressPage from "@/features/coach/pages/ClientsProgressPage";
+import ClientProgressDetailPage from "@/features/coach/pages/ClientProgressDetailPage";
 import RoutineExercisesEdit from "@/features/routines/pages/RoutineExercisesEdit";
 import CoopSessionLobby from "@/features/workout/pages/CoopSessionLobby";
 import ClientMyCoach from "@/features/client/pages/ClientMyCoach";
@@ -259,6 +261,22 @@ const AppContent = () => {
             element={
               <ProtectedRoute requiredRole="COACH">
                 <CoachClientList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clients/progress"
+            element={
+              <ProtectedRoute requiredRole="COACH">
+                <ClientsProgressPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clients/progress/:clientId"
+            element={
+              <ProtectedRoute requiredRole="COACH">
+                <ClientProgressDetailPage />
               </ProtectedRoute>
             }
           />

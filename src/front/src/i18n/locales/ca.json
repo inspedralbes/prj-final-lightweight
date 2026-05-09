@@ -358,6 +358,23 @@
     "userOffline": "{{name}} no està connectat/ada",
     "callMissed": "{{name}} no ha respost"
   },
+  "progress": {
+    "title": "Progrés de clients",
+    "lastSession": "Última sessió",
+    "totalSessions": "Sessions totals",
+    "noSessions": "Cap sessió completada",
+    "sessionHistory": "Historial de sessions",
+    "completionChart": "Evolució del % completat",
+    "routine": "Rutina",
+    "date": "Data",
+    "completion": "% completat",
+    "sets": "Sèries",
+    "backToList": "Tornar a la llista",
+    "stats": {
+      "totalSets": "Sèries totals",
+      "totalExercises": "Exercicis totals"
+    }
+  },
   "history": {
     "navLabel": "Historial i Estadístiques",
     "title": "El meu progrés",

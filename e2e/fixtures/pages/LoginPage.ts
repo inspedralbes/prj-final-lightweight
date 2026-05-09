@@ -1,5 +1,7 @@
 import { type Page, type Locator, expect } from '@playwright/test';
 
+// Selectors use data-testid attributes defined in src/front/src/features/auth/pages/Login.tsx.
+// This keeps tests decoupled from CSS classes or DOM structure.
 export class LoginPage {
   readonly page: Page;
   readonly usernameInput: Locator;
@@ -12,8 +14,7 @@ export class LoginPage {
     this.usernameInput = page.getByTestId('username-input');
     this.passwordInput = page.getByTestId('password-input');
     this.loginButton = page.getByTestId('login-submit');
-    // Los toasts suelen ser accesibles por su rol o texto, pero buscamos el contenedor de toast
-    this.errorToast = page.locator('.toast-error'); 
+    this.errorToast = page.locator('.toast-error');
   }
 
   async goto() {

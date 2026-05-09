@@ -77,6 +77,7 @@ export class ProgressService {
       completedAt: s.completedAt,
       completionPercentage: s.completionPercentage,
       completedSets: s.completedSets,
+      completedExercises: s.completedExercises,
     }));
   }
 
@@ -116,6 +117,7 @@ export class ProgressService {
       completedAt: s.completedAt,
       completionPercentage: s.completionPercentage,
       completedSets: s.completedSets,
+      completedExercises: s.completedExercises,
     }));
   }
 
