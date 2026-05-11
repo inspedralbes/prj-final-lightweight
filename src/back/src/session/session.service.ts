@@ -31,22 +31,25 @@ export class SessionService {
     return session;
   }
 
-  // Crear sesión — acepta coaches Y clientes en modo solitario
+  // Crear sesión — acepta coaches Y clientes (modo solitario o con amigos)
   async createSession(userId: number, role: string, routineId: number) {
+    const routine = await this.prisma.routine.findUnique({
+      where: { id: routineId },
+    });
+
+    if (!routine) {
+      throw new NotFoundException('Rutina no encontrada');
+    }
+
     if (role === 'CLIENT') {
-      // Verificar que la rutina es de modo solitario y pertenece a este cliente
-      const routine = await this.prisma.routine.findUnique({
-        where: { id: routineId },
-      });
-      if (!routine || routine.coachId !== null) {
-        throw new ForbiddenException(
-          'Esta rutina no pertenece al modo solitario',
-        );
-      }
-      const assignment = await this.prisma.routineAssignment.findFirst({
+      // El cliente puede crear sesiones con:
+      // 1. Rutinas asignadas por un coach (con asignación)
+      // 2. Rutinas públicas
+      const hasAssignment = await this.prisma.routineAssignment.findFirst({
         where: { routineId, clientId: userId },
       });
-      if (!assignment) {
+
+      if (!hasAssignment && !routine.isPublic) {
         throw new ForbiddenException(
           'No tienes permiso para iniciar una sesión con esta rutina',
         );
@@ -74,7 +77,7 @@ export class SessionService {
     return session;
   }
 
-  // Actualizar estado — soporta coach y cliente solitario
+  // Actualizar estado — soporta coach y cliente (modo solitario o con amigos)
   async updateSessionStatus(
     sessionCode: string,
     status: 'PENDING' | 'ACTIVE' | 'COMPLETED',
@@ -91,13 +94,17 @@ export class SessionService {
       if (session.coachId !== userId)
         throw new ForbiddenException('No tienes permiso');
     } else {
-      // CLIENT solo mode: la sesión no tiene coach y el cliente es el propietario
-      if (session.coachId !== null)
-        throw new ForbiddenException('No tienes permiso');
-      const assignment = await this.prisma.routineAssignment.findFirst({
-        where: { routineId: session.routineId, clientId: userId },
-      });
-      if (!assignment) throw new ForbiddenException('No tienes permiso');
+      // CLIENT: Puede actualizar si:
+      // 1. La sesión tiene coach y tiene asignación (sesión del coach)
+      // 2. La sesión NO tiene coach (sesión entre amigos que el cliente creó)
+      if (session.coachId !== null) {
+        // Sesión del coach: verificar que el cliente tiene asignación
+        const assignment = await this.prisma.routineAssignment.findFirst({
+          where: { routineId: session.routineId, clientId: userId },
+        });
+        if (!assignment) throw new ForbiddenException('No tienes permiso');
+      }
+      // Si coachId es null, es una sesión entre amigos y el cliente puede actualizarla
     }
 
     const data: Record<string, unknown> = { status };

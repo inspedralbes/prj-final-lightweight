@@ -322,49 +322,53 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('sessionFinished')
-  handleSessionFinished(
+  async handleSessionFinished(
     @ConnectedSocket() client: Socket,
     @MessageBody()
     payload: { roomId: string; userId: string; finalStats: any },
   ) {
-    const { roomId, userId, finalStats } = payload;
-    client.to(roomId).emit('partnerFinished', { userId, finalStats });
-    return { success: true };
-  }
+    console.log('[DEBUG] sessionFinished received - Payload:', JSON.stringify(payload));
 
-  @SubscribeMessage('sessionComplete')
-  async handleSessionComplete(
-    @ConnectedSocket() client: Socket,
-    @MessageBody()
-    payload: {
-      roomId: string;
-      userId: string;
-      completedExercises: number;
-      completedSets: number;
-      completionPercentage: number;
-    },
-  ) {
-    const {
-      roomId,
-      userId,
+    const { roomId, userId, finalStats } = payload;
+
+    client.to(roomId).emit('partnerFinished', { userId, finalStats });
+
+    const completedExercises = finalStats?.exercises ?? 0;
+    const completedSets = Math.round((finalStats?.volume ?? 0) / 10);
+    const completionPercentage = finalStats?.exercises > 0 ? 100 : 0;
+
+    console.log('[DEBUG] Parsed values:', {
       completedExercises,
       completedSets,
-      completionPercentage,
-    } = payload;
+      completionPercentage
+    });
 
     try {
+      console.log('[DEBUG] Looking for session with sessionCode:', roomId);
       const session = await this.prisma.liveSession.findUnique({
         where: { sessionCode: roomId },
       });
 
+      console.log('[DEBUG] Session lookup result:', session);
+
       if (!session) {
         console.warn(
-          `[Room] sessionComplete: Session not found for roomId ${roomId}`,
+          `[Room] sessionFinished: Session not found for roomId ${roomId}`,
         );
         return { success: false, error: 'Session not found' };
       }
 
       const userIdInt = parseInt(userId, 10);
+      console.log('[DEBUG] Parsed userId:', userIdInt, 'sessionId:', session.id);
+
+      console.log('[DEBUG] Attempting upsert with data:', {
+        sessionId: session.id,
+        userId: userIdInt,
+        completedExercises,
+        completedSets,
+        completionPercentage,
+        isPartial: false
+      });
 
       await this.prisma.sessionProgress.upsert({
         where: {
@@ -396,7 +400,8 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
       return { success: true };
     } catch (error) {
-      console.error('[Room] Error persisting session progress:', error);
+      console.error('[DEBUG] Error persisting session progress:', error);
+      console.error('[DEBUG] Error stack:', error.stack);
       return { success: false, error: 'Failed to persist progress' };
     }
   }
