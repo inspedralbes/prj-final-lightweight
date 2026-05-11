@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   ClipboardList,
+  BarChart2,
 } from "lucide-react";
 import { socket } from "@/features/workout/services/socket";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -86,6 +87,12 @@ const Layout = ({ children }: LayoutProps) => {
       label: t("sidebar.clients") || "Clientes",
       icon: Users,
       badge: unreadCount,
+    },
+    {
+      path: "/clients/progress",
+      label: t("progress.title") || "Progrés",
+      icon: BarChart2,
+      badge: 0,
     },
   ];
 

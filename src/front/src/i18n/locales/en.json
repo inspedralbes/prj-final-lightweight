@@ -357,5 +357,33 @@
     "unmute": "Unmute",
     "userOffline": "{{name}} is not connected",
     "callMissed": "{{name}} did not answer"
+  },
+  "progress": {
+    "title": "Client progress",
+    "lastSession": "Last session",
+    "totalSessions": "Total sessions",
+    "noSessions": "No completed sessions",
+    "sessionHistory": "Session history",
+    "completionChart": "Completion trend",
+    "routine": "Routine",
+    "date": "Date",
+    "completion": "% completed",
+    "sets": "Sets",
+    "backToList": "Back to list",
+    "stats": {
+      "totalSets": "Total sets",
+      "totalExercises": "Total exercises"
+    }
+  },
+  "history": {
+    "navLabel": "History & Stats",
+    "title": "My Progress",
+    "totalSessions": "Completed sessions",
+    "totalSets": "Completed sets",
+    "totalExercises": "Completed exercises",
+    "noSessions": "You haven't completed any training sessions yet.",
+    "colRoutine": "Routine",
+    "colDate": "Date",
+    "colCompletion": "% Complete"
   }
 }

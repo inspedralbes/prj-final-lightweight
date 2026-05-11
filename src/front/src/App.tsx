@@ -7,9 +7,12 @@ import ForgotPassword from "@/features/auth/pages/ForgotPassword";
 import CoachDashboard from "@/features/coach/pages/CoachDashboard";
 import ClientDashboard from "@/features/client/pages/ClientDashboard";
 import CoachClientList from "@/features/coach/pages/CoachClientList";
+import ClientsProgressPage from "@/features/coach/pages/ClientsProgressPage";
+import ClientProgressDetailPage from "@/features/coach/pages/ClientProgressDetailPage";
 import RoutineExercisesEdit from "@/features/routines/pages/RoutineExercisesEdit";
 import CoopSessionLobby from "@/features/workout/pages/CoopSessionLobby";
 import ClientMyCoach from "@/features/client/pages/ClientMyCoach";
+import ClientHistoryStats from "@/features/client/pages/ClientHistoryStats";
 import WorkoutRoom from "@/features/workout/pages/WorkoutRoom";
 import SoloWorkoutSession from "@/features/workout/pages/SoloWorkoutSession";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
@@ -262,6 +265,22 @@ const AppContent = () => {
             }
           />
           <Route
+            path="/clients/progress"
+            element={
+              <ProtectedRoute requiredRole="COACH">
+                <ClientsProgressPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clients/progress/:clientId"
+            element={
+              <ProtectedRoute requiredRole="COACH">
+                <ClientProgressDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/routine/:id/edit"
             element={
               <ProtectedRoute>
@@ -284,6 +303,14 @@ const AppContent = () => {
             element={
               <ProtectedRoute requiredRole="CLIENT">
                 <ClientMyCoach />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/client/history"
+            element={
+              <ProtectedRoute requiredRole="CLIENT">
+                <ClientHistoryStats />
               </ProtectedRoute>
             }
           />
