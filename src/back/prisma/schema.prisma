@@ -170,6 +170,7 @@ model LiveSession {
   coachId              Int?          @map("coach_id")
   routineId            Int           @map("routine_id")
   sessionCode          String        @unique @map("session_code")
+  invitationCode       String?       @unique @map("invitation_code")
   status               SessionStatus @default(PENDING)
   createdAt            DateTime      @default(now()) @map("created_at")
   completedAt          DateTime?     @map("completed_at")

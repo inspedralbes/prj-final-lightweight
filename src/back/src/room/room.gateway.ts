@@ -77,7 +77,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
         if (lastProgress) {
           try {
             const session = await this.prisma.liveSession.findUnique({
-              where: { sessionCode: roomId },
+              where: { invitationCode: roomId },
             });
             if (session) {
               const userIdInt = parseInt(lastProgress.userId, 10);
@@ -210,12 +210,35 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('startSession')
-  handleStartSession(
+  async handleStartSession(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { roomId: string; routine: any },
   ) {
     const { roomId, routine } = payload;
-    // Emitir a todos que la sesión comienza (esto activará la cuenta atrás en el front)
+    const routineId = routine.id;
+
+    try {
+      const sessionCode = Math.random()
+        .toString(36)
+        .substring(2, 11)
+        .toUpperCase();
+
+      const session = await this.prisma.liveSession.create({
+        data: {
+          routineId,
+          sessionCode,
+          invitationCode: roomId,
+          status: 'ACTIVE',
+        },
+      });
+
+      console.log(
+        `[Room] Created LiveSession ${session.id} for invitationCode ${roomId}`,
+      );
+    } catch (error) {
+      console.error('[Room] Error creating LiveSession:', error);
+    }
+
     this.server.to(roomId).emit('sessionStarting', { routine });
     return { success: true };
   }
@@ -344,9 +367,9 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     try {
-      console.log('[DEBUG] Looking for session with sessionCode:', roomId);
+      console.log('[DEBUG] Looking for session with invitationCode:', roomId);
       const session = await this.prisma.liveSession.findUnique({
-        where: { sessionCode: roomId },
+        where: { invitationCode: roomId },
       });
 
       console.log('[DEBUG] Session lookup result:', session);
