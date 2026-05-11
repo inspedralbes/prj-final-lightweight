@@ -49,11 +49,17 @@
     "forgotPasswordSubtitle": "Recupera l'accés al teu compte i continua el teu entrenament.",
     "forgotPasswordHint": "Introdueix el teu usuari i t'enviarem un correu de recuperació.",
     "resetPassword": "Restablir contrasenya",
-    "sendReset": "Enviar sol\u00b7licitud",
+    "sendReset": "Enviar sol·licitud",
     "invalidCredentials": "Usuari o contrasenya invàlids",
     "acceptTerms": "Accepto els",
     "termsLink": "Termes i Condicions",
-    "passwordMinLength": "La contrasenya ha de tenir com a mínim {{count}} caràcters"
+    "passwordMinLength": "La contrasenya ha de tenir com a mínim {{count}} caràcters",
+    "newPassword": "Nova contrasenya",
+    "confirmPassword": "Confirmar contrasenya",
+    "resetPasswordButton": "Restablir contrasenya",
+    "resetTokenInvalid": "Aquest enllaç no és vàlid o ha expirat.",
+    "requestNewReset": "Sol·licitar un nou enllaç",
+    "emailNotRegistered": "Aquest correu no està registrat."
   },
   "sidebar": {
     "dashboard": "Panell de control",
@@ -150,10 +156,11 @@
     "passwordMismatch": "Les contrasenyes no coincideixen",
     "acceptTermsRequired": "Has d'acceptar els termes per continuar",
     "userAlreadyExists": "Aquest usuari ja existeix",
-    "resetEmailSent": "Correu de recuperació enviat",
+    "resetEmailSent": "Si aquest email existeix, revisa la safata.",
     "routineNotFound": "Rutina no trobada",
     "clientUpdated": "Client actualitzat correctament",
-    "noPermission": "No tens permís per editar aquesta rutina"
+    "noPermission": "No tens permís per editar aquesta rutina",
+    "passwordResetSuccess": "Contrasenya restablerta. Ja pots iniciar sessió."
   },
   "clients": {
     "title": "Els meus clients",

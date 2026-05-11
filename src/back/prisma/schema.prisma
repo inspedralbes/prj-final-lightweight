@@ -27,8 +27,21 @@ model User {
   routinesCreated           Routine[]           @relation("CoachRoutines")
   coach                     User?               @relation("CoachClients", fields: [coachId], references: [id])
   clients                   User[]              @relation("CoachClients")
+  passwordResetTokens       PasswordResetToken[]
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int      @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 model ClientProfile {

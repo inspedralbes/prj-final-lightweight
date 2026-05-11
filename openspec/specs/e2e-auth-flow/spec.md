@@ -164,6 +164,15 @@ El sistema HA DE ser totalment comprovable mitjançant tests E2E de Playwright q
 - **QUAN** un test E2E es completa (exitós o fallit) i comença el test següent
 - **ALESHORES** el fixture `e2e/fixtures/reset.ts` neteja les dades de test de PostgreSQL, assegurant que no hi ha fuga d'estat entre tests i permetent que els tests de registre utilitzin noms d'usuari de test consistents
 
+#### Escenari: Ruta de QA manual de forgot-password
+
+- **QUAN** un desarrollador envía el formulari ForgotPassword en `http://localhost:5173/forgot-password` amb l'email d'un usuari registrat
+- **ALESHORES** el backend registra una URL de previsualització d'Ethereal a la consola (format: `https://ethereal.email/message/...`)
+- **I** el desarrollador pot obrir aquella URL en un navegador per verificar que l'HTML de l'email conté un enllaç a `/reset-password?token=<hex>`
+- **I** seguir l'enllaç i enviar una nova contrasenya a `/reset-password` completa el restabliment
+- **I** el desarrollador pot iniciar sessió amb la nova contrasenya
+- **I** qualsevol cobertura automatitzada nova DEBE afegir-se com a `*.spec.ts` co-ubicat a `src/back/src/auth/` usant `@nestjs/testing` amb un `PrismaService` mockeado, un `JwtService.sign` stubbejat i un `MailService` mockeado
+
 ---
 
 ### Requisit: Suport d'i18n per a Fluxos d'Autenticació

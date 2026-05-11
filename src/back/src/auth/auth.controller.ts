@@ -1,22 +1,35 @@
-import { Controller, Post, Body, Headers } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
-// El controlador de autenticación se encarga de manejar las solicitudes HTTP relacionadas con el registro y el inicio de sesión de los usuarios.
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  // Endpoint para registrar un nuevo usuario. Recibe un DTO con el nombre de usuario y la contraseña, y llama al servicio de autenticación para crear el nuevo usuario.
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return await this.authService.register(registerDto);
   }
 
-  // Endpoint para iniciar sesión. Recibe un DTO con el nombre de usuario y la contraseña, y llama al servicio de autenticación para validar las credenciales y generar un token JWT.
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return await this.authService.login(loginDto);
+  }
+
+  @Post('forgot-password')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto);
+    return { message: 'If this email exists, a reset link has been sent.' };
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto);
+    return { message: 'Password reset successfully.' };
   }
 }

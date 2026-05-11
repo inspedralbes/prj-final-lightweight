@@ -50,10 +50,16 @@
     "forgotPasswordHint": "Enter your username and we will send you a recovery email.",
     "resetPassword": "Reset Password",
     "sendReset": "Send Request",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "resetPasswordButton": "Reset Password",
+    "resetTokenInvalid": "This link is invalid or has expired.",
+    "requestNewReset": "Request a new reset link",
     "invalidCredentials": "Invalid username or password",
     "acceptTerms": "I accept the",
     "termsLink": "Terms and Conditions",
-    "passwordMinLength": "Password must be at least {{count}} characters"
+    "passwordMinLength": "Password must be at least {{count}} characters",
+    "emailNotRegistered": "This email is not registered."
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -150,7 +156,8 @@
     "passwordMismatch": "Passwords do not match",
     "acceptTermsRequired": "You must accept the terms to continue",
     "userAlreadyExists": "This user already exists",
-    "resetEmailSent": "Recovery email sent",
+    "resetEmailSent": "If this email exists, check your inbox.",
+    "passwordResetSuccess": "Password reset. You can now log in.",
     "routineNotFound": "Routine not found",
     "clientUpdated": "Client updated successfully",
     "noPermission": "You don't have permission to edit this routine"

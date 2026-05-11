@@ -50,10 +50,16 @@
     "forgotPasswordHint": "Introduce tu usuario y te enviaremos un correo de recuperación.",
     "resetPassword": "Restablecer contraseña",
     "sendReset": "Enviar solicitud",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "resetPasswordButton": "Restablecer contraseña",
+    "resetTokenInvalid": "Este enlace no es válido o ha expirado.",
+    "requestNewReset": "Solicitar un nuevo enlace",
     "invalidCredentials": "Usuario o contraseña inválidos",
     "acceptTerms": "Acepto los",
     "termsLink": "Términos y Condiciones",
-    "passwordMinLength": "La contraseña debe tener al menos {{count}} caracteres"
+    "passwordMinLength": "La contraseña debe tener al menos {{count}} caracteres",
+    "emailNotRegistered": "Este correo no está registrado."
   },
   "sidebar": {
     "dashboard": "Panel de control",
@@ -150,7 +156,8 @@
     "passwordMismatch": "Las contraseñas no coinciden",
     "acceptTermsRequired": "Debes aceptar los términos para continuar",
     "userAlreadyExists": "Este usuario ya existe",
-    "resetEmailSent": "Correo de recuperación enviado",
+    "resetEmailSent": "Si este email existe, revisa tu bandeja de entrada.",
+    "passwordResetSuccess": "Contraseña restablecida. Ya puedes iniciar sesión.",
     "routineNotFound": "Rutina no encontrada",
     "clientUpdated": "Cliente actualizado correctamente",
     "noPermission": "No tienes permiso para editar esta rutina"
