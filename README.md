@@ -16,6 +16,7 @@
 | [Estructura de carpetes](#estructura-de-carpetes)                     | Organització del codi front-end           |
 | [Funcionalitats detallades](#funcionalitats-detallades)               | Descripció funcional completa             |
 | [Quick Start (dev)](#quick-start-dev)                                 | Posar el projecte en marxa pas a pas      |
+| [Testing E2E](#testing-e2e)                                           | Tests end-to-end amb Playwright           |
 | [Variables d'entorn](#variables-dentorn)                              | Què cal configurar al `.env`              |
 | [Comandaments útils](#comandaments-útils)                             | Referència ràpida de comandes             |
 | [URLs i ports](#urls-i-ports)                                         | On s'accedeix a cada servei               |
@@ -393,6 +394,27 @@ exit
 | Frontend      | http://localhost:5173 |
 | Backend (API) | http://localhost:3000 |
 | Adminer (BD)  | http://localhost:8081 |
+
+---
+
+## Testing E2E
+
+El projecte inclou una suite completa de tests end-to-end amb Playwright. Consulta la [guia completa de testing E2E](docs/e2e.md) per a:
+
+- Instal·lació i configuració
+- Execució de tests
+- Convencions i organització
+- Ús de fixtures (incloent `twoUsers` per tests multi-usuari)
+- Depuració local i en CI
+- Integració amb GitHub Actions
+
+**Començament ràpid:**
+
+```bash
+cd e2e
+npm install
+npm run test:e2e:browser
+```
 
 ---
 
