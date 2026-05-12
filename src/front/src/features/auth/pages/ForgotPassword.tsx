@@ -84,6 +84,7 @@ export default function ForgotPassword() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={t("auth.email")}
+                    data-testid="forgot-password-email"
                     className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                     required
                   />
@@ -91,13 +92,14 @@ export default function ForgotPassword() {
               </div>
 
               {emailError && (
-                <p className="text-red-400 text-sm">{emailError}</p>
+                <p data-testid="forgot-password-error" className="text-red-400 text-sm">{emailError}</p>
               )}
 
               {/* Botón Principal */}
               <button
                 type="submit"
                 disabled={isLoading}
+                data-testid="forgot-password-submit"
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-700 text-black font-bold rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
               >
                 {isLoading ? t("common.loading") : t("auth.sendReset")}

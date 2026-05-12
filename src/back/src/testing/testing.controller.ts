@@ -1,11 +1,14 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import {
   TestingService,
   type ResetResult,
   type SeedSnapshot,
 } from './testing.service';
 import { LoginAsDto } from './dto/login-as.dto';
+import { InjectResetTokenDto } from './dto/inject-reset-token.dto';
 
+@SkipThrottle()
 @Controller('testing')
 export class TestingController {
   constructor(private readonly testing: TestingService) {}
@@ -27,5 +30,13 @@ export class TestingController {
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginAsDto) {
     return this.testing.loginAs(dto.username);
+  }
+
+  @Post('inject-reset-token')
+  @HttpCode(HttpStatus.OK)
+  async injectResetToken(
+    @Body() dto: InjectResetTokenDto,
+  ): Promise<{ rawToken: string }> {
+    return this.testing.injectResetToken(dto.email);
   }
 }

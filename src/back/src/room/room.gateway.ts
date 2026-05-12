@@ -350,7 +350,10 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody()
     payload: { roomId: string; userId: string; finalStats: any },
   ) {
-    console.log('[DEBUG] sessionFinished received - Payload:', JSON.stringify(payload));
+    console.log(
+      '[DEBUG] sessionFinished received - Payload:',
+      JSON.stringify(payload),
+    );
 
     const { roomId, userId, finalStats } = payload;
 
@@ -363,7 +366,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log('[DEBUG] Parsed values:', {
       completedExercises,
       completedSets,
-      completionPercentage
+      completionPercentage,
     });
 
     try {
@@ -382,7 +385,12 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const userIdInt = parseInt(userId, 10);
-      console.log('[DEBUG] Parsed userId:', userIdInt, 'sessionId:', session.id);
+      console.log(
+        '[DEBUG] Parsed userId:',
+        userIdInt,
+        'sessionId:',
+        session.id,
+      );
 
       console.log('[DEBUG] Attempting upsert with data:', {
         sessionId: session.id,
@@ -390,7 +398,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
         completedExercises,
         completedSets,
         completionPercentage,
-        isPartial: false
+        isPartial: false,
       });
 
       await this.prisma.sessionProgress.upsert({
