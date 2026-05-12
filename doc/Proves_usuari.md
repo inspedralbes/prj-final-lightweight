@@ -137,3 +137,52 @@ A la pàgina del PR, a la secció **Checks**, trobaràs el check `e2e / playwrig
 #### 5. Botó Tornar
 - A `/client/history`, fes clic al botó "Volver" → confirma que torna a `/client-home`
 
+---
+
+## LW-454 — Flux de Recuperació de Contrasenya (Forgot Password)
+
+### Prerequisits
+- Stack en marxa: `docker compose up` (amb `E2E_TESTING=true` al `.env` per als tests manuals)
+- Usuari registrat amb email conegut a la BD
+
+### Escenaris
+
+#### 1. Sol·licitar reset — email registrat
+- Navega a `/forgot-password`
+- Introdueix l'email d'un usuari registrat i fes clic a "Enviar"
+- Confirma que el botó queda deshabilitat mentre la petició és en vol
+- Confirma que apareix un missatge de confirmació genèric (no revela si el correu existeix)
+- Comprova a la consola del backend la URL de previsualització d'Ethereal (entorn dev)
+- Obre l'URL d'Ethereal → confirma que l'email conté l'enllaç `/reset-password?token=...`
+
+#### 2. Sol·licitar reset — email no registrat
+- Navega a `/forgot-password`
+- Introdueix un email que no existeix a la BD
+- Confirma que apareix un missatge d'error en línia sota el camp
+- Confirma que la pàgina NO redirigeix a `/login`
+
+#### 3. Restablir contrasenya — flux exitós
+- Copia el token de l'URL de l'email obtinguda a l'Escenari 1
+- Navega a `/reset-password?token=<token>`
+- Confirma que la pàgina renderitza els dos camps de contrasenya (sense JWT no hi ha redirecció)
+- Introdueix una nova contrasenya vàlida (mínim 8 caràcters) en els dos camps
+- Fes clic a "Restablir contrasenya"
+- Confirma que apareix un toast d'èxit i la SPA redirigeix a `/login`
+- Inicia sessió amb la nova contrasenya → confirma accés exitós
+
+#### 4. Validació al client — contrasenyes no coincidents
+- Navega a `/reset-password?token=<qualsevol>`
+- Introdueix contrasenyes different als dos camps i fes clic a "Restablir"
+- Confirma que apareix l'error "les contrasenyes no coincideixen" sense fer cap crida a la API
+
+#### 5. Validació al client — contrasenya massa curta
+- Navega a `/reset-password?token=<qualsevol>`
+- Introdueix "curta" als dos camps i fes clic a "Restablir"
+- Confirma que apareix l'error de mínim 8 caràcters sense fer cap crida a la API
+
+#### 6. Token expirat o ja usat
+- Usa el token consumit a l'Escenari 3 o espera 30 minuts fins que expiri
+- Navega a `/reset-password?token=<token_usat_o_expirat>`
+- Intenta restablir la contrasenya → confirma missatge d'error
+- Confirma que la pàgina mostra un enllaç a `/forgot-password` per sol·licitar un nou token
+

@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { seedE2EData, type SeedSnapshot } from '../prisma/e2e-seed';
+import { randomBytes, createHash } from 'crypto';
 
 const E2E_USERNAME_RE = /^e2e_[a-z_]+$/;
 
@@ -66,6 +67,28 @@ export class TestingService {
 
     const seeded = await this.seed();
     return { reset: true, seeded, durationMs: Date.now() - start };
+  }
+
+  async injectResetToken(email: string): Promise<{ rawToken: string }> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
+    await this.prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, used: false },
+      data: { used: true },
+    });
+
+    const rawToken = randomBytes(32).toString('hex');
+    const hash = createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    await this.prisma.passwordResetToken.create({
+      data: { token: hash, userId: user.id, expiresAt },
+    });
+
+    return { rawToken };
   }
 
   async loginAs(username: string) {
