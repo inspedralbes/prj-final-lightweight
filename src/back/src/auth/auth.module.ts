@@ -5,8 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { MailModule } from '../mail/mail.module';
 
-// El módulo de autenticación se encarga de configurar y proporcionar los servicios relacionados con la autenticación de usuarios, incluyendo la generación de tokens JWT y la validación de credenciales.
 @Module({
   imports: [
     PassportModule,
@@ -18,6 +18,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         signOptions: { expiresIn: '24h' },
       }),
     }),
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

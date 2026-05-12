@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import Login from "@/features/auth/pages/Login";
 import Register from "@/features/auth/pages/Register";
 import ForgotPassword from "@/features/auth/pages/ForgotPassword";
+import ResetPassword from "@/features/auth/pages/ResetPassword";
 import CoachDashboard from "@/features/coach/pages/CoachDashboard";
 import ClientDashboard from "@/features/client/pages/ClientDashboard";
 import CoachClientList from "@/features/coach/pages/CoachClientList";
@@ -246,6 +247,7 @@ const AppContent = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Rutas protegidas para COACH */}
           <Route
