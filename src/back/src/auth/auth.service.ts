@@ -25,13 +25,10 @@ export class AuthService {
     private mail: MailService,
   ) {}
 
-  // Función para hashear la contraseña del usuario utilizando bcrypt.
   async hashPassword(password: string): Promise<string> {
-    const saltRounds = 10;
-    return await bcrypt.hash(password, saltRounds);
+    return await bcrypt.hash(password, 10);
   }
 
-  // Función para validar la contraseña ingresada por el usuario comparándola con el hash almacenado en la base de datos.
   async validatePassword(
     password: string,
     hashedPassword: string,
@@ -39,7 +36,6 @@ export class AuthService {
     return await bcrypt.compare(password, hashedPassword);
   }
 
-  // Función para registrar un nuevo usuario. Verifica si el nombre de usuario ya existe, hashea la contraseña y crea un nuevo registro en la base de datos.
   async register(registerDto: RegisterDto) {
     const { username, email, password, role } = registerDto;
     const existingUser = await this.prisma.user.findFirst({
@@ -50,22 +46,14 @@ export class AuthService {
     }
     const passwordHash = await this.hashPassword(password);
     const user = await this.prisma.user.create({
-      data: {
-        username,
-        email,
-        passwordHash,
-        role,
-      },
+      data: { username, email, passwordHash, role },
     });
     return { message: `User ${user.username} registered successfully` };
   }
 
-  // Función para iniciar sesión. Verifica si el usuario existe, valida la contraseña y genera un token JWT si las credenciales son correctas.
   async login(loginDto: LoginDto) {
     const { username, password } = loginDto;
-    const user = await this.prisma.user.findUnique({
-      where: { username },
-    });
+    const user = await this.prisma.user.findUnique({ where: { username } });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -76,9 +64,17 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    if (user.activeSessionToken) {
+      throw new ConflictException('Session already active');
+    }
     const payload = { userId: user.id, role: user.role };
+    const access_token = this.jwtService.sign(payload);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { activeSessionToken: access_token },
+    });
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token,
       user: {
         id: user.id,
         username: user.username,
@@ -86,6 +82,24 @@ export class AuthService {
         coachId: user.coachId || undefined,
       },
     };
+  }
+
+  async clearSession(userId: number): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { activeSessionToken: null },
+    });
+  }
+
+  async logout(userId: number): Promise<void> {
+    await this.clearSession(userId);
+  }
+
+  async logoutByToken(rawToken: string): Promise<void> {
+    await this.prisma.user.updateMany({
+      where: { activeSessionToken: rawToken },
+      data: { activeSessionToken: null },
+    });
   }
 
   async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
