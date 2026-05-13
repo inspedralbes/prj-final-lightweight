@@ -216,15 +216,10 @@ A la pàgina del PR, a la secció **Checks**, trobaràs el check `e2e / playwrig
 #### 5. Botó Tornar
 - A `/client/history`, fes clic al botó "Tornar" → confirma que torna a `/client-home`
 
+
 ---
 
 ## Flux de Recuperació de Contrasenya (LW-454)
-
-### Prerequisits
-- Stack en marxa: `docker compose up` (amb `E2E_TESTING=true` al `.env` per als tests manuals)
-- Usuari registrat amb email conegut a la BD
-
-### Escenaris
 
 #### 1. Sol·licitar reset — email registrat
 - Navega a `/forgot-password`
@@ -264,3 +259,30 @@ A la pàgina del PR, a la secció **Checks**, trobaràs el check `e2e / playwrig
 - Navega a `/reset-password?token=<token_usat_o_expirat>`
 - Intenta restablir la contrasenya → confirma missatge d'error
 - Confirma que la pàgina mostra un enllaç a `/forgot-password` per sol·licitar un nou token
+
+---
+
+## Control de Sessió Única (LW-459)
+
+### 1. Sessió concurrent bloquejada
+- Inicia sessió amb un compte (COACH o CLIENT) en Chrome
+- Obre Firefox i intenta iniciar sessió amb el mateix compte i contrasenya
+- **Resultat esperat:** Firefox mostra el missatge "Ja tens una sessió activa en un altre dispositiu" (en Català) i no s'obre sessió
+
+### 2. Login possible després de tancar sessió
+- Amb Chrome connectat, fes clic al botó de tancar sessió
+- Comprova a la pestanya Network (DevTools) que s'ha enviat `POST /api/auth/logout` i s'ha rebut HTTP 200
+- Ara inicia sessió a Firefox amb el mateix compte
+- **Resultat esperat:** El login a Firefox és exitós
+
+### 3. Alliberament de sessió per desconnexió de socket
+- Inicia sessió a Chrome (no tanquis sessió)
+- Tanca la pestanya de Chrome completament (sense fer logout)
+- Espera 30 segons
+- Intenta iniciar sessió a Firefox amb el mateix compte
+- **Resultat esperat:** El login a Firefox és exitós (la sessió s'ha alliberat per timeout de socket)
+
+### 4. Reconnexió ràpida no bloqueja (refresc de pàgina)
+- Inicia sessió a Chrome
+- Refresca la pàgina (F5) ràpidament
+- **Resultat esperat:** L'usuari segueix autenticat i no es necessita tornar a fer login

@@ -17,7 +17,7 @@ interface MockAuthUser {
 
 interface RenderWithAuthOptions extends Omit<RenderOptions, "wrapper"> {
   user?: MockAuthUser | null;
-  logout?: () => void;
+  logout?: () => Promise<void>;
 }
 
 /**
@@ -26,7 +26,7 @@ interface RenderWithAuthOptions extends Omit<RenderOptions, "wrapper"> {
  */
 export function renderWithAuthContext(
   ui: ReactElement,
-  { user = null, logout = vi.fn(), ...options }: RenderWithAuthOptions = {},
+  { user = null, logout = vi.fn().mockResolvedValue(undefined), ...options }: RenderWithAuthOptions = {},
 ): RenderResult {
   const mockValue = {
     user,
