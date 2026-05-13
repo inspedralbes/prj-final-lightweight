@@ -2,24 +2,24 @@
 
 ## Notes
 
-This is a **backend-only implementation task** that adds database persistence for data that already exists in-memory during Friend Sessions. No new application requirements are being defined.
+Aquesta és una **tasca d'implementació només de backend** que afegeix persistència a la base de dades per a dades que ja existeixen en memòria durant les Friend Sessions. No es defineixen nous requisits d'aplicació.
 
-### No New Specs Required
+### No calen noves especificacions
 
-The functionality builds on existing specifications:
+La funcionalitat es basa en especificacions existents:
 
-- **`coop-session`** (existing): Defines how Friend Sessions work - this task adds persistence to it
-- **`progress-api`** (existing): The LW-258 API will query the data this task persists
+- **`coop-session`** (existent): Defineix com funcionen les Friend Sessions — aquesta tasca hi afegeix persistència
+- **`progress-api`** (existent): L'API de LW-258 consultarà les dades que aquesta tasca persisteix
 
-This change adds:
-- New Prisma model `SessionProgress`
-- Socket.IO event handler to persist progress
-- No new REST endpoints
-- No new user-facing behavior
+Aquest canvi afegeix:
+- Nou model Prisma `SessionProgress`
+- Gestor d'events Socket.IO per persistir el progrés
+- Cap nou endpoint REST
+- Cap nou comportament visible per a l'usuari
 
-### Implementation Only
+### Només implementació
 
-All requirements are already defined in the design.md. The implementation will:
-1. Add `SessionProgress` model to schema.prisma
-2. Add `sessionComplete` handler in RoomGateway
-3. Create and apply Prisma migration
+Tots els requisits ja estan definits a design.md. La implementació:
+1. Afegirà el model `SessionProgress` a schema.prisma
+2. Afegirà el gestor de `sessionComplete` a RoomGateway
+3. Crearà i aplicarà la migració Prisma

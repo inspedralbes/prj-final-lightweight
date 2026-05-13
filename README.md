@@ -399,7 +399,7 @@ exit
 
 ## Testing E2E
 
-El projecte inclou una suite completa de tests end-to-end amb Playwright. Consulta la [guia completa de testing E2E](docs/e2e.md) per a:
+El projecte inclou una suite completa de tests end-to-end amb Playwright. Consulta la [guia completa de testing E2E](doc/guia-testing-e2e.md) per a:
 
 - Instal·lació i configuració
 - Execució de tests

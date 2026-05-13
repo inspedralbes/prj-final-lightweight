@@ -1,161 +1,161 @@
 # AGENTS.md — LightWeight
 
-> Reference guide for AI agents and contributors implementing new functionality in this project.  
-> Read this file **in full** before touching any file.
+> Guia de referència per a agents d'IA i contribuïdors que implementen nova funcionalitat en aquest projecte.
+> Llegeix aquest fitxer **íntegrament** abans de tocar cap fitxer.
 
 ---
 
-## Table of Contents
+## Taula de continguts
 
-1. [Project Architecture](#1-project-architecture)
-2. [Tech Stack](#2-tech-stack)
-3. [Non-Negotiable Rules](#3-non-negotiable-rules)
-4. [Back-end: How to Add Features](#4-back-end-how-to-add-features)
-5. [Front-end: How to Add Features](#5-front-end-how-to-add-features)
-6. [Authentication & Guards](#6-authentication--guards)
-7. [Database (Prisma)](#7-database-prisma)
+1. [Arquitectura del projecte](#1-arquitectura-del-projecte)
+2. [Stack tecnològic](#2-stack-tecnològic)
+3. [Regles no negociables](#3-regles-no-negociables)
+4. [Backend: com afegir funcionalitats](#4-backend-com-afegir-funcionalitats)
+5. [Frontend: com afegir funcionalitats](#5-frontend-com-afegir-funcionalitats)
+6. [Autenticació i guards](#6-autenticació-i-guards)
+7. [Base de dades (Prisma)](#7-base-de-dades-prisma)
 8. [WebSockets](#8-websockets)
-9. [Internationalisation (i18n)](#9-internationalisation-i18n)
-10. [Styles (Tailwind CSS 4)](#10-styles-tailwind-css-4)
-11. [Icons](#11-icons)
-12. [Common Patterns](#12-common-patterns)
-13. [Anti-patterns — What NOT to Do](#13-anti-patterns--what-not-to-do)
-14. [Final Verification](#14-final-verification)
+9. [Internacionalització (i18n)](#9-internacionalització-i18n)
+10. [Estils (Tailwind CSS 4)](#10-estils-tailwind-css-4)
+11. [Icones](#11-icones)
+12. [Patrons comuns](#12-patrons-comuns)
+13. [Anti-patrons — Què NO fer](#13-anti-patrons--què-no-fer)
+14. [Verificació final](#14-verificació-final)
 
 ---
 
-## 1. Project Architecture
+## 1. Arquitectura del projecte
 
 ```
 prj-final-lightweight/
-├── src/back/          ← NestJS API (port 3000)
+├── src/back/          ← API NestJS (port 3000)
 ├── src/front/         ← React + Vite (port 5173)
-├── nginx/             ← Reverse proxy (production)
+├── nginx/             ← Proxy invers (producció)
 ├── docker-compose.yml          ← Dev
-└── docker-compose.prod.yml     ← Production
+└── docker-compose.prod.yml     ← Producció
 ```
 
-**Data flow:**
+**Flux de dades:**
 
 ```
-Browser → React (5173) ←──HTTP/WS──► NestJS (3000) ←─Prisma─► PostgreSQL (5432)
+Navegador → React (5173) ←──HTTP/WS──► NestJS (3000) ←─Prisma─► PostgreSQL (5432)
 ```
 
-In production, only port 80/443 (Nginx) is exposed. The backend and DB are not directly accessible.
+En producció, només el port 80/443 (Nginx) queda exposat. El backend i la BD no són accessibles directament.
 
-### User Roles
+### Rols d'usuari
 
-| Role     | Description                                                 |
-| -------- | ----------------------------------------------------------- |
-| `COACH`  | Creates routines, manages clients, generates invitations    |
-| `CLIENT` | Receives routines, trains, can have a single assigned coach |
+| Rol      | Descripció                                                         |
+| -------- | ------------------------------------------------------------------ |
+| `COACH`  | Crea rutines, gestiona clients, genera invitacions                 |
+| `CLIENT` | Rep rutines, entrena, pot tenir un sol coach assignat              |
 
 ---
 
-## 2. Tech Stack
+## 2. Stack tecnològic
 
-### Back-end
+### Backend
 
-| Tool       | Version | Notes                                                       |
-| ---------- | ------- | ----------------------------------------------------------- |
-| NestJS     | 11      | HTTP + WS framework. One domain = one module                |
-| TypeScript | 5.x     | Strict typing (`strict: true`)                              |
-| Prisma     | 6       | ORM. Schema at `src/back/prisma/schema.prisma`              |
-| Passport   | —       | `jwt` strategy. Guards: `JwtAuthGuard`, `CoachGuard`        |
-| Socket.io  | 4       | Gateways at `src/back/src/events/` and `src/back/src/room/` |
+| Eina       | Versió | Notes                                                           |
+| ---------- | ------ | --------------------------------------------------------------- |
+| NestJS     | 11     | HTTP + WS framework. Un domini = un mòdul                       |
+| TypeScript | 5.x    | Tipat estricte (`strict: true`)                                 |
+| Prisma     | 6      | ORM. Schema a `src/back/prisma/schema.prisma`                   |
+| Passport   | —      | Estratègia `jwt`. Guards: `JwtAuthGuard`, `CoachGuard`          |
+| Socket.io  | 4      | Gateways a `src/back/src/events/` i `src/back/src/room/`        |
 
-### Front-end
+### Frontend
 
-| Tool             | Version | Notes                                                  |
-| ---------------- | ------- | ------------------------------------------------------ |
-| React            | 19      | Functional components + hooks. **No class components** |
-| TypeScript       | 5.9     | `verbatimModuleSyntax: true` → requires `import type`  |
-| Vite             | 7       | Bundler. Alias `@/` → `src/`                           |
-| Tailwind CSS     | 4       | Utility classes. **No inline CSS or SCSS**             |
-| React Router     | 7       | Declarative routing in `App.tsx`                       |
-| Axios            | 1.13    | HTTP client. Wrapper at `@/shared/utils/api.ts`        |
-| Socket.io-client | 4       | Connection at `@/features/workout/services/socket.ts`  |
-| i18next          | 24      | Files at `@/i18n/locales/{ca,es,en}.json`              |
-| lucide-react     | 0.475   | Primary icon library                                   |
+| Eina             | Versió | Notes                                                      |
+| ---------------- | ------ | ---------------------------------------------------------- |
+| React            | 19     | Components funcionals + hooks. **Sense components de classe** |
+| TypeScript       | 5.9    | `verbatimModuleSyntax: true` → requereix `import type`     |
+| Vite             | 7      | Bundler. Àlies `@/` → `src/`                               |
+| Tailwind CSS     | 4      | Classes utilitàries. **Sense CSS inline ni SCSS**          |
+| React Router     | 7      | Enrutament declaratiu a `App.tsx`                          |
+| Axios            | 1.13   | Client HTTP. Wrapper a `@/shared/utils/api.ts`             |
+| Socket.io-client | 4      | Connexió a `@/features/workout/services/socket.ts`         |
+| i18next          | 24     | Fitxers a `@/i18n/locales/{ca,es,en}.json`                 |
+| lucide-react     | 0.475  | Biblioteca d'icones principal                              |
 
 ---
 
-## 3. Non-Negotiable Rules
+## 3. Regles no negociables
 
-These rules must be followed **without exception**.
+Aquestes regles s'han de seguir **sense cap excepció**.
 
-### Front-end
+### Frontend
 
-1. **All imports use the `@/` alias** (never `../` or `./` to navigate up directories):
+1. **Tots els imports usen l'àlies `@/`** (mai `../` o `./` per pujar de directori):
 
    ```ts
-   // ✅ Correct
+   // ✅ Correcte
    import { api } from "@/shared/utils/api";
 
-   // ❌ Wrong
+   // ❌ Incorrecte
    import { api } from "../../shared/utils/api";
    ```
 
-2. **Feature-based architecture** — each bounded context lives in `features/<name>/`:
+2. **Arquitectura basada en features** — cada context acotat viu a `features/<nom>/`:
 
    ```
-   features/<name>/
-   ├── pages/       ← route-level pages (top-level components)
-   ├── components/  ← reusable components within the feature
-   └── services/    ← HTTP/WS request logic for this feature
+   features/<nom>/
+   ├── pages/       ← pàgines de ruta (components de nivell superior)
+   ├── components/  ← components reutilitzables dins la feature
+   └── services/    ← lògica de peticions HTTP/WS per a aquesta feature
    ```
 
-3. **Dependency rule** — one direction only:
+3. **Regla de dependències** — en una sola direcció:
 
    ```
    shared  ←  features/*  ←  App.tsx
    ```
 
-   - `shared/` **never** imports from `features/`.
-   - One feature **does not** import from another feature directly.
-   - If code needs to be shared between features, move it to `shared/`.
+   - `shared/` **mai** importa de `features/`.
+   - Una feature **no** importa d'una altra feature directament.
+   - Si cal compartir codi entre features, mou-lo a `shared/`.
 
-4. **`import type`** is mandatory for types when `verbatimModuleSyntax` is active:
+4. **`import type`** és obligatori per a tipus quan `verbatimModuleSyntax` és actiu:
 
    ```ts
    // ✅
    import { type FC, useState } from "react";
    import type { MyType } from "@/features/foo/types";
 
-   // ❌ Causes build error
+   // ❌ Causa error de build
    import { FC } from "react";
    ```
 
-5. **Never add the token manually** in services; the `api.ts` interceptor already does it. However, services that use `axios` directly (not the `api` wrapper) must add it manually via `authHeader()`.
+5. **Mai afegir el token manualment** als serveis; l'interceptor de `api.ts` ja ho fa. No obstant, els serveis que usen `axios` directament (no el wrapper `api`) han d'afegir-lo manualment via `authHeader()`.
 
-6. **New pages** → add the corresponding `<Route>` in `App.tsx` inside the appropriate `<ProtectedRoute>`.
+6. **Noves pàgines** → afegeix la `<Route>` corresponent a `App.tsx` dins el `<ProtectedRoute>` adequat.
 
-### Back-end
+### Backend
 
-1. **One domain = one NestJS module** at `src/back/src/<name>/`. Register it in `AppModule`.
+1. **Un domini = un mòdul NestJS** a `src/back/src/<nom>/`. Registra'l a `AppModule`.
 
-2. **Static routes ALWAYS before dynamic ones** inside a controller:
+2. **Les rutes estàtiques SEMPRE abans de les dinàmiques** dins d'un controlador:
 
    ```ts
-   // ✅ Correct order
-   @Get('global')         // ← static first
-   @Get('my-routines')    // ← static first
-   @Get(':id')            // ← dynamic last
+   // ✅ Ordre correcte
+   @Get('global')         // ← primer l'estàtica
+   @Get('my-routines')    // ← primer l'estàtica
+   @Get(':id')            // ← la dinàmica al final
    ```
 
-3. **`req.user.userId`** is the property exposed by the JWT payload processed by the guard. Always use this field to get the authenticated user, not `req.user.id`.
+3. **`req.user.userId`** és la propietat exposada pel payload JWT processada pel guard. Utilitza sempre aquest camp per obtenir l'usuari autenticat, no `req.user.id`.
 
-4. **Explicit HTTP errors**: throw `HttpException` or NestJS-specific exceptions (`NotFoundException`, `ForbiddenException`, etc.) instead of letting errors propagate unhandled.
+4. **Errors HTTP explícits**: llança `HttpException` o excepcions específiques de NestJS (`NotFoundException`, `ForbiddenException`, etc.) en lloc de deixar que els errors es propaguin sense gestionar.
 
-5. **DTOs for all `@Body()` parameters**. Create a `dto/create-<name>.dto.ts` or `dto/update-<name>.dto.ts` file for each input operation.
+5. **DTOs per a tots els paràmetres `@Body()`**. Crea un fitxer `dto/create-<nom>.dto.ts` o `dto/update-<nom>.dto.ts` per a cada operació d'entrada.
 
 ---
 
-## 4. Back-end: How to Add Features
+## 4. Backend: com afegir funcionalitats
 
-### NestJS module structure
+### Estructura d'un mòdul NestJS
 
-For each new domain (e.g. `diets`), create:
+Per a cada nou domini (p. ex. `diets`), crea:
 
 ```
 src/back/src/diets/
@@ -167,7 +167,7 @@ src/back/src/diets/
     └── update-diet.dto.ts
 ```
 
-### Module template
+### Plantilla de mòdul
 
 ```ts
 // diets.module.ts
@@ -184,7 +184,7 @@ import { PrismaModule } from "../prisma/prisma.module";
 export class DietsModule {}
 ```
 
-### Controller template
+### Plantilla de controlador
 
 ```ts
 // diets.controller.ts
@@ -206,14 +206,14 @@ import { CreateDietDto } from "./dto/create-diet.dto";
 export class DietsController {
   constructor(private dietsService: DietsService) {}
 
-  // Static routes first ↓
+  // Rutes estàtiques primer ↓
   @Get("my-diets")
   @UseGuards(JwtAuthGuard)
   async getMyDiets(@Request() req: any) {
     return this.dietsService.getDietsForClient(req.user.userId);
   }
 
-  // Dynamic routes last ↓
+  // Rutes dinàmiques al final ↓
   @Get(":id")
   @UseGuards(JwtAuthGuard)
   async getById(@Param("id") id: string) {
@@ -221,14 +221,14 @@ export class DietsController {
   }
 
   @Post()
-  @UseGuards(CoachGuard) // COACH only
+  @UseGuards(CoachGuard) // Només COACH
   async create(@Request() req: any, @Body() dto: CreateDietDto) {
     return this.dietsService.createDiet(req.user.userId, dto);
   }
 }
 ```
 
-### Service template
+### Plantilla de servei
 
 ```ts
 // diets.service.ts
@@ -254,36 +254,36 @@ export class DietsService {
 }
 ```
 
-### Register the module in AppModule
+### Registrar el mòdul a AppModule
 
 ```ts
-// app.module.ts — add to imports[]
+// app.module.ts — afegir a imports[]
 import { DietsModule } from "./diets/diets.module";
 
 @Module({
   imports: [
-    // ... existing modules ...
-    DietsModule, // ← add here
+    // ... mòduls existents ...
+    DietsModule, // ← afegir aquí
   ],
 })
 export class AppModule {}
 ```
 
-### Available guards
+### Guards disponibles
 
-| Guard              | File                            | Usage                                     |
-| ------------------ | ------------------------------- | ----------------------------------------- |
-| `JwtAuthGuard`     | `auth/guards/jwt-auth.guard.ts` | Any authenticated user                    |
-| `CoachGuard`       | `auth/guards/coach.guard.ts`    | Exclusive to `role === 'COACH'`           |
-| `AuthGuard('jwt')` | passport                        | Equivalent to `JwtAuthGuard` (direct use) |
+| Guard              | Fitxer                          | Ús                                           |
+| ------------------ | ------------------------------- | -------------------------------------------- |
+| `JwtAuthGuard`     | `auth/guards/jwt-auth.guard.ts` | Qualsevol usuari autenticat                  |
+| `CoachGuard`       | `auth/guards/coach.guard.ts`    | Exclusiu per a `role === 'COACH'`            |
+| `AuthGuard('jwt')` | passport                        | Equivalent a `JwtAuthGuard` (ús directe)     |
 
 ---
 
-## 5. Front-end: How to Add Features
+## 5. Frontend: com afegir funcionalitats
 
-### Adding a complete new feature
+### Afegir una nova feature completa
 
-Suppose we want to add `diets`:
+Suposem que volem afegir `diets`:
 
 ```
 src/front/src/features/diets/
@@ -296,7 +296,7 @@ src/front/src/features/diets/
     └── dietService.ts
 ```
 
-### Service template (uses the `api` wrapper)
+### Plantilla de servei (usa el wrapper `api`)
 
 ```ts
 // features/diets/services/dietService.ts
@@ -321,9 +321,9 @@ export const dietService = {
 };
 ```
 
-> ⚠️ The `api` wrapper (from `@/shared/utils/api`) adds the JWT token automatically. Do not add it manually. If for some reason you use `axios` directly, you must add `{ headers: { Authorization: \`Bearer \${localStorage.getItem('token')}\` } }`.
+> ⚠️ El wrapper `api` (de `@/shared/utils/api`) afegeix el token JWT automàticament. No l'afegeixis manualment. Si per algun motiu uses `axios` directament, has d'afegir `{ headers: { Authorization: \`Bearer \${localStorage.getItem('token')}\` } }`.
 
-### Page template
+### Plantilla de pàgina
 
 ```tsx
 // features/diets/pages/CoachDietList.tsx
@@ -356,29 +356,29 @@ export default function CoachDietList() {
 }
 ```
 
-### Register the route in App.tsx
+### Registrar la ruta a App.tsx
 
 ```tsx
-// App.tsx — add the import and the <Route>
+// App.tsx — afegir l'import i la <Route>
 import CoachDietList from "@/features/diets/pages/CoachDietList";
 
-// Inside the <Routes> block, inside the appropriate <ProtectedRoute>:
+// Dins del bloc <Routes>, dins del <ProtectedRoute> adequat:
 <Route path="/diets" element={<CoachDietList />} />;
 ```
 
-### Add the sidebar entry (Layout.tsx)
+### Afegir l'entrada al sidebar (Layout.tsx)
 
 ```tsx
 // shared/layout/Layout.tsx
-import { Salad } from "lucide-react"; // ← choose the appropriate icon
+import { Salad } from "lucide-react"; // ← tria la icona adequada
 
 const coachNavItems = [
-  // ... existing items ...
+  // ... elements existents ...
   { to: "/diets", icon: Salad, label: t("nav.diets") },
 ];
 ```
 
-### Accessing the authenticated user
+### Accedir a l'usuari autenticat
 
 ```tsx
 import { useAuth } from "@/features/auth/context/AuthContext";
@@ -391,20 +391,20 @@ function MyComponent() {
 
 ---
 
-## 6. Authentication & Guards
+## 6. Autenticació i guards
 
-### How it works
+### Com funciona
 
-1. On login, the backend returns a JWT `access_token` and user data.
-2. The frontend stores `token`, `userRole`, `username`, `userId`, `coachId` in `localStorage`.
-3. `AuthContext` reads it on mount and exposes `user` to the entire component tree.
-4. The axios interceptor in `api.ts` adds `Authorization: Bearer <token>` to every request.
-5. If the backend returns `401`, the interceptor clears `localStorage` and redirects to `/login`.
+1. En iniciar sessió, el backend retorna un JWT `access_token` i dades de l'usuari.
+2. El frontend emmagatzema `token`, `userRole`, `username`, `userId`, `coachId` a `localStorage`.
+3. `AuthContext` els llegeix en muntar-se i exposa `user` a tot l'arbre de components.
+4. L'interceptor axios a `api.ts` afegeix `Authorization: Bearer <token>` a cada petició.
+5. Si el backend retorna `401`, l'interceptor neteja `localStorage` i redirigeix a `/login`.
 
 ### ProtectedRoute
 
 ```tsx
-// App.tsx — how a route is protected
+// App.tsx — com es protegeix una ruta
 <Route element={<ProtectedRoute allowedRoles={["COACH"]} />}>
   <Route path="/dashboard" element={<CoachDashboard />} />
 </Route>
@@ -413,7 +413,7 @@ function MyComponent() {
   <Route path="/client-home" element={<ClientDashboard />} />
 </Route>
 
-// For routes accessible by both roles:
+// Per a rutes accessibles per tots dos rols:
 <Route element={<ProtectedRoute allowedRoles={["COACH", "CLIENT"]} />}>
   <Route path="/diets" element={<CoachDietList />} />
 </Route>
@@ -423,70 +423,70 @@ function MyComponent() {
 
 ```tsx
 const { logout } = useAuth();
-// logout() clears localStorage + user state. The app redirects to /login automatically.
+// logout() neteja localStorage + estat de l'usuari. L'app redirigeix a /login automàticament.
 ```
 
 ---
 
-## 7. Database (Prisma)
+## 7. Base de dades (Prisma)
 
-### Schema location
+### Ubicació del schema
 
 ```
 src/back/prisma/schema.prisma
 ```
 
-### Main models and key fields
+### Models principals i camps clau
 
-| Model               | Key fields                                                  |
-| ------------------- | ----------------------------------------------------------- |
-| `User`              | `id`, `username`, `email`, `role` (COACH/CLIENT), `coachId` |
-| `Routine`           | `id`, `coachId`, `name`, `isPublic`                         |
-| `RoutineExercise`   | `routineId`, `exerciseId`, `sets`, `reps`, `rest`, `order`  |
-| `RoutineAssignment` | `routineId`, `clientId` (unique composite PK)               |
-| `ExerciseCatalog`   | `id`, `name`, `category`, `primaryMuscle[]`                 |
-| `Invitation`        | `id`, `coachId`, `code`, `status`, `targetClientId`         |
-| `ClientProfile`     | `clientId` (1:1 with User), `privateNotes`, `goals`         |
-| `P2PChatMessage`    | `senderId`, `receiverId`, `text`, `read`                    |
-| `LiveSession`       | `coachId`, `routineId`, `sessionCode`, `status`             |
+| Model               | Camps clau                                                          |
+| ------------------- | ------------------------------------------------------------------- |
+| `User`              | `id`, `username`, `email`, `role` (COACH/CLIENT), `coachId`         |
+| `Routine`           | `id`, `coachId`, `name`, `isPublic`                                 |
+| `RoutineExercise`   | `routineId`, `exerciseId`, `sets`, `reps`, `rest`, `order`          |
+| `RoutineAssignment` | `routineId`, `clientId` (PK compost únic)                           |
+| `ExerciseCatalog`   | `id`, `name`, `category`, `primaryMuscle[]`                         |
+| `Invitation`        | `id`, `coachId`, `code`, `status`, `targetClientId`                 |
+| `ClientProfile`     | `clientId` (1:1 amb User), `privateNotes`, `goals`                  |
+| `P2PChatMessage`    | `senderId`, `receiverId`, `text`, `read`                            |
+| `LiveSession`       | `coachId`, `routineId`, `sessionCode`, `status`                     |
 
-### How to create or modify entities
+### Com crear o modificar entitats
 
-1. Edit `schema.prisma`.
-2. Create the migration:
+1. Edita `schema.prisma`.
+2. Crea la migració:
    ```bash
    docker exec -it lw-backend sh
-   npx prisma migrate dev --name describe_the_change
+   npx prisma migrate dev --name descriu_el_canvi
    ```
-3. Regenerate the client:
+3. Regenera el client:
    ```bash
    npx prisma generate
    ```
-4. The Prisma client is injected via `PrismaService` in NestJS services:
+4. El client Prisma s'injecta via `PrismaService` als serveis NestJS:
 
    ```ts
    constructor(private prisma: PrismaService) {}
 
-   // Usage example
+   // Exemple d'ús
    const user = await this.prisma.user.findUnique({ where: { id } });
    ```
 
 ### Cascades
 
-`onDelete: Cascade` is configured for:
+`onDelete: Cascade` està configurat per a:
 
 - `RoutineExercise` → `Routine`
-- `RoutineAssignment` → `Routine` and `User`
+- `RoutineAssignment` → `Routine` i `User`
 - `ClientProfile` → `User`
-- Chat messages → `User` and `LiveSession`
+- Missatges de xat → `User` i `LiveSession`
 
-If you add new relations that depend on `User` or `Routine`, consider adding `onDelete: Cascade` to avoid data inconsistencies.
+Si afegeixes noves relacions que depenen de `User` o `Routine`, considera afegir `onDelete: Cascade` per evitar inconsistències de dades.
 
 ---
 
 ## 8. WebSockets
 
-### WS architecture
+### Arquitectura WS
 
 ```
 Client (socket.ts)  ──connect──►  EventsGateway (events.gateway.ts)
@@ -494,56 +494,56 @@ Client (socket.ts)  ──connect──►  EventsGateway (events.gateway.ts)
                                   RoomGateway (room.gateway.ts)
 ```
 
-### Front-end connection
+### Connexió al frontend
 
 ```ts
 // @/features/workout/services/socket.ts
-// The socket instance is a singleton. Import it directly:
+// La instància del socket és un singleton. Importa-la directament:
 import { socket } from "@/features/workout/services/socket";
 
-// Emit an event
+// Emetre un event
 socket.emit("join-room", { roomId: "abc" });
 
-// Listen to an event
+// Escoltar un event
 socket.on("room-state", (data) => { ... });
 
-// Always clean up listeners in the useEffect cleanup:
+// Neteja sempre els listeners a l'useEffect cleanup:
 useEffect(() => {
   socket.on("my-event", handler);
-  return () => { socket.off("my-event", handler); }; // ← mandatory
+  return () => { socket.off("my-event", handler); }; // ← obligatori
 }, []);
 ```
 
-### Registering the user on the socket (already handled in App.tsx)
+### Registrar l'usuari al socket (ja gestionat a App.tsx)
 
 ```ts
-// App.tsx already does:
+// App.tsx ja fa:
 socket.emit("register-user", user.id);
-// This allows the backend to send events targeted at a specific user.
+// Això permet al backend enviar events dirigits a un usuari específic.
 ```
 
-### P2P notifications (existing pattern)
+### Notificacions P2P (patró existent)
 
-The backend emits `p2p-message-notification` when a P2P message arrives. `App.tsx` listens to it and calls `addNotification()` from `NotificationContext`. For new notification types, follow the same pattern.
+El backend emet `p2p-message-notification` quan arriba un missatge P2P. `App.tsx` l'escolta i crida `addNotification()` de `NotificationContext`. Per a nous tipus de notificació, segueix el mateix patró.
 
 ---
 
-## 9. Internationalisation (i18n)
+## 9. Internacionalització (i18n)
 
-### Supported languages
+### Idiomes suportats
 
-`ca` (Catalan, default), `es` (Spanish), `en` (English).
+`ca` (Català, per defecte), `es` (Castellà), `en` (Anglès).
 
-### Translation files
+### Fitxers de traducció
 
 ```
 src/front/src/i18n/locales/
-├── ca.json   ← Catalan (default)
+├── ca.json   ← Català (per defecte)
 ├── es.json
 └── en.json
 ```
 
-### Usage in components
+### Ús als components
 
 ```tsx
 import { useTranslation } from "react-i18next";
@@ -554,10 +554,10 @@ function MyComponent() {
 }
 ```
 
-### Rule: all user-visible strings must be in the translation files
+### Regla: totes les cadenes visibles per l'usuari han d'estar als fitxers de traducció
 
 ```json
-// ca.json — add new keys
+// ca.json — afegir noves claus
 {
   "diets": {
     "title": "Dietes",
@@ -567,15 +567,15 @@ function MyComponent() {
 }
 ```
 
-Copy the same key to `es.json` and `en.json` with the corresponding translation.
+Copia la mateixa clau a `es.json` i `en.json` amb la traducció corresponent.
 
 ---
 
-## 10. Styles (Tailwind CSS 4)
+## 10. Estils (Tailwind CSS 4)
 
-- Use **only Tailwind classes**. No `style={{}}` inline or new `.css` files.
-- The theme (colors, dark mode) is managed via `ThemeContext`, which adds/removes the `dark` class on `<html>`.
-- Standard card structure:
+- Usa **només classes Tailwind**. Sense `style={{}}` inline ni nous fitxers `.css`.
+- El tema (colors, mode fosc) es gestiona via `ThemeContext`, que afegeix/elimina la classe `dark` a `<html>`.
+- Estructura estàndard de targeta:
   ```tsx
   <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow flex flex-col gap-3">
     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">...</h2>
@@ -585,13 +585,13 @@ Copy the same key to `es.json` and `en.json` with the corresponding translation.
     </div>
   </div>
   ```
-- To align buttons at the **bottom** of a variable-height card: `flex flex-col` on the container + `flex-1` on the body + `mt-auto` on the buttons.
+- Per alinear botons al **final** d'una targeta d'alçada variable: `flex flex-col` al contenidor + `flex-1` al cos + `mt-auto` als botons.
 
 ---
 
-## 11. Icons
+## 11. Icones
 
-Use **`lucide-react`** as the first option:
+Usa **`lucide-react`** com a primera opció:
 
 ```tsx
 import { Dumbbell, ClipboardList, Users, LayoutDashboard } from "lucide-react";
@@ -599,22 +599,22 @@ import { Dumbbell, ClipboardList, Users, LayoutDashboard } from "lucide-react";
 <ClipboardList className="w-5 h-5" />;
 ```
 
-Custom icons (not available in lucide) are at `@/shared/components/Icons.tsx`. Add them there if needed.
+Les icones personalitzades (no disponibles a lucide) estan a `@/shared/components/Icons.tsx`. Afegeix-les allà si cal.
 
-**Current sidebar icons:**
+**Icones actuals del sidebar:**
 
-| Section              | Icon                                | Role           |
-| -------------------- | ----------------------------------- | -------------- |
-| Dashboard / Routines | `LayoutDashboard` / `ClipboardList` | COACH / CLIENT |
-| Clients              | `Users`                             | COACH          |
-| My coach             | `UserCheck`                         | CLIENT         |
-| Train with friend    | `Swords`                            | CLIENT         |
+| Secció                  | Icona                               | Rol            |
+| ----------------------- | ----------------------------------- | -------------- |
+| Dashboard / Rutines     | `LayoutDashboard` / `ClipboardList` | COACH / CLIENT |
+| Clients                 | `Users`                             | COACH          |
+| El meu coach            | `UserCheck`                         | CLIENT         |
+| Entrenar amb amic       | `Swords`                            | CLIENT         |
 
 ---
 
-## 12. Common Patterns
+## 12. Patrons comuns
 
-### Fetching data in a page
+### Obtenir dades en una pàgina
 
 ```tsx
 const [data, setData] = useState<MyType[]>([]);
@@ -633,28 +633,26 @@ if (isLoading) return <LoadingScreen />;
 if (error) return <p className="text-red-500">{error}</p>;
 ```
 
-````
-
-### Toast (pop-up notification)
+### Toast (notificació emergent)
 
 ```tsx
 import { useToast } from "@/shared/hooks/useToast";
 
 const { showToast } = useToast();
 
-// Usage
-showToast("Operation completed", "success");
-showToast("Unexpected error", "error");
-````
+// Ús
+showToast("Operació completada", "success");
+showToast("Error inesperat", "error");
+```
 
-### Confirmation modal
+### Modal de confirmació
 
 ```tsx
 import ConfirmModal from "@/shared/components/ConfirmModal";
 
 <ConfirmModal
   isOpen={showConfirm}
-  message="Are you sure you want to delete this?"
+  message="Estàs segur que vols eliminar això?"
   onConfirm={handleDelete}
   onCancel={() => setShowConfirm(false)}
 />;
@@ -662,62 +660,62 @@ import ConfirmModal from "@/shared/components/ConfirmModal";
 
 ---
 
-## 13. Anti-patterns — What NOT to Do
+## 13. Anti-patrons — Què NO fer
 
-| Anti-pattern                                                          | Why it is problematic                                | Alternative                                             |
-| --------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------- |
-| Importing between features (`features/a` imports from `features/b`)   | Violates the dependency rule, creates tight coupling | Move shared code to `shared/`                           |
-| Using `import { FC } from "react"` without `type`                     | Fails with `verbatimModuleSyntax`                    | `import { type FC } from "react"`                       |
-| Placing dynamic routes (`:id`) before static ones in a controller     | NestJS/Express treats the static name as an ID       | Static routes always first                              |
-| Calling `localStorage.getItem('token')` manually in components        | Breaks authentication encapsulation                  | `useAuth().user.token` or let the interceptor handle it |
-| Adding inline styles (`style={{color: 'red'}}`)                       | Inconsistent with the design system                  | Equivalent Tailwind classes                             |
-| Creating new services that don't use `api.ts` (without justification) | Loses automatic token management and 401 handling    | Use `api` from `@/shared/utils/api`                     |
-| Dead code or unused variables in TypeScript                           | Build error (`TS6133`)                               | Remove or use `_` prefix if it's a required parameter   |
-| Modifying `schema.prisma` without creating a migration                | DB and schema become out of sync                     | `npx prisma migrate dev --name <name>`                  |
-| Adding a NestJS module without registering it in `AppModule`          | The module does not exist at runtime                 | Add to `imports[]` in `AppModule`                       |
-| Hardcoded strings in components (`<p>Loading...</p>`)                 | Does not work in other languages                     | `t("common.loading")` with the key in all i18n files    |
+| Anti-patró                                                            | Per què és problemàtic                               | Alternativa                                              |
+| --------------------------------------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------- |
+| Importar entre features (`features/a` importa de `features/b`)        | Viola la regla de dependències, crea acoblament fort | Mou el codi compartit a `shared/`                        |
+| Usar `import { FC } from "react"` sense `type`                        | Falla amb `verbatimModuleSyntax`                     | `import { type FC } from "react"`                        |
+| Posar rutes dinàmiques (`:id`) abans de les estàtiques en un controlador | NestJS/Express tracta el nom estàtic com un ID      | Les rutes estàtiques sempre primer                       |
+| Cridar `localStorage.getItem('token')` manualment als components      | Trenca l'encapsulació de l'autenticació              | `useAuth().user.token` o deixa que ho gestioni l'interceptor |
+| Afegir estils inline (`style={{color: 'red'}}`)                       | Inconsistent amb el sistema de disseny               | Classes Tailwind equivalents                             |
+| Crear nous serveis que no usen `api.ts` (sense justificació)          | Perd la gestió automàtica de token i del 401         | Usa `api` de `@/shared/utils/api`                        |
+| Codi mort o variables no usades en TypeScript                         | Error de build (`TS6133`)                            | Elimina o usa el prefix `_` si és un paràmetre necessari |
+| Modificar `schema.prisma` sense crear una migració                    | La BD i el schema queden desincronitzats             | `npx prisma migrate dev --name <nom>`                    |
+| Afegir un mòdul NestJS sense registrar-lo a `AppModule`               | El mòdul no existeix en temps d'execució             | Afegeix-lo a `imports[]` d'`AppModule`                   |
+| Cadenes hardcoded als components (`<p>Loading...</p>`)                | No funciona en altres idiomes                        | `t("common.loading")` amb la clau als tres fitxers i18n  |
 
 ---
 
-## 14. Final Verification
+## 14. Verificació final
 
-Before considering any implementation complete, verify:
+Abans de considerar qualsevol implementació completa, verifica:
 
-### Front-end
+### Frontend
 
 ```bash
 cd src/front
 
-# 1. TypeScript type check (without emitting files)
+# 1. Comprovació de tipus TypeScript (sense emetre fitxers)
 npx tsc --noEmit
 
-# 2. Production build (must finish without errors)
+# 2. Build de producció (ha de finalitzar sense errors)
 npm run build
 
 # 3. Linting
 npm run lint
 ```
 
-### Back-end
+### Backend
 
 ```bash
 cd src/back
 
-# 1. Validate Prisma schema
+# 1. Validar el schema Prisma
 docker exec -it lw-backend npx prisma validate
 
-# 2. TypeScript build
+# 2. Build TypeScript
 npm run build
 ```
 
-### Conceptual checklist
+### Llista de verificació conceptual
 
-- [ ] All imports use `@/` (front-end)
-- [ ] No cross-feature imports (front-end)
-- [ ] `import type` for types (front-end)
-- [ ] New route added to `App.tsx` and to the sidebar if applicable
-- [ ] New module registered in `AppModule` (back-end)
-- [ ] Static routes before dynamic ones (back-end)
-- [ ] New Prisma migration if the schema was modified
-- [ ] Translations added to all 3 files (ca, es, en)
-- [ ] `tsc --noEmit` and `npm run build` pass without errors
+- [ ] Tots els imports usen `@/` (frontend)
+- [ ] Cap import entre features (frontend)
+- [ ] `import type` per a tipus (frontend)
+- [ ] Nova ruta afegida a `App.tsx` i al sidebar si correspon
+- [ ] Nou mòdul registrat a `AppModule` (backend)
+- [ ] Rutes estàtiques abans de les dinàmiques (backend)
+- [ ] Nova migració Prisma si el schema s'ha modificat
+- [ ] Traduccions afegides als 3 fitxers (ca, es, en)
+- [ ] `tsc --noEmit` i `npm run build` passen sense errors

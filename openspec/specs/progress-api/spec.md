@@ -1,138 +1,138 @@
-# Spec: Progress API
+# Spec: API de Progrés
 
-## Purpose
+## Propòsit
 
-Provides REST endpoints for querying and aggregating workout progress data. Coaches can review their clients' activity summaries and session histories. Clients can view their own session history and aggregated statistics. Session completion metrics are persisted when a session transitions to COMPLETED status.
+Proporciona endpoints REST per consultar i agregar dades de progrés d'entrenament. Els coaches poden revisar els resums d'activitat i l'historial de sessions dels seus clients. Els clients poden veure el seu propi historial de sessions i estadístiques agregades. Les mètriques de finalització de sessió es persisteixen quan una sessió transiciona a l'estat COMPLETED.
 
-## Requirements
+## Requisits
 
-### Requirement: Coach can list clients with activity summary
-The system SHALL provide an endpoint `GET /progress/coach/clients` that returns a list of the authenticated coach's clients, each with the date of their last completed session and total number of completed sessions.
+### Requisit: El coach pot llistar clients amb resum d'activitat
+El sistema HA DE proporcionar un endpoint `GET /progress/coach/clients` que retorni una llista dels clients del coach autenticat, cadascun amb la data de la seva última sessió completada i el nombre total de sessions completades.
 
-#### Scenario: Coach retrieves client activity list
-- **WHEN** a coach sends `GET /progress/coach/clients` with a valid JWT
-- **THEN** the system returns HTTP 200 with an array of `{ clientId, username, lastSessionAt, totalSessions }` for each client whose sessions have `coachId` matching the coach's id
+#### Escenari: El coach obté la llista d'activitat de clients
+- **QUAN** un coach envia `GET /progress/coach/clients` amb un JWT vàlid
+- **ALESHORES** el sistema retorna HTTP 200 amb un array de `{ clientId, username, lastSessionAt, totalSessions }` per a cada client les sessions del qual tenen `coachId` que coincideix amb l'id del coach
 
-#### Scenario: Empty list when coach has no sessions
-- **WHEN** a coach with no completed sessions calls `GET /progress/coach/clients`
-- **THEN** the system returns HTTP 200 with `{ clients: [] }`
+#### Escenari: Llista buida quan el coach no té sessions
+- **QUAN** un coach sense sessions completades crida `GET /progress/coach/clients`
+- **ALESHORES** el sistema retorna HTTP 200 amb `{ clients: [] }`
 
-#### Scenario: Unauthenticated request is rejected
-- **WHEN** a request is made to `GET /progress/coach/clients` without a JWT
-- **THEN** the system returns HTTP 401
+#### Escenari: La petició no autenticada és rebutjada
+- **QUAN** es fa una petició a `GET /progress/coach/clients` sense JWT
+- **ALESHORES** el sistema retorna HTTP 401
 
-#### Scenario: Client role cannot access coach endpoint
-- **WHEN** a user with role CLIENT calls `GET /progress/coach/clients` with a valid JWT
-- **THEN** the system returns HTTP 403
+#### Escenari: El rol CLIENT no pot accedir a l'endpoint del coach
+- **QUAN** un usuari amb rol CLIENT crida `GET /progress/coach/clients` amb un JWT vàlid
+- **ALESHORES** el sistema retorna HTTP 403
 
-#### Scenario: Testability — Jest unit
-- **WHEN** `ProgressService.getCoachClientsSummary(coachId)` is called with a mocked `PrismaService` that returns two `LiveSession` groups
-- **THEN** the method returns an array of two `CoachClientSummaryDto` with correct `totalSessions` counts
-
----
-
-### Requirement: Coach can view a client's session history
-The system SHALL provide an endpoint `GET /progress/coach/client/:clientId` that returns the paginated list of completed sessions for a specific client of the authenticated coach, including routine name, completion date, completion percentage, and completed sets.
-
-#### Scenario: Coach retrieves session history for a valid client
-- **WHEN** a coach sends `GET /progress/coach/client/42` and client 42 belongs to that coach
-- **THEN** the system returns HTTP 200 with `{ sessions: [{ id, routineName, completedAt, completionPercentage, completedSets }] }` ordered by `completedAt` descending
-
-#### Scenario: Client with no completed sessions returns empty list
-- **WHEN** the client has sessions with status PENDING or ACTIVE only
-- **THEN** the system returns HTTP 200 with `{ sessions: [] }`
-
-#### Scenario: Coach requests history of a foreign client
-- **WHEN** the `clientId` does not belong to the authenticated coach
-- **THEN** the system returns HTTP 404
-
-#### Scenario: Unauthenticated request is rejected
-- **WHEN** the request has no JWT
-- **THEN** the system returns HTTP 401
-
-#### Scenario: Client role cannot access this endpoint
-- **WHEN** a CLIENT-role JWT is used
-- **THEN** the system returns HTTP 403
-
-#### Scenario: Testability — Jest unit
-- **WHEN** `ProgressService.getClientSessionHistory(coachId, clientId)` is called and the mocked Prisma returns no sessions for that coachId
-- **THEN** the method throws `NotFoundException`
+#### Escenari: Testabilitat — test unitari Jest
+- **QUAN** `ProgressService.getCoachClientsSummary(coachId)` es crida amb un `PrismaService` mockat que retorna dos grups de `LiveSession`
+- **ALESHORES** el mètode retorna un array de dos `CoachClientSummaryDto` amb els comptes de `totalSessions` correctes
 
 ---
 
-### Requirement: Client can view their own session history
-The system SHALL provide an endpoint `GET /progress/client/sessions` that returns the authenticated client's own completed sessions (both solo and co-op), including routine name, completion date, and completion percentage.
+### Requisit: El coach pot veure l'historial de sessions d'un client
+El sistema HA DE proporcionar un endpoint `GET /progress/coach/client/:clientId` que retorni la llista paginada de sessions completades per a un client específic del coach autenticat, incloent el nom de la rutina, la data de finalització, el percentatge de compleció i les sèries completades.
 
-#### Scenario: Client retrieves their session list
-- **WHEN** a client sends `GET /progress/client/sessions` with a valid JWT
-- **THEN** the system returns HTTP 200 with `{ sessions: [{ id, routineName, completedAt, completionPercentage }] }` ordered by `completedAt` descending
+#### Escenari: El coach obté l'historial de sessions per a un client vàlid
+- **QUAN** un coach envia `GET /progress/coach/client/42` i el client 42 pertany a aquell coach
+- **ALESHORES** el sistema retorna HTTP 200 amb `{ sessions: [{ id, routineName, completedAt, completionPercentage, completedSets }] }` ordenat per `completedAt` descendent
 
-#### Scenario: Solo sessions are included
-- **WHEN** the client has completed solo sessions (LiveSession where coachId IS NULL and routine is assigned to them)
-- **THEN** those sessions appear in the response
+#### Escenari: Client sense sessions completades retorna llista buida
+- **QUAN** el client té sessions amb estat PENDING o ACTIVE únicament
+- **ALESHORES** el sistema retorna HTTP 200 amb `{ sessions: [] }`
 
-#### Scenario: Co-op sessions are included
-- **WHEN** the client appears as a LiveParticipant in a COMPLETED LiveSession
-- **THEN** that session also appears in the response
+#### Escenari: El coach sol·licita l'historial d'un client aliè
+- **QUAN** el `clientId` no pertany al coach autenticat
+- **ALESHORES** el sistema retorna HTTP 404
 
-#### Scenario: PENDING or ACTIVE sessions are excluded
-- **WHEN** the client has ongoing sessions not yet COMPLETED
-- **THEN** those sessions do NOT appear in the history list
+#### Escenari: La petició no autenticada és rebutjada
+- **QUAN** la petició no té JWT
+- **ALESHORES** el sistema retorna HTTP 401
 
-#### Scenario: Unauthenticated request is rejected
-- **WHEN** no JWT is provided
-- **THEN** the system returns HTTP 401
+#### Escenari: El rol CLIENT no pot accedir a aquest endpoint
+- **QUAN** s'usa un JWT amb rol CLIENT
+- **ALESHORES** el sistema retorna HTTP 403
 
-#### Scenario: Coach role cannot access client session history
-- **WHEN** a COACH-role JWT is used
-- **THEN** the system returns HTTP 403
-
-#### Scenario: Testability — manual QA
-- **WHEN** a test client completes a solo workout via the UI and then calls `GET /progress/client/sessions`
-- **THEN** the completed session appears at the top of the returned list with `completedAt` set
+#### Escenari: Testabilitat — test unitari Jest
+- **QUAN** `ProgressService.getClientSessionHistory(coachId, clientId)` es crida i el Prisma mockat no retorna sessions per a aquell coachId
+- **ALESHORES** el mètode llança `NotFoundException`
 
 ---
 
-### Requirement: Client can view aggregated workout statistics
-The system SHALL provide an endpoint `GET /progress/client/stats` that returns aggregated totals for the authenticated client: total completed sessions, total completed sets, and total completed exercises.
+### Requisit: El client pot veure el seu propi historial de sessions
+El sistema HA DE proporcionar un endpoint `GET /progress/client/sessions` que retorni les sessions completades pròpies del client autenticat (tant en solitari com cooperatives), incloent el nom de la rutina, la data de finalització i el percentatge de compleció.
 
-#### Scenario: Client with completed sessions gets real stats
-- **WHEN** a client sends `GET /progress/client/stats` and has 5 completed sessions
-- **THEN** the system returns HTTP 200 with `{ totalSessions: 5, totalSets: <sum>, totalExercises: <sum> }`
+#### Escenari: El client obté la seva llista de sessions
+- **QUAN** un client envia `GET /progress/client/sessions` amb un JWT vàlid
+- **ALESHORES** el sistema retorna HTTP 200 amb `{ sessions: [{ id, routineName, completedAt, completionPercentage }] }` ordenat per `completedAt` descendent
 
-#### Scenario: Client with no completed sessions gets zeros
-- **WHEN** the client has no COMPLETED sessions
-- **THEN** the system returns HTTP 200 with `{ totalSessions: 0, totalSets: 0, totalExercises: 0 }`
+#### Escenari: Les sessions en solitari s'inclouen
+- **QUAN** el client té sessions en solitari completades (LiveSession on coachId ÉS NULL i la rutina li és assignada)
+- **ALESHORES** aquelles sessions apareixen a la resposta
 
-#### Scenario: Null completion fields are counted as zero
-- **WHEN** some sessions predate the schema change and have null `completedSets` / `completedExercises`
-- **THEN** those nulls are treated as 0 in the aggregation (not surfaced as null in the response)
+#### Escenari: Les sessions cooperatives s'inclouen
+- **QUAN** el client apareix com a LiveParticipant en una LiveSession COMPLETED
+- **ALESHORES** aquella sessió també apareix a la resposta
 
-#### Scenario: Unauthenticated request is rejected
-- **WHEN** no JWT is provided
-- **THEN** the system returns HTTP 401
+#### Escenari: Les sessions PENDING o ACTIVE s'exclouen
+- **QUAN** el client té sessions en curs no COMPLETED
+- **ALESHORES** aquelles sessions NO apareixen a la llista d'historial
 
-#### Scenario: Coach role cannot access client stats
-- **WHEN** a COACH-role JWT is used
-- **THEN** the system returns HTTP 403
+#### Escenari: La petició no autenticada és rebutjada
+- **QUAN** no es proporciona JWT
+- **ALESHORES** el sistema retorna HTTP 401
 
-#### Scenario: Testability — Jest unit
-- **WHEN** `ProgressService.getClientStats(clientId)` is called with a mocked Prisma that returns sessions with mixed null/non-null `completedSets`
-- **THEN** the method returns `{ totalSessions, totalSets, totalExercises }` with nulls treated as 0
+#### Escenari: El rol COACH no pot accedir a l'historial de sessions del client
+- **QUAN** s'usa un JWT amb rol COACH
+- **ALESHORES** el sistema retorna HTTP 403
+
+#### Escenari: Testabilitat — QA manual
+- **QUAN** un client de prova completa un entrenament en solitari via la UI i després crida `GET /progress/client/sessions`
+- **ALESHORES** la sessió completada apareix al capdamunt de la llista retornada amb `completedAt` establert
 
 ---
 
-### Requirement: Session completion persists summary metrics
-The system SHALL persist `completionPercentage`, `completedSets`, and `completedExercises` on `LiveSession` when a session transitions to COMPLETED status, so history endpoints can return accurate data.
+### Requisit: El client pot veure estadístiques d'entrenament agregades
+El sistema HA DE proporcionar un endpoint `GET /progress/client/stats` que retorni els totals agregats del client autenticat: total de sessions completades, total de sèries completades i total d'exercicis completats.
 
-#### Scenario: Completion payload is saved on session complete
-- **WHEN** `updateSessionStatus` is called with `status = COMPLETED` and a body containing `{ completionPercentage: 85, completedSets: 12, completedExercises: 4 }`
-- **THEN** the `LiveSession` row is updated with those values alongside `status = COMPLETED` and `completedAt = now()`
+#### Escenari: Client amb sessions completades obté estadístiques reals
+- **QUAN** un client envia `GET /progress/client/stats` i té 5 sessions completades
+- **ALESHORES** el sistema retorna HTTP 200 amb `{ totalSessions: 5, totalSets: <suma>, totalExercises: <suma> }`
 
-#### Scenario: Missing completion fields default to null
-- **WHEN** `updateSessionStatus` is called with `status = COMPLETED` and no completion stats in the body
-- **THEN** the fields remain null and the session is still marked COMPLETED
+#### Escenari: Client sense sessions completades obté zeros
+- **QUAN** el client no té sessions COMPLETED
+- **ALESHORES** el sistema retorna HTTP 200 amb `{ totalSessions: 0, totalSets: 0, totalExercises: 0 }`
 
-#### Scenario: Testability — Jest unit
-- **WHEN** `SessionService.updateSessionStatus` is invoked with completion stats and a mocked Prisma
-- **THEN** the mocked `liveSession.update` is called with `completionPercentage`, `completedSets`, and `completedExercises` in the `data` payload
+#### Escenari: Els camps de compleció null es comptabilitzen com a zero
+- **QUAN** algunes sessions anteriors al canvi d'schema tenen `completedSets` / `completedExercises` null
+- **ALESHORES** aquells nulls es tracten com a 0 en l'agregació (no s'exposen com a null a la resposta)
+
+#### Escenari: La petició no autenticada és rebutjada
+- **QUAN** no es proporciona JWT
+- **ALESHORES** el sistema retorna HTTP 401
+
+#### Escenari: El rol COACH no pot accedir a les stats del client
+- **QUAN** s'usa un JWT amb rol COACH
+- **ALESHORES** el sistema retorna HTTP 403
+
+#### Escenari: Testabilitat — test unitari Jest
+- **QUAN** `ProgressService.getClientStats(clientId)` es crida amb un Prisma mockat que retorna sessions amb `completedSets` mixt null/no-null
+- **ALESHORES** el mètode retorna `{ totalSessions, totalSets, totalExercises }` amb els nulls tractats com a 0
+
+---
+
+### Requisit: La finalització de sessió persisteix les mètriques de resum
+El sistema HA DE persistir `completionPercentage`, `completedSets` i `completedExercises` a `LiveSession` quan una sessió transiciona a l'estat COMPLETED, perquè els endpoints d'historial puguin retornar dades precises.
+
+#### Escenari: El payload de finalització es desa en completar la sessió
+- **QUAN** `updateSessionStatus` es crida amb `status = COMPLETED` i un cos que conté `{ completionPercentage: 85, completedSets: 12, completedExercises: 4 }`
+- **ALESHORES** la fila `LiveSession` s'actualitza amb aquells valors juntament amb `status = COMPLETED` i `completedAt = now()`
+
+#### Escenari: Els camps de compleció absents queden com a null
+- **QUAN** `updateSessionStatus` es crida amb `status = COMPLETED` i sense stats de compleció al cos
+- **ALESHORES** els camps romanen null i la sessió queda marcada com COMPLETED igualment
+
+#### Escenari: Testabilitat — test unitari Jest
+- **QUAN** `SessionService.updateSessionStatus` s'invoca amb stats de compleció i un Prisma mockat
+- **ALESHORES** el `liveSession.update` mockat es crida amb `completionPercentage`, `completedSets` i `completedExercises` al payload `data`
