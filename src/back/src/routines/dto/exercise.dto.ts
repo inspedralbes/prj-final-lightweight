@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsInt, Min, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsInt, Min, IsOptional, IsArray } from 'class-validator';
 
 export class ExerciseDto {
   @IsString()
@@ -24,4 +24,9 @@ export class ExerciseDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
 }

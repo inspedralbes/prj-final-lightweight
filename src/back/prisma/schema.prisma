@@ -71,6 +71,7 @@ model ExerciseCatalog {
   mechanic         String?
   primaryMuscle    String[]
   secondaryMuscle  String[]
+  images           String[]          @default([])
   routineExercises RoutineExercise[]
 
   @@map("exercise_catalog")
