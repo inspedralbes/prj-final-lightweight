@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
@@ -17,6 +18,8 @@ import { ClientsModule } from './clients/clients.module';
 import { ChatModule } from './chat/chat.module';
 import { ProgressModule } from './progress/progress.module';
 import { TestingModule } from './testing/testing.module';
+import { FriendInvitationsModule } from './friend-invitations/friend-invitations.module';
+import { UsersModule } from './users/users.module';
 
 const e2eTestingEnabled =
   process.env.E2E_TESTING === 'true' && process.env.NODE_ENV !== 'production';
@@ -26,6 +29,7 @@ const e2eTestingEnabled =
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
     PrismaModule,
     AuthModule,
@@ -37,6 +41,8 @@ const e2eTestingEnabled =
     ClientsModule,
     ChatModule,
     ProgressModule,
+    FriendInvitationsModule,
+    UsersModule,
     EventsModule,
     ...(e2eTestingEnabled ? [TestingModule] : []),
   ],

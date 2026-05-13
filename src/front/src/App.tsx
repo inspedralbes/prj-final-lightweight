@@ -171,6 +171,12 @@ const AppContent = () => {
       );
     });
 
+    socket.on("friend-invite:notify", (payload: { inviterId: number; inviterUsername?: string; invitationId: number }) => {
+      if (!user) return;
+      console.log("[Friend Invite Notification]", payload);
+      window.dispatchEvent(new CustomEvent("friend-invite:notify", { detail: payload }));
+    });
+
     // Registrar el usuario con su ID (también emitir cuando cambie user)
     if (user) {
       console.log("[Socket] emitting register-user for", user.id);
@@ -224,6 +230,7 @@ const AppContent = () => {
       socket.off("connect");
       socket.off("disconnect");
       socket.off("p2p-message-notification");
+      socket.off("friend-invite:notify");
       socket.off("video-call-invite");
       socket.off("video-call-end");
     };

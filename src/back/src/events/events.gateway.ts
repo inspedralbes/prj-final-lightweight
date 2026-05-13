@@ -11,6 +11,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Inject } from '@nestjs/common';
 import { ChatService } from '../chat/chat.service';
+import { PresenceService } from '../presence/presence.service';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -27,10 +28,20 @@ export class EventsGateway
   @WebSocketServer()
   server: Server;
 
-  private userSockets: Map<number, string> = new Map(); // userId -> socketId
+  private userSockets: Map<number, Set<string>> = new Map(); // userId -> socketIds
   private userOpenChats: Map<number, Set<string>> = new Map(); // userId -> set of roomIds currently open
 
-  constructor(private chatService: ChatService) {}
+  constructor(
+    private chatService: ChatService,
+    private presenceService: PresenceService,
+  ) {}
+
+  private getFirstSocketId(userId: number): string | null {
+    const sockets = this.userSockets.get(userId);
+    if (!sockets || sockets.size === 0) return null;
+    return sockets.values().next().value;
+  }
+
 
   afterInit(server: Server) {
     console.log('✅ Socket Gateway inicializado');
@@ -46,10 +57,15 @@ export class EventsGateway
 
   handleDisconnect(client: Socket) {
     console.log(`❌ Cliente desconectado: ${client.id}`);
-    // Remover del mapa de usuarios
-    for (const [userId, socketId] of this.userSockets.entries()) {
-      if (socketId === client.id) {
-        this.userSockets.delete(userId);
+    for (const [userId, socketIds] of this.userSockets.entries()) {
+      if (socketIds.has(client.id)) {
+        socketIds.delete(client.id);
+        if (socketIds.size === 0) {
+          this.userSockets.delete(userId);
+        } else {
+          this.userSockets.set(userId, socketIds);
+        }
+        this.presenceService.removeSocket(userId, client.id);
         // limpiar chats abiertos de este usuario
         this.userOpenChats.delete(userId);
         break;
@@ -64,7 +80,11 @@ export class EventsGateway
   ) {
     const id = Number(userId);
     if (!Number.isNaN(id)) {
-      this.userSockets.set(id, client.id);
+      const sockets = this.userSockets.get(id) ?? new Set<string>();
+      sockets.add(client.id);
+      this.userSockets.set(id, sockets);
+      this.presenceService.addSocket(id, client.id);
+      client.join(`user:${id}`);
       console.log(`[Auth] Usuario ${id} registrado con socket ${client.id}`);
     } else {
       console.warn(
@@ -97,7 +117,7 @@ export class EventsGateway
 
     // Notificar al otro usuario (si está conectado) del estado
     if (otherUserId) {
-      const otherSocketId = this.userSockets.get(otherUserId);
+      const otherSocketId = this.getFirstSocketId(otherUserId);
       if (otherSocketId) {
         const otherHasChatOpen =
           this.userOpenChats.get(otherUserId)?.has(roomId) || false;
@@ -146,7 +166,7 @@ export class EventsGateway
 
     // Notificar al otro usuario del cambio de estado
     if (otherUserId) {
-      const otherSocketId = this.userSockets.get(otherUserId);
+      const otherSocketId = this.getFirstSocketId(otherUserId);
       if (otherSocketId) {
         const otherHasChatOpen =
           this.userOpenChats.get(otherUserId)?.has(roomId) || false;
@@ -287,7 +307,7 @@ export class EventsGateway
       const senderUsername = message.sender?.username || 'Unknown';
 
       // Si el receptor está conectado, enviarle mensaje y posiblemente notificación
-      const receiverSocketId = this.userSockets.get(recvId);
+      const receiverSocketId = this.getFirstSocketId(recvId);
       const roomId = `chat_client_${recvId}`;
       const receiverOpenRooms = this.userOpenChats.get(recvId);
       const receiverHasThisChatOpen = receiverOpenRooms
@@ -341,7 +361,7 @@ export class EventsGateway
       roomId: string;
     },
   ) {
-    const calleeSocketId = this.userSockets.get(Number(payload.calleeId));
+    const calleeSocketId = this.getFirstSocketId(Number(payload.calleeId));
     if (calleeSocketId) {
       this.server.to(calleeSocketId).emit('video-call-invite', payload);
       // Confirm to caller that the invite was delivered
@@ -370,7 +390,7 @@ export class EventsGateway
     @MessageBody()
     payload: { callerId: number; calleeId: number; roomId: string },
   ) {
-    const callerSocketId = this.userSockets.get(Number(payload.callerId));
+    const callerSocketId = this.getFirstSocketId(Number(payload.callerId));
     if (callerSocketId) {
       this.server.to(callerSocketId).emit('video-call-accept', payload);
       console.log(
@@ -385,7 +405,7 @@ export class EventsGateway
     @MessageBody()
     payload: { callerId: number; calleeId: number },
   ) {
-    const callerSocketId = this.userSockets.get(Number(payload.callerId));
+    const callerSocketId = this.getFirstSocketId(Number(payload.callerId));
     if (callerSocketId) {
       this.server.to(callerSocketId).emit('video-call-reject', payload);
       console.log(
@@ -400,7 +420,7 @@ export class EventsGateway
     @MessageBody()
     payload: { fromUserId: number; toUserId: number },
   ) {
-    const toSocketId = this.userSockets.get(Number(payload.toUserId));
+    const toSocketId = this.getFirstSocketId(Number(payload.toUserId));
     if (toSocketId) {
       this.server.to(toSocketId).emit('video-call-end', payload);
       console.log(
@@ -419,7 +439,7 @@ export class EventsGateway
       invitationId: number;
     },
   ) {
-    const socketId = this.userSockets.get(clientId);
+    const socketId = this.getFirstSocketId(clientId);
     if (socketId) {
       this.server.to(socketId).emit('coach-invitation', payload);
       console.log(
