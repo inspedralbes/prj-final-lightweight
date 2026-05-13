@@ -1,6 +1,16 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+  Query,
+} from '@nestjs/common';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -16,11 +26,31 @@ export class AuthController {
   }
 
   @Post('login')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async login(@Body() loginDto: LoginDto) {
     return await this.authService.login(loginDto);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(@Request() req: { user: { userId: number } }) {
+    await this.authService.logout(req.user.userId);
+    return { message: 'Logged out' };
+  }
+
+  // Called via navigator.sendBeacon on tab/window close.
+  // Token passed as ?t= query param since sendBeacon cannot set headers.
+  @Post('logout-beacon')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logoutBeacon(@Query('t') token: string) {
+    if (token) {
+      await this.authService.logoutByToken(token);
+    }
+  }
+
   @Post('forgot-password')
+  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.forgotPassword(dto);

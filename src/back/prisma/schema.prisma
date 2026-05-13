@@ -13,8 +13,9 @@ model User {
   email        String   @unique
   passwordHash String   @map("password_hash")
   role         UserRole
-  coachId      Int?     @map("coach_id")
-  createdAt    DateTime @default(now()) @map("created_at")
+  coachId              Int?     @map("coach_id")
+  activeSessionToken   String?  @map("active_session_token")
+  createdAt            DateTime @default(now()) @map("created_at")
 
   // Relaciones
   coach                  User?        @relation("CoachClients", fields: [coachId], references: [id])

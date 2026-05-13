@@ -4,6 +4,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import api from "@/shared/utils/api";
 
 interface AuthUser {
   id: number;
@@ -16,7 +17,7 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   login: (userData: AuthUser) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
   updateCoachId: (coachId: number | null) => void;
 }
@@ -58,7 +59,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // network failure or already logged out — still clear local state
+    }
     localStorage.removeItem("token");
     localStorage.removeItem("userRole");
     localStorage.removeItem("username");

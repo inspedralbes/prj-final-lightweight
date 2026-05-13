@@ -9,11 +9,15 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Inject } from '@nestjs/common';
 import { ChatService } from '../chat/chat.service';
+import { AuthService } from '../auth/auth.service';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+// Grace period before treating a disconnect as a permanent logout.
+// 30 s covers page refreshes, brief network drops, and short tab switches.
+const DISCONNECT_GRACE_MS = 30_000;
 
 @WebSocketGateway({
   cors: {
@@ -29,8 +33,13 @@ export class EventsGateway
 
   private userSockets: Map<number, string> = new Map(); // userId -> socketId
   private userOpenChats: Map<number, Set<string>> = new Map(); // userId -> set of roomIds currently open
+  private disconnectTimers: Map<number, ReturnType<typeof setTimeout>> =
+    new Map(); // userId -> pending logout timer
 
-  constructor(private chatService: ChatService) {}
+  constructor(
+    private chatService: ChatService,
+    private authService: AuthService,
+  ) {}
 
   afterInit(server: Server) {
     console.log('✅ Socket Gateway inicializado');
@@ -46,12 +55,23 @@ export class EventsGateway
 
   handleDisconnect(client: Socket) {
     console.log(`❌ Cliente desconectado: ${client.id}`);
-    // Remover del mapa de usuarios
     for (const [userId, socketId] of this.userSockets.entries()) {
       if (socketId === client.id) {
         this.userSockets.delete(userId);
-        // limpiar chats abiertos de este usuario
         this.userOpenChats.delete(userId);
+        // Start grace timer — if user doesn't reconnect, clear their session
+        const timer = setTimeout(async () => {
+          this.disconnectTimers.delete(userId);
+          console.log(
+            `[Auth] Grace period expired for user ${userId} — clearing session`,
+          );
+          try {
+            await this.authService.clearSession(userId);
+          } catch {
+            // user may have already logged out via beacon
+          }
+        }, DISCONNECT_GRACE_MS);
+        this.disconnectTimers.set(userId, timer);
         break;
       }
     }
@@ -64,6 +84,13 @@ export class EventsGateway
   ) {
     const id = Number(userId);
     if (!Number.isNaN(id)) {
+      // Cancel any pending logout timer (e.g. page refresh reconnect)
+      const pending = this.disconnectTimers.get(id);
+      if (pending) {
+        clearTimeout(pending);
+        this.disconnectTimers.delete(id);
+        console.log(`[Auth] Reconnect detected for user ${id} — cancelled logout timer`);
+      }
       this.userSockets.set(id, client.id);
       console.log(`[Auth] Usuario ${id} registrado con socket ${client.id}`);
     } else {
