@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/shared/hooks/useToast";
 import type { Routine } from "@/features/routines/services/routineService";
+import ExerciseImage from "@/features/exercises/components/ExerciseImage";
 import { Socket } from "socket.io-client";
 
 export interface PartnerProgress {
@@ -341,6 +342,11 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                       </span>
                     </div>
                   </div>
+
+                  {/* Exercise image during workout */}
+                  <ExerciseImage key={currentExerciseIdx}
+                    images={selectedRoutine.exercises[currentExerciseIdx].exercise?.images || []}
+                  />
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">

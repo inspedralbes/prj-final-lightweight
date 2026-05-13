@@ -7,6 +7,7 @@ import {
 } from "../../../shared/components/Icons";
 import { useTranslation } from "react-i18next";
 import ExerciseSearchModal from "./ExerciseSearchModal";
+import ExerciseImage from "./ExerciseImage";
 
 export type ExerciseItem = {
   name: string;
@@ -23,6 +24,7 @@ export type ExerciseItem = {
   equipment?: string;
   primaryMuscle?: string[];
   description?: string;
+  images?: string[];
 };
 
 type Props = {
@@ -135,6 +137,7 @@ export const ExercisesForm = ({
         equipment: _equipment,
         primaryMuscle: _primaryMuscle,
         description: _description,
+        images: _images,
         ...rest
       }) => ({
         ...rest,
@@ -157,6 +160,7 @@ export const ExercisesForm = ({
       equipment: e.equipment,
       primaryMuscle: e.primaryMuscle,
       description: e.description,
+      images: e.images,
     }));
 
   const [openSearch, setOpenSearch] = useState<number | null>(null);
@@ -322,8 +326,10 @@ export const ExercisesForm = ({
                     </div>
                   )}
 
-                  {/* Description */}
+                  {/* Exercise Images */}
+                  <ExerciseImage key={ex.exerciseId ?? idx} images={ex.images || []} className="mb-3" />
 
+                  {/* Description */}
                   {ex.description && (
                     <div>
                       <p className="text-xs text-gray-500 font-medium mb-1">
@@ -427,6 +433,7 @@ export const ExercisesForm = ({
                         equipment: ex.equipment,
                         primaryMuscle: ex.primaryMuscle,
                         description: ex.description,
+                        images: ex.images,
                       };
                     }
                     // New exercise: use sensible defaults
@@ -444,6 +451,7 @@ export const ExercisesForm = ({
                       equipment: ex.equipment,
                       primaryMuscle: ex.primaryMuscle,
                       description: ex.description,
+                      images: ex.images,
                     };
                   });
                 });
