@@ -37,11 +37,11 @@
 - [x] 8.1 Run `npx prisma validate` in backend to confirm schema is valid
 - [x] 8.2 Run `npm run lint` and `npm run build` in `src/back/`
 - [x] 8.3 Run `npm run lint` and `npm run build` in `src/front/`
-- [ ] 8.4 Manual smoke test: import exercises, open search modal, click an exercise with images → verify images appear
-- [ ] 8.5 Manual smoke test: edit a routine → verify images appear in exercise info cards
-- [ ] 8.6 Manual smoke test: start a solo workout → verify images appear during the session
-- [ ] 8.7 Manual smoke test: find an exercise with no images → verify nothing is rendered (no broken placeholder)
+- [x] 8.4 Manual smoke test: import exercises, open search modal, click an exercise with images → verify images appear
+- [x] 8.5 Manual smoke test: edit a routine → verify images appear in exercise info cards
+- [x] 8.6 Manual smoke test: start a solo workout → verify images appear during the session
+- [x] 8.7 Manual smoke test: find an exercise with no images → verify nothing is rendered (no broken placeholder)
 
 ## 9. Final import (last step — rate-limited)
 
-- [ ] 9.1 After all code is implemented and verified, trigger the import: `curl -X POST http://localhost:3000/exercises/import` (or through the Docker backend) — this populates image URLs for all existing exercises in the DB
+- [x] 9.1 After all code is implemented and verified, trigger the import: `curl -X POST http://localhost:3000/exercises/import` (or through the Docker backend) — this populates image URLs for all existing exercises in the DB
