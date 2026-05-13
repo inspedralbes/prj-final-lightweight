@@ -1,8 +1,8 @@
-# LightWeight E2E Tests
+# LightWeight — Tests E2E
 
-> Harness Playwright para tests end-to-end. Cubre **LW-438** (workspace + smoke) y **LW-440** (seed determinista + fixtures multi-usuario).
+> Suite Playwright per a tests end-to-end. Cobreix **LW-438** (workspace + smoke) i **LW-440** (seed determinista + fixtures multi-usuari).
 
-## Instalación
+## Instal·lació
 
 ```bash
 cd e2e
@@ -10,149 +10,149 @@ npm install
 npx playwright install chromium
 ```
 
-## Ejecutar el smoke test
+## Executar el smoke test
 
-Arranca el frontend en otra terminal (debe quedar escuchando en `http://localhost:5173`):
+Arrenca el frontend en un altre terminal (ha de quedar escoltant a `http://localhost:5173`):
 
 ```bash
 cd src/front && npm run dev
 ```
 
-Luego, desde `e2e/`:
+Després, des de `e2e/`:
 
 ```bash
 npm run test:e2e:browser
 ```
 
-Resultado esperado: `2 passed` (smoke + seed).
+Resultat esperat: `2 passed` (smoke + seed).
 
 ---
 
-## Datos de prueba
+## Dades de prova
 
-### 1. Arrancar el back con el flag `E2E_TESTING`
+### 1. Arrencar el backend amb el flag `E2E_TESTING`
 
-Los tests que usan las fixtures (`loginAs`, `resetDatabase`) necesitan que el backend exponga los endpoints `/testing/reset`, `/testing/seed` y `/testing/login`. Estos endpoints solo se montan si el back arranca con `E2E_TESTING=true`:
+Els tests que usen les fixtures (`loginAs`, `resetDatabase`) necessiten que el backend exposi els endpoints `/testing/reset`, `/testing/seed` i `/testing/login`. Aquests endpoints només es munten si el backend arrenca amb `E2E_TESTING=true`:
 
 ```bash
-# Local (sin Docker):
+# Local (sense Docker):
 cd src/back
 E2E_TESTING=true npm run start:dev
 
-# O dentro de Docker (añade E2E_TESTING=true al .env de la raíz y reinicia):
+# O dins de Docker (afegeix E2E_TESTING=true al .env de l'arrel i reinicia):
 docker compose up -d --build backend
 ```
 
-> ⚠️ **Nunca** establezcas `E2E_TESTING=true` en producción. El back tiene una doble guarda: si `NODE_ENV=production`, ignora el flag y los endpoints devuelven 404.
+> ⚠️ **Mai** estableixis `E2E_TESTING=true` en producció. El backend té una doble guarda: si `NODE_ENV=production`, ignora el flag i els endpoints retornen 404.
 
-> ⚠️ El secret `ENV_FILE` que la GitHub Action `deploy.yml` inyecta en producción **no debe** contener `E2E_TESTING=true`. Antes de mergear a `main`, comprueba el contenido del secret en GitHub.
+> ⚠️ El secret `ENV_FILE` que la GitHub Action `deploy.yml` injecta en producció **no ha de** contenir `E2E_TESTING=true`. Abans de fer merge a `main`, comprova el contingut del secret a GitHub.
 
-### 2. Ejecutar el seed inicial
+### 2. Executar el seed inicial
 
-Desde `src/back/`, con la DB arrancada:
+Des de `src/back/`, amb la BD engegada:
 
 ```bash
 cd src/back
 npx prisma db seed
 ```
 
-El seed es idempotente (usa `upsert`), así que se puede correr varias veces sin error.
+El seed és idempotent (usa `upsert`), de manera que es pot executar diverses vegades sense error.
 
-### 3. Usuarios disponibles
+### 3. Usuaris disponibles
 
-| Username | Role | Vínculo | Password |
+| Nom d'usuari | Rol | Vincle | Contrasenya |
 |---|---|---|---|
 | `e2e_coach` | COACH | — | `E2eP@ss123!` |
 | `e2e_client_linked` | CLIENT | `coachId = e2e_coach.id` | `E2eP@ss123!` |
 | `e2e_client_unlinked` | CLIENT | `coachId = null` | `E2eP@ss123!` |
 
-Además, el seed crea: una rutina `e2e_routine_basic` propiedad de `e2e_coach`, una asignación a `e2e_client_linked`, y una invitación pendiente con código `E2E-INVITE-001`.
+A més, el seed crea: una rutina `e2e_routine_basic` propietat de `e2e_coach`, una assignació a `e2e_client_linked`, i una invitació pendent amb codi `E2E-INVITE-001`.
 
-### 4. Usar las fixtures en un test
+### 4. Usar les fixtures en un test
 
 ```ts
-// e2e/tests/mi-flow.spec.ts
+// e2e/tests/el-meu-flux.spec.ts
 import { test, expect } from "../fixtures";
 
-test("coach ve su dashboard", async ({ loginAs }) => {
+test("el coach veu el seu dashboard", async ({ loginAs }) => {
   const page = await loginAs("coach");
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/dashboard/);
 });
 ```
 
-- `loginAs(role)` ⇒ `Page` ya autenticada (token + datos en `localStorage`). Roles: `'coach' | 'clientLinked' | 'clientUnlinked'`.
-- `freshDb` ⇒ fixture auto-run (`auto: true`) que llama a `resetDatabase()` antes de cada test. Para desactivarla en un bloque concreto, `test.use({ freshDb: false })`.
-- `resetDatabase()` ⇒ helper directo si necesitas resetear a mano dentro de un test.
+- `loginAs(role)` ⇒ `Page` ja autenticada (token + dades a `localStorage`). Rols: `'coach' | 'clientLinked' | 'clientUnlinked'`.
+- `freshDb` ⇒ fixture auto-run (`auto: true`) que crida `resetDatabase()` abans de cada test. Per desactivar-la en un bloc concret, `test.use({ freshDb: false })`.
+- `resetDatabase()` ⇒ helper directe si necessites fer reset manualment dins d'un test.
 
-### 5. Convención de prefijo `e2e_*`
+### 5. Convenció de prefix `e2e_*`
 
-`POST /testing/reset` solo borra usuarios cuyo `username` empieza por `e2e_` (y todo lo que cuelga de ellos en cascada). Si tu test crea datos extra a mano, **respeta el prefijo** (`e2e_extra_user`, `e2e_routine_xyz`) para que el reset los limpie.
+`POST /testing/reset` només esborra usuaris el `username` dels quals comenci per `e2e_` (i tot el que en depèn en cascada). Si el teu test crea dades addicionals a mà, **respecta el prefix** (`e2e_extra_user`, `e2e_routine_xyz`) perquè el reset els netegi.
 
-### 6. Reset / login manual desde la línea de comandos
+### 6. Reset / login manual des de la línia de comandes
 
 ```bash
-# Reset completo (borra e2e_*, vuelve a sembrar)
+# Reset complet (esborra e2e_*, torna a sembrar)
 curl -X POST http://localhost:3000/testing/reset
 
-# Login as coach (devuelve { access_token, user })
+# Login com a coach (retorna { access_token, user })
 curl -X POST -H "Content-Type: application/json" \
   -d '{"username":"e2e_coach"}' \
   http://localhost:3000/testing/login
 
-# Username no permitido (HTTP 400)
+# Nom d'usuari no permès (HTTP 400)
 curl -X POST -H "Content-Type: application/json" \
   -d '{"username":"admin"}' \
   http://localhost:3000/testing/login
 ```
 
-> En dev local el back vive en `:3000` directamente (sin `/api`). El prefijo `/api` solo lo añade Nginx en producción.
+> En dev local el backend viu a `:3000` directament (sense `/api`). El prefix `/api` només l'afegeix Nginx en producció.
 
 ---
 
-## Tests de Autenticación (LW-441)
+## Tests d'Autenticació (LW-441)
 
-Los tests de autenticación cubren el flujo completo de registro, inicio de sesión, cierre de sesión y persistencia.
+Els tests d'autenticació cobreixen el flux complet de registre, inici de sessió, tancament de sessió i persistència.
 
-### Qué cubren:
-- **Login**: Éxito como COACH y CLIENT, errores por credenciales incorrectas o usuario inexistente.
-- **Registre**: Creación de nuevos usuarios con rol dinámico, validación de errores (usuario duplicado, contraseñas no coincidentes).
-- **Logout**: Cierre de sesión correcto y limpieza de `localStorage`.
-- **Persistència**: Verificación de que la sesión se mantiene tras recargar la página.
+### Què cobreixen:
+- **Login**: Èxit com a COACH i CLIENT, errors per credencials incorrectes o usuari inexistent.
+- **Registre**: Creació de nous usuaris amb rol dinàmic, validació d'errors (usuari duplicat, contrasenyes no coincidents).
+- **Logout**: Tancament de sessió correcte i neteja de `localStorage`.
+- **Persistència**: Verificació que la sessió es manté en recarregar la pàgina.
 
-### Ejecución:
+### Execució:
 
-Para ejecutar exclusivamente los tests de autenticación:
+Per executar exclusivament els tests d'autenticació:
 
 ```bash
 cd e2e
 npx playwright test tests/auth.spec.ts
 ```
 
-Para ver la ejecución en tiempo real (modo UI):
+Per veure l'execució en temps real (mode UI):
 ```bash
 npx playwright test tests/auth.spec.ts --ui
 ```
 
-Si se quiere hacer todos los test en conjunto, hay que añadir --workers=1:
+Si es volen executar tots els tests junts, cal afegir --workers=1:
 ```bash
 npx playwright test --workers=1
 ```
 
 ### Page Objects
-Se han introducido Page Objects para mejorar la mantenibilidad:
+S'han introduït Page Objects per millorar la mantenibilitat:
 - `LoginPage`: `/e2e/fixtures/pages/LoginPage.ts`
 - `RegisterPage`: `/e2e/fixtures/pages/RegisterPage.ts`
 
-Uso en tests:
+Ús en tests:
 ```ts
-test('ejemplo login', async ({ loginPage, page }) => {
+test('exemple login', async ({ loginPage, page }) => {
   await loginPage.goto();
-  await loginPage.login('usuario', 'password');
+  await loginPage.login('usuari', 'contrasenya');
   await expect(page).toHaveURL(/\/dashboard/);
 });
 ```
 
 ---
 
-> La guía completa de debugging y Page Objects avanzados llegará con **LW-446**.
+> La guia completa de testing E2E (depuració, Trace Viewer, convencions avançades) és a [doc/guia-testing-e2e.md](../doc/guia-testing-e2e.md).
