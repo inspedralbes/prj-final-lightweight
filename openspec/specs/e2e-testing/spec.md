@@ -1,531 +1,531 @@
-# Spec: E2E Testing
+# Spec: Testing E2E
 
-## Purpose
+## Propòsit
 
-Provide an isolated end-to-end testing workspace (`e2e/`) at the repository root using Playwright, separate from the frontend and backend source trees. The workspace supports reproducible local and CI execution, includes a minimal smoke test to verify the full browser–frontend pipeline, and has been cleaned of any prior Cypress scaffolding.
-
----
-
-## Requirements
-
-### Requirement: Workspace E2E aislado
-
-The system SHALL provide a workspace `e2e/` at the repository root that hosts the entire end-to-end test suite with Playwright, separated from `src/front/` and `src/back/`. The workspace SHALL declare its own `package.json` with `"private": true` and `@playwright/test` as a devDependency, and SHALL be installable independently of the rest of the monorepo.
-
-#### Scenario: Estructura del workspace
-
-- **GIVEN** un desarrollador que clona el repositorio tras este cambio
-- **WHEN** ejecuta `ls e2e/`
-- **THEN** ve, como mínimo, los archivos: `package.json`, `playwright.config.ts`, `tsconfig.json`, `README.md`, `.env.example` y el directorio `tests/`
-- **AND** `e2e/package.json` declara `"private": true` y `@playwright/test` como devDependency
-
-#### Scenario: Instalación independiente
-
-- **GIVEN** el workspace `e2e/` recién clonado y sin instalar
-- **WHEN** el desarrollador ejecuta `cd e2e && npm install && npx playwright install chromium`
-- **THEN** la instalación completa sin errores
-- **AND** `e2e/node_modules/@playwright/test/package.json` existe
-- **AND** Chromium queda instalado en la caché local de Playwright
-
-#### Scenario: Aislamiento del frontend
-
-- **GIVEN** el workspace `e2e/` instalado
-- **WHEN** se ejecuta `cd src/front && npm run lint && npm run build`
-- **THEN** ambos comandos terminan con código 0
-- **AND** el bundle de producción del frontend no incluye ninguna referencia a `@playwright/test` ni a archivos de `e2e/`
+Proporcionar un workspace de testing end-to-end aïllat (`e2e/`) a l'arrel del repositori usant Playwright, separat dels arbres de codi del frontend i el backend. El workspace suporta execució local i en CI reproduïble, inclou un smoke test mínim per verificar el pipeline complet navegador–frontend, i ha estat netejat de qualsevol scaffolding anterior de Cypress.
 
 ---
 
-### Requirement: Configuración de Playwright reproducible
+## Requisits
 
-The system SHALL define `playwright.config.ts` so that the suite behaves consistently between local development and CI environments. The config SHALL expose `baseURL` via the `PLAYWRIGHT_BASE_URL` environment variable (defaulting to `http://localhost:5173`), SHALL apply 2 retries when `process.env.CI` is set and 0 retries otherwise, and SHALL produce trace, screenshot and video artifacts on failure.
+### Requisit: Workspace E2E aïllat
 
-#### Scenario: baseURL configurable por entorno (default)
+El sistema HA DE proporcionar un workspace `e2e/` a l'arrel del repositori que allotgi la suite completa de tests end-to-end amb Playwright, separada de `src/front/` i `src/back/`. El workspace HA DE declarar el seu propi `package.json` amb `"private": true` i `@playwright/test` com a devDependency, i HA DE poder instal·lar-se de forma independent de la resta del monorepo.
 
-- **GIVEN** la variable de entorno `PLAYWRIGHT_BASE_URL` no definida
-- **WHEN** se ejecuta `npm run test:e2e:browser`
-- **THEN** Playwright usa `http://localhost:5173` como `baseURL` del frontend
+#### Escenari: Estructura del workspace
 
-#### Scenario: baseURL configurable por entorno (override)
+- **DONAT** un desenvolupador que clona el repositori després d'aquest canvi
+- **QUAN** executa `ls e2e/`
+- **ALESHORES** veu, com a mínim, els arxius: `package.json`, `playwright.config.ts`, `tsconfig.json`, `README.md`, `.env.example` i el directori `tests/`
+- **I** `e2e/package.json` declara `"private": true` i `@playwright/test` com a devDependency
 
-- **GIVEN** la variable `PLAYWRIGHT_BASE_URL=https://staging.lightweight.daw.inspedralbes.cat` definida
-- **WHEN** se ejecuta `npm run test:e2e:browser`
-- **THEN** los `page.goto('/')` resuelven contra esa URL
+#### Escenari: Instal·lació independent
 
-#### Scenario: Reintentos sólo en CI
+- **DONAT** el workspace `e2e/` acabat de clonar i sense instal·lar
+- **QUAN** el desenvolupador executa `cd e2e && npm install && npx playwright install chromium`
+- **ALESHORES** la instal·lació es completa sense errors
+- **I** `e2e/node_modules/@playwright/test/package.json` existeix
+- **I** Chromium queda instal·lat a la caché local de Playwright
 
-- **GIVEN** la variable de entorno `CI` no definida (entorno local)
-- **WHEN** un test falla
-- **THEN** Playwright **no** lo reintenta y reporta el fallo inmediato
+#### Escenari: Aïllament del frontend
 
-- **GIVEN** la variable de entorno `CI=true` definida
-- **WHEN** un test falla
-- **THEN** Playwright lo reintenta hasta 2 veces antes de marcarlo como fallido
-
-#### Scenario: Artefactos de debugging en fallo
-
-- **GIVEN** un test que falla
-- **WHEN** termina la ejecución
-- **THEN** se genera un archivo `trace.zip` en `e2e/test-results/<test-name>/`
-- **AND** se genera una captura de pantalla del momento del fallo
-- **AND** se genera un vídeo de la ejecución
-- **AND** `npx playwright show-report` abre un reporte HTML con todos los artefactos vinculados
+- **DONAT** el workspace `e2e/` instal·lat
+- **QUAN** s'executa `cd src/front && npm run lint && npm run build`
+- **ALESHORES** ambdues ordres acaben amb codi 0
+- **I** el bundle de producció del frontend no inclou cap referència a `@playwright/test` ni a arxius de `e2e/`
 
 ---
 
-### Requirement: Smoke test ejecutable
+### Requisit: Configuració de Playwright reproduïble
 
-The system SHALL include exactly one smoke test in `e2e/tests/smoke.spec.ts` that verifies the full pipeline (Playwright → browser → frontend → DOM) without depending on database seeding or authentication. This is the only test introduced by this change; tests por flujo viven en cambios posteriores.
+El sistema HA DE definir `playwright.config.ts` perquè la suite es comporti de forma consistent entre l'entorn de desenvolupament local i CI. La configuració HA D'exposar `baseURL` via la variable d'entorn `PLAYWRIGHT_BASE_URL` (amb valor per defecte `http://localhost:5173`), HA D'aplicar 2 reintents quan `process.env.CI` estigui definit i 0 reintents en cas contrari, i HA DE produir artefactes de traça, captura de pantalla i vídeo en cas de falla.
 
-#### Scenario: Smoke pasa con front arrancado
+#### Escenari: baseURL configurable per entorn (per defecte)
 
-- **GIVEN** el frontend arrancado en `http://localhost:5173`
-- **WHEN** se ejecuta `cd e2e && npm run test:e2e:browser`
-- **THEN** el comando termina con código 0
-- **AND** la salida indica `1 passed`
+- **DONAT** la variable d'entorn `PLAYWRIGHT_BASE_URL` no definida
+- **QUAN** s'executa `npm run test:e2e:browser`
+- **ALESHORES** Playwright usa `http://localhost:5173` com a `baseURL` del frontend
 
-#### Scenario: Smoke falla con front parado
+#### Escenari: baseURL configurable per entorn (override)
 
-- **GIVEN** el frontend **no** arrancado
-- **WHEN** se ejecuta `cd e2e && npm run test:e2e:browser`
-- **THEN** el comando termina con código distinto de 0
-- **AND** el mensaje de error indica que el navegador no pudo conectar al `baseURL`
-- **AND** se genera el `playwright-report/` con la traza del fallo
+- **DONAT** la variable `PLAYWRIGHT_BASE_URL=https://staging.lightweight.daw.inspedralbes.cat` definida
+- **QUAN** s'executa `npm run test:e2e:browser`
+- **ALESHORES** els `page.goto('/')` es resolen contra aquella URL
 
----
+#### Escenari: Reintents només en CI
 
-### Requirement: README operativo mínimo
+- **DONAT** la variable d'entorn `CI` no definida (entorn local)
+- **QUAN** un test falla
+- **ALESHORES** Playwright **no** el reintenta i reporta la falla immediatament
 
-The system SHALL include a minimal `e2e/README.md` documenting only how to install dependencies and how to run the smoke test locally. Full documentation (Trace Viewer usage, conventions, debugging guide, fixtures patterns) is **explicitly out of scope** of this change and is owned by LW-446.
+- **DONAT** la variable d'entorn `CI=true` definida
+- **QUAN** un test falla
+- **ALESHORES** Playwright el reintenta fins a 2 vegades abans de marcar-lo com a fallat
 
-#### Scenario: README cubre instalación y ejecución del smoke
+#### Escenari: Artefactes de depuració en falla
 
-- **GIVEN** `e2e/README.md` en la raíz del workspace
-- **WHEN** un desarrollador lo lee
-- **THEN** encuentra al menos: cómo instalar (`npm install` + `npx playwright install chromium`) y cómo correr el smoke (`npm run test:e2e:browser` con el front arrancado en `:5173`)
-
-#### Scenario: README delega la guía completa a LW-446
-
-- **GIVEN** `e2e/README.md` en la raíz del workspace
-- **WHEN** un desarrollador lo lee
-- **THEN** encuentra una nota explícita indicando que la guía completa de E2E (Trace Viewer, convenciones, debugging) llegará con LW-446
-- **AND** **NO** contiene secciones detalladas sobre Trace Viewer ni convenciones de organización (eso pertenece a LW-446)
+- **DONAT** un test que falla
+- **QUAN** acaba l'execució
+- **ALESHORES** es genera un arxiu `trace.zip` a `e2e/test-results/<test-name>/`
+- **I** es genera una captura de pantalla del moment de la falla
+- **I** es genera un vídeo de l'execució
+- **I** `npx playwright show-report` obre un report HTML amb tots els artefactes vinculats
 
 ---
 
-### Requirement: Limpieza del scaffolding anterior
+### Requisit: Smoke test executable
 
-The system SHALL NOT contain any residue of the previous Cypress scaffolding: the directory `src/front/cypress/` and the file `src/front/.env.cypress.example` SHALL be removed, and no source file under version control SHALL reference `cypress`.
+El sistema HA D'incloure exactament un smoke test a `e2e/tests/smoke.spec.ts` que verifiqui el pipeline complet (Playwright → navegador → frontend → DOM) sense dependre del seed de la base de dades ni de l'autenticació. Aquest és l'únic test introduït per aquest canvi; els tests per flux viuen en canvis posteriors.
 
-#### Scenario: Sin restos de Cypress
+#### Escenari: Smoke passa amb el frontend arrencat
 
-- **GIVEN** el repositorio en su estado final tras este cambio
-- **WHEN** se ejecuta `grep -ri "cypress" --include="*.ts" --include="*.tsx" --include="*.json" --include="*.md" --include="*.yml" --exclude-dir=node_modules .`
-- **THEN** el comando devuelve cero coincidencias
-- **AND** la carpeta `src/front/cypress/` no existe
-- **AND** `src/front/.env.cypress.example` no existe
+- **DONAT** el frontend arrencat a `http://localhost:5173`
+- **QUAN** s'executa `cd e2e && npm run test:e2e:browser`
+- **ALESHORES** l'ordre acaba amb codi 0
+- **I** la sortida indica `1 passed`
 
----
+#### Escenari: Smoke falla amb el frontend aturat
 
-### Requirement: Seed determinista de usuarios E2E
-
-The system SHALL provide a deterministic seed script at `src/back/prisma/seed.ts`, registered under the `prisma.seed` field of `src/back/package.json` (`ts-node ./prisma/seed.ts`), that creates a fixed set of three E2E test users — `e2e_coach` (UserRole.COACH), `e2e_client_linked` (UserRole.CLIENT, with `coachId` pointing to `e2e_coach`) and `e2e_client_unlinked` (UserRole.CLIENT, `coachId = null`) — together with one `Routine` named `e2e_routine_basic` owned by the coach, one `RoutineExercise`, one `RoutineAssignment` linking the routine to `e2e_client_linked`, and one `Invitation` (`code = 'E2E-INVITE-001'`, `status = 'PENDING'`, `coachId = e2e_coach.id`, `targetClientId = e2e_client_unlinked.id`). The seed SHALL be idempotent (`upsert`-based for unique fields, `findFirst+create` for `Routine`) and re-runnable without errors.
-
-#### Scenario: Seed inicial sobre DB sin datos `e2e_*`
-
-- **GIVEN** una base de datos PostgreSQL sin filas con `username` que empiece por `e2e_`
-- **WHEN** un desarrollador ejecuta `cd src/back && npx prisma db seed`
-- **THEN** el script termina con código 0
-- **AND** la tabla `users` contiene exactamente tres usuarios con `username` `e2e_coach`, `e2e_client_linked`, `e2e_client_unlinked`
-- **AND** `e2e_client_linked.coach_id` es igual a `e2e_coach.id`
-- **AND** existe una `Routine` con `name = 'e2e_routine_basic'` y `coach_id = e2e_coach.id` con al menos una `RoutineExercise` y una `RoutineAssignment` apuntando a `e2e_client_linked`
-- **AND** existe una `Invitation` con `code = 'E2E-INVITE-001'`, `status = 'PENDING'`, `coach_id = e2e_coach.id`, `target_client_id = e2e_client_unlinked.id`
-
-#### Scenario: Seed idempotente
-
-- **GIVEN** un seed ya aplicado correctamente
-- **WHEN** el desarrollador ejecuta `npx prisma db seed` por segunda vez
-- **THEN** el script termina con código 0
-- **AND** no se crean usuarios adicionales — `SELECT COUNT(*) FROM users WHERE username LIKE 'e2e_%'` devuelve exactamente 3
-- **AND** los `id` de los tres usuarios `e2e_*` son los mismos que tras la primera ejecución
-- **AND** `e2e_routine_basic` sigue siendo única (no se crea una segunda copia)
-
-#### Scenario: Seed asegura `ExerciseCatalog` mínimo
-
-- **GIVEN** una base de datos en la que `ExerciseCatalog` está vacío
-- **WHEN** se ejecuta el seed
-- **THEN** el script crea (vía `upsert`) al menos 5 ejercicios fijos en `ExerciseCatalog` (Push-up, Pull-up, Squat, Bench Press, Deadlift)
-- **AND** la `RoutineExercise` de `e2e_routine_basic` referencia uno de esos ejercicios
+- **DONAT** el frontend **no** arrencat
+- **QUAN** s'executa `cd e2e && npm run test:e2e:browser`
+- **ALESHORES** l'ordre acaba amb codi diferent de 0
+- **I** el missatge d'error indica que el navegador no ha pogut connectar al `baseURL`
+- **I** es genera el `playwright-report/` amb la traça de la falla
 
 ---
 
-### Requirement: Módulo de testing del backend cargado condicionalmente
+### Requisit: README operatiu mínim
 
-The system SHALL ship a NestJS module `TestingModule` at `src/back/src/testing/` that is imported into `AppModule` if and only if `process.env.E2E_TESTING === 'true'` AND `process.env.NODE_ENV !== 'production'`. The module SHALL expose three HTTP endpoints under `/api/testing/*` and SHALL NOT be reachable when either condition fails, in which case the endpoints SHALL respond with HTTP 404. The module SHALL NOT be wrapped by `JwtAuthGuard` — it is intentionally open while active and gated solely by the env flag.
+El sistema HA D'incloure un `e2e/README.md` mínim que documenti únicament com instal·lar les dependències i com executar el smoke test localment. La documentació completa (ús del Trace Viewer, convencions, guia de depuració, patrons de fixtures) queda **explícitament fora de l'abast** d'aquest canvi i és responsabilitat de LW-446.
 
-#### Scenario: Módulo activo en dev con flag
+#### Escenari: README cobreix instal·lació i execució del smoke
 
-- **GIVEN** el back arrancado con `E2E_TESTING=true` y `NODE_ENV=development`
-- **WHEN** se hace `POST http://localhost:3000/api/testing/reset`
-- **THEN** la respuesta tiene HTTP status 200
-- **AND** el body es JSON con la forma `{ reset: true, seeded: { users: [...], routines: [...], invitations: number }, durationMs: number }`
+- **DONAT** `e2e/README.md` a l'arrel del workspace
+- **QUAN** un desenvolupador el llegeix
+- **ALESHORES** troba com a mínim: com instal·lar (`npm install` + `npx playwright install chromium`) i com executar el smoke (`npm run test:e2e:browser` amb el frontend arrencat a `:5173`)
 
-#### Scenario: Módulo inactivo sin flag
+#### Escenari: README delega la guia completa a LW-446
 
-- **GIVEN** el back arrancado con `E2E_TESTING` no definida (o `false`)
-- **WHEN** se hace `POST http://localhost:3000/api/testing/reset`
-- **THEN** la respuesta tiene HTTP status 404
-- **AND** el body es la respuesta NestJS por defecto (`Cannot POST /api/testing/reset`)
-
-#### Scenario: Módulo inactivo en producción incluso con flag
-
-- **GIVEN** el back arrancado con `E2E_TESTING=true` y `NODE_ENV=production`
-- **WHEN** se hace `POST http://localhost:3000/api/testing/reset`
-- **THEN** la respuesta tiene HTTP status 404
-- **AND** los logs del servidor NO contienen ninguna entrada de `TestingController` (porque el módulo no se ha cargado)
+- **DONAT** `e2e/README.md` a l'arrel del workspace
+- **QUAN** un desenvolupador el llegeix
+- **ALESHORES** troba una nota explícita indicant que la guia completa d'E2E (Trace Viewer, convencions, depuració) arribarà amb LW-446
+- **I** **NO** conté seccions detallades sobre Trace Viewer ni convencions d'organització (això pertany a LW-446)
 
 ---
 
-### Requirement: Endpoint de reset E2E
+### Requisit: Neteja de l'scaffolding anterior
 
-The system SHALL expose `POST /api/testing/reset` (when the testing module is active) that deletes every row in `LiveSession`, `LiveParticipant`, `WorkoutEvent`, `ChatMessage`, `Invitation`, `Routine`, `RoutineExercise`, `RoutineAssignment`, `ClientProfile`, `P2PChatMessage` whose foreign keys reach a `User` whose `username` starts with `e2e_`, then deletes those `User` rows themselves, and finally re-applies the deterministic seed. The endpoint SHALL NOT delete any `User` whose username does not match `^e2e_`. The endpoint SHALL complete in less than 2000 ms on a local PostgreSQL with fewer than 1000 rows per table. **The explicit deletion order for `LiveSession`-scoped rows SHALL be: `WorkoutEvent` → `ChatMessage` (session-level) → `LiveParticipant` → `LiveSession`**, to respect foreign key constraints before `User` rows are deleted.
+El sistema NO HA DE contenir cap residu de l'scaffolding anterior de Cypress: el directori `src/front/cypress/` i l'arxiu `src/front/.env.cypress.example` HAN DE ser eliminats, i cap arxiu sota control de versions HA DE referenciar `cypress`.
 
-#### Scenario: Reset limpia LiveSessions de usuarios e2e
+#### Escenari: Sense restes de Cypress
 
-- **GIVEN** la DB contiene un `LiveSession` creado durante un test de co-op con `hostId = e2e_coach.id`
-- **AND** la DB contiene `LiveParticipant`, `WorkoutEvent` y `ChatMessage` (de sesión) asociados a esa `LiveSession`
-- **WHEN** se hace `POST /api/testing/reset`
-- **THEN** la respuesta es HTTP 200
-- **AND** `SELECT COUNT(*) FROM live_sessions WHERE host_id = (SELECT id FROM users WHERE username = 'e2e_coach')` devuelve 0
-- **AND** `SELECT COUNT(*) FROM live_participants WHERE session_id IN (...)` devuelve 0
-- **AND** los tres usuarios `e2e_*` han sido recreados con sus relaciones base
-
-#### Scenario: Reset no toca usuarios reales
-
-- **GIVEN** la DB contiene un usuario real `coach_marina` (sin prefijo `e2e_`) con sus rutinas, asignaciones y mensajes
-- **AND** la DB contiene los tres usuarios `e2e_*` seedeados
-- **WHEN** se hace `POST /api/testing/reset`
-- **THEN** la respuesta es HTTP 200
-- **AND** `SELECT COUNT(*) FROM users WHERE username = 'coach_marina'` sigue devolviendo 1
-- **AND** las rutinas, asignaciones y mensajes de `coach_marina` siguen presentes (filas no borradas)
-- **AND** `SELECT COUNT(*) FROM users WHERE username LIKE 'e2e_%'` devuelve 3 (los recreó el seed)
-
-#### Scenario: Reset limpia datos huérfanos `e2e_*`
-
-- **GIVEN** la DB tiene los tres usuarios seedeados más un cuarto usuario `e2e_extra` creado a mano por un test anterior que no limpió
-- **WHEN** se hace `POST /api/testing/reset`
-- **THEN** `SELECT COUNT(*) FROM users WHERE username LIKE 'e2e_%'` devuelve exactamente 3
-- **AND** `e2e_extra` ya no existe
-
-#### Scenario: Reset bajo el presupuesto de tiempo
-
-- **GIVEN** una DB local con <1000 filas por tabla
-- **WHEN** se hace `POST /api/testing/reset` y se mide el campo `durationMs` de la respuesta
-- **THEN** `durationMs < 2000`
+- **DONAT** el repositori en el seu estat final després d'aquest canvi
+- **QUAN** s'executa `grep -ri "cypress" --include="*.ts" --include="*.tsx" --include="*.json" --include="*.md" --include="*.yml" --exclude-dir=node_modules .`
+- **ALESHORES** l'ordre retorna zero coincidències
+- **I** la carpeta `src/front/cypress/` no existeix
+- **I** `src/front/.env.cypress.example` no existeix
 
 ---
 
-### Requirement: Endpoint de seed sin reset
+### Requisit: Seed determinista d'usuaris E2E
 
-The system SHALL expose `POST /api/testing/seed` (when the testing module is active) that runs only the seed phase (without deleting anything) and SHALL be safe to call repeatedly thanks to seed idempotency.
+El sistema HA DE proporcionar un script de seed determinista a `src/back/prisma/seed.ts`, registrat sota el camp `prisma.seed` de `src/back/package.json` (`ts-node ./prisma/seed.ts`), que creï un conjunt fix de tres usuaris de test E2E — `e2e_coach` (UserRole.COACH), `e2e_client_linked` (UserRole.CLIENT, amb `coachId` apuntant a `e2e_coach`) i `e2e_client_unlinked` (UserRole.CLIENT, `coachId = null`) — juntament amb una `Routine` anomenada `e2e_routine_basic` propietat del coach, un `RoutineExercise`, un `RoutineAssignment` vinculant la rutina a `e2e_client_linked`, i una `Invitation` (`code = 'E2E-INVITE-001'`, `status = 'PENDING'`, `coachId = e2e_coach.id`, `targetClientId = e2e_client_unlinked.id`). El seed HA DE ser idempotent (basat en `upsert` per a camps únics, `findFirst+create` per a `Routine`) i re-executable sense errors.
 
-#### Scenario: Seed sin reset es idempotente
+#### Escenari: Seed inicial sobre BD sense dades `e2e_*`
 
-- **GIVEN** los tres usuarios `e2e_*` ya creados con sus relaciones
-- **WHEN** se hace `POST /api/testing/seed` dos veces seguidas
-- **THEN** ambas respuestas son HTTP 200
-- **AND** los IDs de los tres usuarios no han cambiado entre la primera y la segunda llamada
-- **AND** la tabla `users` no ha crecido
+- **DONAT** una base de dades PostgreSQL sense files amb `username` que comenci per `e2e_`
+- **QUAN** un desenvolupador executa `cd src/back && npx prisma db seed`
+- **ALESHORES** el script acaba amb codi 0
+- **I** la taula `users` conté exactament tres usuaris amb `username` `e2e_coach`, `e2e_client_linked`, `e2e_client_unlinked`
+- **I** `e2e_client_linked.coach_id` és igual a `e2e_coach.id`
+- **I** existeix una `Routine` amb `name = 'e2e_routine_basic'` i `coach_id = e2e_coach.id` amb almenys un `RoutineExercise` i un `RoutineAssignment` apuntant a `e2e_client_linked`
+- **I** existeix una `Invitation` amb `code = 'E2E-INVITE-001'`, `status = 'PENDING'`, `coach_id = e2e_coach.id`, `target_client_id = e2e_client_unlinked.id`
 
-#### Scenario: Seed restaura entidades borradas a mano
+#### Escenari: Seed idempotent
 
-- **GIVEN** los tres usuarios `e2e_*` existen pero un dev borró la `e2e_routine_basic` manualmente desde Adminer
-- **WHEN** se hace `POST /api/testing/seed`
-- **THEN** la respuesta es HTTP 200
-- **AND** `SELECT COUNT(*) FROM routines WHERE name = 'e2e_routine_basic'` vuelve a devolver 1
-- **AND** los IDs de los tres usuarios siguen siendo los mismos (no se han recreado)
+- **DONAT** un seed ja aplicat correctament
+- **QUAN** el desenvolupador executa `npx prisma db seed` per segona vegada
+- **ALESHORES** el script acaba amb codi 0
+- **I** no es creen usuaris addicionals — `SELECT COUNT(*) FROM users WHERE username LIKE 'e2e_%'` retorna exactament 3
+- **I** els `id` dels tres usuaris `e2e_*` són els mateixos que després de la primera execució
+- **I** `e2e_routine_basic` segueix sent única (no es crea una segona còpia)
 
----
+#### Escenari: Seed assegura `ExerciseCatalog` mínim
 
-### Requirement: Endpoint de login as
-
-The system SHALL expose `POST /api/testing/login` (when the testing module is active) accepting a JSON body validated by `LoginAsDto` (`username: string` matching `^e2e_[a-z_]+$`). The endpoint SHALL return the same response shape as `POST /api/auth/login` (`{ access_token, user: { id, username, role, coachId } }`) for any user whose username matches the regex, by signing a JWT via `JwtService` with payload `{ userId: user.id, role: user.role }` (the same shape `AuthService.login()` produces, so the existing `JwtStrategy.validate()` accepts it without changes). The endpoint SHALL reject any username not matching `^e2e_*` with HTTP 400, and SHALL return HTTP 404 if the matching user does not exist.
-
-#### Scenario: Login as e2e_coach
-
-- **GIVEN** el seed aplicado y el módulo de testing activo
-- **WHEN** se hace `POST /api/testing/login` con body `{ "username": "e2e_coach" }`
-- **THEN** la respuesta es HTTP 200
-- **AND** el body contiene `access_token` (string JWT no vacío) y `user.role === 'COACH'`
-- **AND** ese mismo `access_token` autentica correctamente una llamada a un endpoint protegido por `JwtAuthGuard` (e.g. `GET /api/routines/my-routines` → HTTP 200), porque su payload `{ userId, role }` cuadra con lo que `JwtStrategy.validate()` espera
-
-#### Scenario: Login as username no permitido
-
-- **GIVEN** el módulo de testing activo
-- **WHEN** se hace `POST /api/testing/login` con body `{ "username": "admin_real" }`
-- **THEN** la respuesta es HTTP 400
-- **AND** el mensaje incluye `"username must match /^e2e_[a-z_]+$/"`
-- **AND** la DB no se consulta (el rechazo ocurre en el `class-validator`)
-
-#### Scenario: Login as usuario inexistente
-
-- **GIVEN** el módulo de testing activo y un seed que no contiene `e2e_phantom`
-- **WHEN** se hace `POST /api/testing/login` con body `{ "username": "e2e_phantom" }`
-- **THEN** la respuesta es HTTP 404
-- **AND** el mensaje incluye `"User e2e_phantom not found"`
+- **DONAT** una base de dades on `ExerciseCatalog` està buit
+- **QUAN** s'executa el seed
+- **ALESHORES** el script crea (via `upsert`) almenys 5 exercicis fixos a `ExerciseCatalog` (Push-up, Pull-up, Squat, Bench Press, Deadlift)
+- **I** el `RoutineExercise` de `e2e_routine_basic` referencia un d'aquells exercicis
 
 ---
 
-### Requirement: Fixtures Playwright multi-usuario
+### Requisit: Mòdul de testing del backend carregat condicionalment
 
-The E2E workspace SHALL provide reusable Playwright fixtures at `e2e/fixtures/` exporting at minimum: a typed `e2eUsers` map (with `e2eCoach`, `e2eClientLinked`, `e2eClientUnlinked`, each having `username`, `password`, `role`); a `loginViaApi(page, user)` helper that calls `POST /api/testing/login`, stores the returned `access_token` and user info in the browser's `localStorage` (matching the keys used by `AuthContext`: `token`, `userRole`, `username`, `userId`, `coachId`), and returns once `localStorage` is set; a `resetDatabase()` helper that calls `POST /api/testing/reset`; and an extended Playwright `test` (`e2e/fixtures/index.ts`) that exposes a `loginAs` fixture and an auto-running `freshDb` fixture. The fixture barrel SHALL re-export `expect` from `@playwright/test` so tests can `import { test, expect } from '../fixtures'`.
+El sistema HA DE lliurar un mòdul NestJS `TestingModule` a `src/back/src/testing/` que s'importi a `AppModule` si i només si `process.env.E2E_TESTING === 'true'` I `process.env.NODE_ENV !== 'production'`. El mòdul HA D'exposar tres endpoints HTTP sota `/api/testing/*` i NO HA DE ser accessible quan qualsevol de les condicions falli, en aquell cas els endpoints HAN DE respondre amb HTTP 404. El mòdul NO HA DE ser embolcallat per `JwtAuthGuard` — és intencionalment obert mentre està actiu i controlat únicament per la variable d'entorn.
 
-#### Scenario: Fixture `loginAs('coach')` deja sesión activa en la página
+#### Escenari: Mòdul actiu en dev amb flag
 
-- **GIVEN** el back con `E2E_TESTING=true` arrancado en `:3000`, el front en `:5173`, y el seed aplicado
-- **WHEN** un test E2E llama a `await loginAs('coach')` y luego a `await page.goto('/dashboard')`
-- **THEN** la página `/dashboard` carga sin redirigir a `/login`
-- **AND** `localStorage.getItem('userRole') === 'COACH'`
-- **AND** `localStorage.getItem('username') === 'e2e_coach'`
+- **DONAT** el backend arrencat amb `E2E_TESTING=true` i `NODE_ENV=development`
+- **QUAN** es fa `POST http://localhost:3000/api/testing/reset`
+- **ALESHORES** la resposta té HTTP status 200
+- **I** el body és JSON amb la forma `{ reset: true, seeded: { users: [...], routines: [...], invitations: number }, durationMs: number }`
 
-#### Scenario: Fixture `freshDb` resetea antes de cada test
+#### Escenari: Mòdul inactiu sense flag
 
-- **GIVEN** dos tests E2E `t1` y `t2` que comparten archivo
-- **AND** `t1` crea un usuario adicional `e2e_temp` mediante el endpoint `/api/testing/seed` con un payload extendido (hipotético) — o simplemente lo crea desde la fixture
-- **WHEN** `t2` empieza a ejecutarse
-- **THEN** `e2e_temp` ya no existe (`POST /api/testing/login {username: "e2e_temp"}` devuelve 404)
-- **AND** los tres usuarios `e2e_*` seedeados sí existen
+- **DONAT** el backend arrencat amb `E2E_TESTING` no definida (o `false`)
+- **QUAN** es fa `POST http://localhost:3000/api/testing/reset`
+- **ALESHORES** la resposta té HTTP status 404
+- **I** el body és la resposta NestJS per defecte (`Cannot POST /api/testing/reset`)
 
-#### Scenario: Test puede optar a no resetear
+#### Escenari: Mòdul inactiu en producció fins i tot amb flag
 
-- **GIVEN** un test que necesita compartir estado con otro (`describe.serial`)
-- **WHEN** el archivo declara `test.use({ freshDb: false })`
-- **THEN** la fixture `freshDb` no se ejecuta entre tests del bloque y los datos persisten entre ellos
-
----
-
-### Requirement: Global setup que verifica el harness
-
-The E2E workspace SHALL define `e2e/global-setup.ts`, referenced from `playwright.config.ts` via `globalSetup`, that performs a one-time `POST` to `${PLAYWRIGHT_API_URL ?? 'http://localhost:3000/api'}/testing/reset` before the suite runs. If the request fails (network error or non-200 response), the setup SHALL throw with a clear, actionable message that names the missing piece (back not running, `E2E_TESTING` flag not set, or unexpected API response).
-
-#### Scenario: Global setup OK
-
-- **GIVEN** el back arrancado con `E2E_TESTING=true`
-- **WHEN** Playwright arranca la suite
-- **THEN** `global-setup.ts` recibe HTTP 200 de `/api/testing/reset`
-- **AND** la suite continúa con los tests
-
-#### Scenario: Global setup falla rápido si el back no responde
-
-- **GIVEN** el back **no** arrancado
-- **WHEN** Playwright intenta arrancar la suite
-- **THEN** la ejecución termina antes de correr ningún test
-- **AND** el mensaje de error contiene `"Backend not reachable at http://localhost:3000/api"` o equivalente claro
-
-#### Scenario: Global setup falla si el flag está apagado
-
-- **GIVEN** el back arrancado pero sin `E2E_TESTING=true`
-- **WHEN** Playwright intenta arrancar la suite
-- **THEN** la ejecución termina con error
-- **AND** el mensaje incluye `"E2E_TESTING flag must be set to 'true' on the backend"` o equivalente que apunte a la causa real (404 en `/api/testing/reset`)
+- **DONAT** el backend arrencat amb `E2E_TESTING=true` i `NODE_ENV=production`
+- **QUAN** es fa `POST http://localhost:3000/api/testing/reset`
+- **ALESHORES** la resposta té HTTP status 404
+- **I** els logs del servidor NO contenen cap entrada de `TestingController` (perquè el mòdul no s'ha carregat)
 
 ---
 
-### Requirement: Variable de entorno `E2E_TESTING` documentada y `fail-closed` en producción
+### Requisit: Endpoint de reset E2E
 
-The repository SHALL document the `E2E_TESTING` environment variable in `.env.example` (root), `src/back/.env.example`, the GitHub Actions `ENV_FILE` template note, and the `e2e/.env.example` README. Each occurrence SHALL include an inline comment marking it as **never enable in production**. The backend SHALL refuse to load `TestingModule` when `process.env.NODE_ENV === 'production'`, even if `E2E_TESTING=true` is forced.
+El sistema HA D'exposar `POST /api/testing/reset` (quan el mòdul de testing és actiu) que elimini cada fila de `LiveSession`, `LiveParticipant`, `WorkoutEvent`, `ChatMessage`, `Invitation`, `Routine`, `RoutineExercise`, `RoutineAssignment`, `ClientProfile`, `P2PChatMessage` les claus foranies de les quals arriben a un `User` el `username` del qual comenci per `e2e_`, i després elimini aquelles files de `User`. Finalment torna a aplicar el seed determinista. L'endpoint NO HA D'eliminar cap `User` el username del qual no coincideixi amb `^e2e_`. L'endpoint HA DE completar-se en menys de 2000 ms en un PostgreSQL local amb menys de 1000 files per taula. **L'ordre d'eliminació explícita per a files d'àmbit `LiveSession` HA DE ser: `WorkoutEvent` → `ChatMessage` (nivell de sessió) → `LiveParticipant` → `LiveSession`**, per respectar les restriccions de clau forana abans d'eliminar les files de `User`.
+
+#### Escenari: Reset neteja LiveSessions d'usuaris e2e
+
+- **DONAT** la BD conté un `LiveSession` creat durant un test de co-op amb `hostId = e2e_coach.id`
+- **I** la BD conté `LiveParticipant`, `WorkoutEvent` i `ChatMessage` (de sessió) associats a aquella `LiveSession`
+- **QUAN** es fa `POST /api/testing/reset`
+- **ALESHORES** la resposta és HTTP 200
+- **I** `SELECT COUNT(*) FROM live_sessions WHERE host_id = (SELECT id FROM users WHERE username = 'e2e_coach')` retorna 0
+- **I** `SELECT COUNT(*) FROM live_participants WHERE session_id IN (...)` retorna 0
+- **I** els tres usuaris `e2e_*` han estat recreats amb les seves relacions base
+
+#### Escenari: Reset no toca usuaris reals
+
+- **DONAT** la BD conté un usuari real `coach_marina` (sense prefix `e2e_`) amb les seves rutines, assignacions i missatges
+- **I** la BD conté els tres usuaris `e2e_*` sembrats
+- **QUAN** es fa `POST /api/testing/reset`
+- **ALESHORES** la resposta és HTTP 200
+- **I** `SELECT COUNT(*) FROM users WHERE username = 'coach_marina'` segueix retornant 1
+- **I** les rutines, assignacions i missatges de `coach_marina` segueixen presents (files no eliminades)
+- **I** `SELECT COUNT(*) FROM users WHERE username LIKE 'e2e_%'` retorna 3 (els va recrear el seed)
+
+#### Escenari: Reset neteja dades òrfenes `e2e_*`
+
+- **DONAT** la BD té els tres usuaris sembrats més un quart usuari `e2e_extra` creat manualment per un test anterior que no va netejar
+- **QUAN** es fa `POST /api/testing/reset`
+- **ALESHORES** `SELECT COUNT(*) FROM users WHERE username LIKE 'e2e_%'` retorna exactament 3
+- **I** `e2e_extra` ja no existeix
+
+#### Escenari: Reset dins del pressupost de temps
+
+- **DONAT** una BD local amb <1000 files per taula
+- **QUAN** es fa `POST /api/testing/reset` i es mesura el camp `durationMs` de la resposta
+- **ALESHORES** `durationMs < 2000`
 
 ---
 
-### Requirement: El badge d'invitacions pendents exposa data-testid per a la selecció E2E
+### Requisit: Endpoint de seed sense reset
+
+El sistema HA D'exposar `POST /api/testing/seed` (quan el mòdul de testing és actiu) que executi només la fase de seed (sense eliminar res) i HA DE ser segur de cridar repetidament gràcies a la idempotència del seed.
+
+#### Escenari: Seed sense reset és idempotent
+
+- **DONAT** els tres usuaris `e2e_*` ja creats amb les seves relacions
+- **QUAN** es fa `POST /api/testing/seed` dues vegades seguides
+- **ALESHORES** ambdues respostes són HTTP 200
+- **I** els IDs dels tres usuaris no han canviat entre la primera i la segona crida
+- **I** la taula `users` no ha crescut
+
+#### Escenari: Seed restaura entitats eliminades manualment
+
+- **DONAT** els tres usuaris `e2e_*` existeixen però un dev ha eliminat la `e2e_routine_basic` manualment des d'Adminer
+- **QUAN** es fa `POST /api/testing/seed`
+- **ALESHORES** la resposta és HTTP 200
+- **I** `SELECT COUNT(*) FROM routines WHERE name = 'e2e_routine_basic'` torna a retornar 1
+- **I** els IDs dels tres usuaris segueixen sent els mateixos (no s'han recreat)
+
+---
+
+### Requisit: Endpoint de login as
+
+El sistema HA D'exposar `POST /api/testing/login` (quan el mòdul de testing és actiu) acceptant un body JSON validat per `LoginAsDto` (`username: string` que coincideixi amb `^e2e_[a-z_]+$`). L'endpoint HA DE retornar la mateixa forma de resposta que `POST /api/auth/login` (`{ access_token, user: { id, username, role, coachId } }`) per a qualsevol usuari el username del qual coincideixi amb la regex, signant un JWT via `JwtService` amb payload `{ userId: user.id, role: user.role }` (la mateixa forma que produeix `AuthService.login()`, perquè l'existent `JwtStrategy.validate()` l'accepti sense canvis). L'endpoint HA DE rebutjar qualsevol username que no coincideixi amb `^e2e_*` amb HTTP 400, i HA DE retornar HTTP 404 si l'usuari coincident no existeix.
+
+#### Escenari: Login as e2e_coach
+
+- **DONAT** el seed aplicat i el mòdul de testing actiu
+- **QUAN** es fa `POST /api/testing/login` amb body `{ "username": "e2e_coach" }`
+- **ALESHORES** la resposta és HTTP 200
+- **I** el body conté `access_token` (string JWT no buit) i `user.role === 'COACH'`
+- **I** aquell mateix `access_token` autentica correctament una crida a un endpoint protegit per `JwtAuthGuard` (p. ex. `GET /api/routines/my-routines` → HTTP 200), perquè el seu payload `{ userId, role }` quadra amb el que espera `JwtStrategy.validate()`
+
+#### Escenari: Login as username no permès
+
+- **DONAT** el mòdul de testing actiu
+- **QUAN** es fa `POST /api/testing/login` amb body `{ "username": "admin_real" }`
+- **ALESHORES** la resposta és HTTP 400
+- **I** el missatge inclou `"username must match /^e2e_[a-z_]+$/"`
+- **I** la BD no es consulta (el rebuig ocorre al `class-validator`)
+
+#### Escenari: Login as usuari inexistent
+
+- **DONAT** el mòdul de testing actiu i un seed que no conté `e2e_phantom`
+- **QUAN** es fa `POST /api/testing/login` amb body `{ "username": "e2e_phantom" }`
+- **ALESHORES** la resposta és HTTP 404
+- **I** el missatge inclou `"User e2e_phantom not found"`
+
+---
+
+### Requisit: Fixtures Playwright multi-usuari
+
+El workspace E2E HA DE proporcionar fixtures Playwright reutilitzables a `e2e/fixtures/` exportant com a mínim: un mapa `e2eUsers` tipat (amb `e2eCoach`, `e2eClientLinked`, `e2eClientUnlinked`, cadascun amb `username`, `password`, `role`); un helper `loginViaApi(page, user)` que cridi `POST /api/testing/login`, emmagatzemi el `access_token` retornat i la informació de l'usuari al `localStorage` del navegador (coincidint amb les claus usades per `AuthContext`: `token`, `userRole`, `username`, `userId`, `coachId`), i retorni un cop s'hagi establert el `localStorage`; un helper `resetDatabase()` que cridi `POST /api/testing/reset`; i un `test` Playwright estès (`e2e/fixtures/index.ts`) que exposi una fixture `loginAs` i una fixture auto-executada `freshDb`. El barrel de fixtures HA DE re-exportar `expect` de `@playwright/test` perquè els tests puguin fer `import { test, expect } from '../fixtures'`.
+
+#### Escenari: Fixture `loginAs('coach')` deixa sessió activa a la pàgina
+
+- **DONAT** el backend amb `E2E_TESTING=true` arrencat a `:3000`, el frontend a `:5173`, i el seed aplicat
+- **QUAN** un test E2E crida `await loginAs('coach')` i després `await page.goto('/dashboard')`
+- **ALESHORES** la pàgina `/dashboard` carrega sense redirigir a `/login`
+- **I** `localStorage.getItem('userRole') === 'COACH'`
+- **I** `localStorage.getItem('username') === 'e2e_coach'`
+
+#### Escenari: Fixture `freshDb` reseteja abans de cada test
+
+- **DONAT** dos tests E2E `t1` i `t2` que comparteixen arxiu
+- **I** `t1` crea un usuari addicional `e2e_temp` via l'endpoint `/api/testing/seed` amb un payload estès (hipotètic) — o simplement el crea des de la fixture
+- **QUAN** `t2` comença a executar-se
+- **ALESHORES** `e2e_temp` ja no existeix (`POST /api/testing/login {username: "e2e_temp"}` retorna 404)
+- **I** els tres usuaris `e2e_*` sembrats sí existeixen
+
+#### Escenari: El test pot optar a no resetejar
+
+- **DONAT** un test que necessita compartir estat amb un altre (`describe.serial`)
+- **QUAN** l'arxiu declara `test.use({ freshDb: false })`
+- **ALESHORES** la fixture `freshDb` no s'executa entre tests del bloc i les dades persisteixen entre ells
+
+---
+
+### Requisit: Global setup que verifica el harness
+
+El workspace E2E HA DE definir `e2e/global-setup.ts`, referenciat des de `playwright.config.ts` via `globalSetup`, que executi un únic `POST` a `${PLAYWRIGHT_API_URL ?? 'http://localhost:3000/api'}/testing/reset` abans que s'executi la suite. Si la petició falla (error de xarxa o resposta no 200), el setup HA DE llançar amb un missatge clar i accionable que nomeni la peça que falta (backend no en marxa, flag `E2E_TESTING` no establert, o resposta d'API inesperada).
+
+#### Escenari: Global setup OK
+
+- **DONAT** el backend arrencat amb `E2E_TESTING=true`
+- **QUAN** Playwright arrenca la suite
+- **ALESHORES** `global-setup.ts` rep HTTP 200 de `/api/testing/reset`
+- **I** la suite continua amb els tests
+
+#### Escenari: Global setup falla ràpid si el backend no respon
+
+- **DONAT** el backend **no** arrencat
+- **QUAN** Playwright intenta arrencar la suite
+- **ALESHORES** l'execució acaba abans d'executar cap test
+- **I** el missatge d'error conté `"Backend not reachable at http://localhost:3000/api"` o equivalent clar
+
+#### Escenari: Global setup falla si el flag està apagat
+
+- **DONAT** el backend arrencat però sense `E2E_TESTING=true`
+- **QUAN** Playwright intenta arrencar la suite
+- **ALESHORES** l'execució acaba amb error
+- **I** el missatge inclou `"E2E_TESTING flag must be set to 'true' on the backend"` o equivalent que apunti a la causa real (404 a `/api/testing/reset`)
+
+---
+
+### Requisit: Variable d'entorn `E2E_TESTING` documentada i `fail-closed` en producció
+
+El repositori HA DE documentar la variable d'entorn `E2E_TESTING` a `.env.example` (arrel), `src/back/.env.example`, la nota de plantilla `ENV_FILE` de GitHub Actions, i el README de `e2e/.env.example`. Cada ocurrència HA D'incloure un comentari en línia marcant-la com a **mai habilitar en producció**. El backend HA DE refusar carregar `TestingModule` quan `process.env.NODE_ENV === 'production'`, fins i tot si es força `E2E_TESTING=true`.
+
+---
+
+### Requisit: El badge d'invitacions pendents exposa data-testid per a la selecció E2E
 
 El component Layout HA DE renderitzar l'element del badge d'invitacions pendents amb `data-testid="pending-invites-badge"` sempre que el comptador del badge sigui superior a zero, perquè els tests Playwright el puguin localitzar de forma fiable sense dependre de selectors CSS fràgils o de text.
 
-#### Scenario: L'element del badge és consultable per data-testid quan el comptador és > 0
+#### Escenari: L'element del badge és consultable per data-testid quan el comptador és > 0
 
-- **GIVEN** el frontend s'està executant i `e2e_client_unlinked` ha iniciat sessió
-- **AND** hi ha almenys una invitació `PENDING` per a aquest client
-- **WHEN** Playwright consulta `page.locator('[data-testid="pending-invites-badge"]')`
-- **THEN** es troba exactament un element
-- **AND** el seu `textContent` és igual a la representació en cadena del comptador de pendents (p. ex. `"1"`)
+- **DONAT** el frontend s'està executant i `e2e_client_unlinked` ha iniciat sessió
+- **I** hi ha almenys una invitació `PENDING` per a aquest client
+- **QUAN** Playwright consulta `page.locator('[data-testid="pending-invites-badge"]')`
+- **ALESHORES** es troba exactament un element
+- **I** el seu `textContent` és igual a la representació en cadena del comptador de pendents (p. ex. `"1"`)
 
-#### Scenario: L'element del badge és absent quan el comptador és 0
+#### Escenari: L'element del badge és absent quan el comptador és 0
 
-- **GIVEN** `e2e_client_linked` ha iniciat sessió (ja té un coach, cap invitació pendent)
-- **WHEN** Playwright consulta `page.locator('[data-testid="pending-invites-badge"]')`
-- **THEN** el comptador d'elements és 0 (element no al DOM o ocult)
+- **DONAT** `e2e_client_linked` ha iniciat sessió (ja té un coach, cap invitació pendent)
+- **QUAN** Playwright consulta `page.locator('[data-testid="pending-invites-badge"]')`
+- **ALESHORES** el comptador d'elements és 0 (element no al DOM o ocult)
 
-#### Scenario: Testabilitat — l'atribut és present al HTML renderitzat
+#### Escenari: Testabilitat — l'atribut és present al HTML renderitzat
 
-- **GIVEN** la compilació del frontend finalitza correctament (`npm run build` a `src/front/`)
-- **WHEN** un desenvolupador inspecciona el nav de Layout a DevTools amb una invitació pendent present
-- **THEN** el `<span>` del badge (o element equivalent) té `data-testid="pending-invites-badge"` als seus atributs
-
----
-
-### Requirement: Suite E2E ejecutable en CI sin intervención manual
-
-El sistema DEBE soportar la ejecución de la suite E2E completa en un entorno de runner de GitHub Actions donde: el frontend se sirve vía Vite dev/preview en `http://localhost:5173`; el backend corre en `http://localhost:3000` con `E2E_TESTING=true` y `NODE_ENV=test`; PostgreSQL 17 está disponible en `localhost:5432`; y no hay secrets de producción presentes. `playwright.config.ts` y `e2e/global-setup.ts` ya satisfacen este requisito leyendo `PLAYWRIGHT_BASE_URL` y `PLAYWRIGHT_API_URL` desde variables de entorno — este requisito convierte la ejecución en CI en un criterio de aceptación formal.
-
-#### Scenario: Suite completa pasa en el entorno de CI
-
-- **GIVEN** el stack efímero descrito (PostgreSQL service container, backend nativo, Vite dev)
-- **AND** `PLAYWRIGHT_BASE_URL=http://localhost:5173` y `PLAYWRIGHT_API_URL=http://localhost:3000/api` definidos
-- **AND** `E2E_TESTING=true` definido en el proceso del backend
-- **WHEN** se ejecuta `cd e2e && npx playwright test` en el runner
-- **THEN** el comando termina con código 0
-- **AND** todos los tests existentes en `e2e/tests/` pasan (incluidos los multi-usuario que usan `twoUsers` fixture)
-
-#### Scenario: Global setup verifica el harness antes de los tests en CI
-
-- **GIVEN** el backend arrancado en el runner con `E2E_TESTING=true`
-- **WHEN** Playwright inicializa la suite (ejecuta `global-setup.ts`)
-- **THEN** `global-setup.ts` recibe HTTP 200 de `POST /api/testing/reset`
-- **AND** la suite continúa con los tests normalmente
-
-#### Scenario: Retries activos en CI — test flaky no bloquea inmediatamente
-
-- **GIVEN** `CI=true` definido en el entorno del runner
-- **AND** un test que falla en su primera ejecución por timing
-- **WHEN** Playwright lo reintenta (hasta 2 veces según `playwright.config.ts`)
-- **THEN** si pasa en el segundo o tercer intento, el test se reporta como `flaky` (pasó con retry)
-- **AND** el job termina con código 0 (flaky ≠ failure en Playwright por defecto)
-- **AND** si falla las 3 veces, el test se reporta como `failed` y el job termina con código distinto de 0
+- **DONAT** la compilació del frontend finalitza correctament (`npm run build` a `src/front/`)
+- **QUAN** un desenvolupador inspecciona el nav de Layout a DevTools amb una invitació pendent present
+- **ALESHORES** el `<span>` del badge (o element equivalent) té `data-testid="pending-invites-badge"` als seus atributs
 
 ---
 
-### Requirement: E2E helper endpoint — inject reset token
+### Requisit: Suite E2E executable en CI sense intervenció manual
 
-The backend MUST expose `POST /testing/inject-reset-token` when `E2E_TESTING=true`. The endpoint SHALL accept `{ email: string }`, invalidate any existing unused token for that user, create a new `PasswordResetToken` with a deterministic raw token value, and return `{ rawToken: string }`. This endpoint SHALL NOT be reachable when `E2E_TESTING` is falsy.
+El sistema HA DE suportar l'execució de la suite E2E completa en un entorn de runner de GitHub Actions on: el frontend es serveix via Vite dev/preview a `http://localhost:5173`; el backend corre a `http://localhost:3000` amb `E2E_TESTING=true` i `NODE_ENV=test`; PostgreSQL 17 està disponible a `localhost:5432`; i no hi ha secrets de producció presents. `playwright.config.ts` i `e2e/global-setup.ts` ja satisfan aquest requisit llegint `PLAYWRIGHT_BASE_URL` i `PLAYWRIGHT_API_URL` des de variables d'entorn — aquest requisit converteix l'execució en CI en un criteri d'acceptació formal.
 
-#### Scenario: Returns raw token for known user
+#### Escenari: Suite completa passa en l'entorn de CI
 
-- **GIVEN** `E2E_TESTING=true` and a seeded user with `email: 'e2e_coach@lightweight.test'`
-- **WHEN** `POST /testing/inject-reset-token` is called with `{ email: 'e2e_coach@lightweight.test' }`
-- **THEN** the response is `200 OK` with body `{ rawToken: '<hex string>' }`
-- **AND** a `PasswordResetToken` row exists with `token = sha256(rawToken)`, `used = false`, `expiresAt` ~30 min from now
+- **DONAT** l'stack efímer descrit (service container de PostgreSQL, backend natiu, Vite dev)
+- **I** `PLAYWRIGHT_BASE_URL=http://localhost:5173` i `PLAYWRIGHT_API_URL=http://localhost:3000/api` definits
+- **I** `E2E_TESTING=true` definit en el procés del backend
+- **QUAN** s'executa `cd e2e && npx playwright test` al runner
+- **ALESHORES** l'ordre acaba amb codi 0
+- **I** tots els tests existents a `e2e/tests/` passen (inclosos els multi-usuari que usen la fixture `twoUsers`)
 
-#### Scenario: Invalidates previous token before inserting
+#### Escenari: Global setup verifica el harness abans dels tests en CI
 
-- **GIVEN** the user already has an unused `PasswordResetToken`
-- **WHEN** `POST /testing/inject-reset-token` is called again for the same email
-- **THEN** the previous token is marked `used = true`
-- **AND** only the newly injected token is valid
+- **DONAT** el backend arrencat al runner amb `E2E_TESTING=true`
+- **QUAN** Playwright inicialitza la suite (executa `global-setup.ts`)
+- **ALESHORES** `global-setup.ts` rep HTTP 200 de `POST /api/testing/reset`
+- **I** la suite continua amb els tests normalment
 
-#### Scenario: Endpoint blocked when E2E_TESTING is not set
+#### Escenari: Reintents actius en CI — test inestable no bloqueja immediatament
 
-- **GIVEN** the backend is started without `E2E_TESTING=true`
-- **WHEN** `POST /testing/inject-reset-token` is called
-- **THEN** the response is `404 Not Found`
-
----
-
-### Requirement: E2E fixture — users include email field
-
-The `e2eUsers` fixture in `e2e/fixtures/users.ts` MUST include an `email` field for each user. The `/testing/reset` seed endpoint MUST populate the `email` column using those values.
-
-#### Scenario: e2e_coach email is deterministic
-
-- **GIVEN** the E2E suite runs `POST /testing/reset`
-- **WHEN** `prismaMock.user.findUnique({ where: { email: 'e2e_coach@lightweight.test' } })` is called
-- **THEN** the user is found
-
-#### Scenario: E2eUser type includes email
-
-- **GIVEN** the TypeScript type `E2eUser`
-- **WHEN** the type is inspected
-- **THEN** it has properties `username: string`, `password: string`, `role: 'COACH' | 'CLIENT'`, `email: string`
+- **DONAT** `CI=true` definit a l'entorn del runner
+- **I** un test que falla en la seva primera execució per timing
+- **QUAN** Playwright el reintenta (fins a 2 vegades segons `playwright.config.ts`)
+- **ALESHORES** si passa en el segon o tercer intent, el test es reporta com a `flaky` (ha passat amb retry)
+- **I** el job acaba amb codi 0 (flaky ≠ failure a Playwright per defecte)
+- **I** si falla les 3 vegades, el test es reporta com a `failed` i el job acaba amb codi diferent de 0
 
 ---
 
-### Requirement: E2E happy-path — full forgot-password → reset-password → login flow
+### Requisit: Endpoint helper E2E — inject reset token
 
-A Playwright test SHALL drive the complete browser flow: navigate to `/forgot-password`, submit email, obtain token via inject endpoint, navigate to `/reset-password?token=...`, set new password, verify redirect to `/login`, and log in successfully with the new password.
+El backend HA D'exposar `POST /testing/inject-reset-token` quan `E2E_TESTING=true`. L'endpoint HA D'acceptar `{ email: string }`, invalidar qualsevol token no usat existent per a aquell usuari, crear un nou `PasswordResetToken` amb un valor de token en brut determinista, i retornar `{ rawToken: string }`. Aquest endpoint NO HA DE ser accessible quan `E2E_TESTING` és false.
 
-#### Scenario: Visitor completes full password reset flow
+#### Escenari: Retorna el token en brut per a un usuari conegut
 
-- **GIVEN** the DB is seeded with `e2e_coach` having email `e2e_coach@lightweight.test`
-- **WHEN** the visitor navigates to `/forgot-password`, enters `e2e_coach@lightweight.test`, and submits
-- **THEN** a generic success message or toast is visible (the UI does not reveal whether the email exists)
-- **AND** `POST /testing/inject-reset-token` returns a `rawToken`
-- **WHEN** the visitor navigates to `/reset-password?token=<rawToken>` and enters `NewE2ePass123!` in both password fields and submits
-- **THEN** a success toast is displayed and the page redirects to `/login`
-- **WHEN** the visitor logs in with `e2e_coach` and `NewE2ePass123!`
-- **THEN** the login succeeds and the coach dashboard is visible
+- **DONAT** `E2E_TESTING=true` i un usuari sembrat amb `email: 'e2e_coach@lightweight.test'`
+- **QUAN** es crida `POST /testing/inject-reset-token` amb `{ email: 'e2e_coach@lightweight.test' }`
+- **ALESHORES** la resposta és `200 OK` amb body `{ rawToken: '<cadena hex>' }`
+- **I** existeix una fila `PasswordResetToken` amb `token = sha256(rawToken)`, `used = false`, `expiresAt` ~30 min des d'ara
 
-#### Scenario: Submit button disabled while request is in flight
+#### Escenari: Invalida el token anterior abans d'inserir
 
-- **GIVEN** the visitor is on `/forgot-password`
-- **WHEN** the visitor submits the form
-- **THEN** the submit button is disabled until the API response is received
+- **DONAT** l'usuari ja té un `PasswordResetToken` no usat
+- **QUAN** es crida `POST /testing/inject-reset-token` de nou per al mateix email
+- **ALESHORES** el token anterior es marca com `used = true`
+- **I** només el token injectat novament és vàlid
 
----
+#### Escenari: Endpoint bloquejat quan E2E_TESTING no està establert
 
-### Requirement: E2E error cases — ForgotPassword page
-
-The Playwright suite SHALL verify all error paths on the `/forgot-password` page without relying on real SMTP.
-
-#### Scenario: Unregistered email shows inline error
-
-- **GIVEN** the visitor is on `/forgot-password`
-- **WHEN** the visitor submits with `notreal@example.com`
-- **THEN** an inline error is visible below the email field
-- **AND** the page does NOT navigate to `/login`
-
-#### Scenario: Invalid email format — browser/client validation
-
-- **GIVEN** the visitor is on `/forgot-password`
-- **WHEN** the visitor submits with `not-an-email`
-- **THEN** a validation error is shown and no API call is made (or the API returns 400 and the error is displayed)
+- **DONAT** el backend s'ha arrencat sense `E2E_TESTING=true`
+- **QUAN** es crida `POST /testing/inject-reset-token`
+- **ALESHORES** la resposta és `404 Not Found`
 
 ---
 
-### Requirement: E2E error cases — ResetPassword page
+### Requisit: Fixture E2E — els usuaris inclouen el camp email
 
-The Playwright suite SHALL verify all error paths on the `/reset-password` page.
+La fixture `e2eUsers` a `e2e/fixtures/users.ts` HA D'incloure un camp `email` per a cada usuari. L'endpoint de seed `/testing/reset` HA DE poblar la columna `email` usant aquells valors.
 
-#### Scenario: Mismatched passwords — client-side validation blocks submission
+#### Escenari: L'email de e2e_coach és determinista
 
-- **GIVEN** the visitor navigates to `/reset-password?token=<validToken>`
-- **WHEN** the visitor enters `Pass1234!` in the first field and `Diferente!` in the second and submits
-- **THEN** a client-side validation error is shown
-- **AND** no `POST /auth/reset-password` call is made
+- **DONAT** la suite E2E executa `POST /testing/reset`
+- **QUAN** es crida `prismaMock.user.findUnique({ where: { email: 'e2e_coach@lightweight.test' } })`
+- **ALESHORES** l'usuari es troba
 
-#### Scenario: Password too short — client-side validation blocks submission
+#### Escenari: El tipus E2eUser inclou email
 
-- **GIVEN** the visitor is on `/reset-password?token=<validToken>`
-- **WHEN** the visitor enters `short` in both password fields and submits
-- **THEN** a client-side validation error is shown (minimum 8 characters)
-
-#### Scenario: Expired token — backend returns 400, error and retry link shown
-
-- **GIVEN** a `PasswordResetToken` exists with `expiresAt` in the past (injected via test helper with manipulated expiry)
-- **WHEN** the visitor submits the form with that token
-- **THEN** an error message is visible
-- **AND** a link to `/forgot-password` is present on the page
-
-#### Scenario: Already-used token — backend returns 400, error shown
-
-- **GIVEN** a token that was already consumed (inject then use it once, then try again)
-- **WHEN** the visitor submits the form with the used token
-- **THEN** an error message is visible
-- **AND** a link to `/forgot-password` is present
-
-#### Scenario: ResetPassword page is publicly accessible without JWT
-
-- **GIVEN** the visitor has no JWT in localStorage
-- **WHEN** the visitor navigates to `/reset-password?token=abc`
-- **THEN** the reset password form is rendered (no redirect to `/login`)
+- **DONAT** el tipus TypeScript `E2eUser`
+- **QUAN** s'inspecciona el tipus
+- **ALESHORES** té les propietats `username: string`, `password: string`, `role: 'COACH' | 'CLIENT'`, `email: string`
 
 ---
 
-### Requirement: E2E CI integration
+### Requisit: Test E2E happy-path — flux complet forgot-password → reset-password → login
 
-The new E2E tests SHALL be executed automatically in the GitHub Actions CI pipeline alongside the existing Playwright suite. No additional SMTP credentials SHALL be required because the inject endpoint bypasses email delivery.
+Un test Playwright HA DE conduir el flux complet del navegador: navegar a `/forgot-password`, enviar l'email, obtenir el token via l'endpoint d'injecció, navegar a `/reset-password?token=...`, establir una nova contrasenya, verificar la redirecció a `/login`, i iniciar sessió correctament amb la nova contrasenya.
 
-#### Scenario: CI runs forgot-password tests automatically
+#### Escenari: El visitant completa el flux complet de restabliment de contrasenya
 
-- **GIVEN** the GitHub Actions E2E workflow starts the backend with `E2E_TESTING=true`
-- **WHEN** Playwright discovers `e2e/tests/forgot-password.spec.ts`
-- **THEN** all tests in that file are executed as part of the CI run
-- **AND** the workflow does NOT require `MAIL_USER`, `MAIL_OAUTH_CLIENT_ID`, `MAIL_OAUTH_CLIENT_SECRET`, or `MAIL_OAUTH_REFRESH_TOKEN` to pass
+- **DONAT** la BD sembrada amb `e2e_coach` tenint email `e2e_coach@lightweight.test`
+- **QUAN** el visitant navega a `/forgot-password`, introdueix `e2e_coach@lightweight.test` i envia
+- **ALESHORES** un missatge d'èxit genèric o toast és visible (la UI no revela si l'email existeix)
+- **I** `POST /testing/inject-reset-token` retorna un `rawToken`
+- **QUAN** el visitant navega a `/reset-password?token=<rawToken>` i introdueix `NewE2ePass123!` en tots dos camps de contrasenya i envia
+- **ALESHORES** es mostra un toast d'èxit i la pàgina redirigeix a `/login`
+- **QUAN** el visitant inicia sessió amb `e2e_coach` i `NewE2ePass123!`
+- **ALESHORES** l'inici de sessió té èxit i el dashboard del coach és visible
+
+#### Escenari: El botó d'enviament es deshabilita mentre la petició és en vol
+
+- **DONAT** el visitant és a `/forgot-password`
+- **QUAN** el visitant envia el formulari
+- **ALESHORES** el botó d'enviament es deshabilita fins que es rep la resposta de l'API
+
+---
+
+### Requisit: Casos d'error E2E — pàgina ForgotPassword
+
+La suite Playwright HA DE verificar tots els camins d'error a la pàgina `/forgot-password` sense dependre de SMTP real.
+
+#### Escenari: Email no registrat mostra error en línia
+
+- **DONAT** el visitant és a `/forgot-password`
+- **QUAN** el visitant envia amb `notreal@example.com`
+- **ALESHORES** un error en línia és visible sota el camp email
+- **I** la pàgina NO navega a `/login`
+
+#### Escenari: Format d'email invàlid — validació del navegador/client
+
+- **DONAT** el visitant és a `/forgot-password`
+- **QUAN** el visitant envia amb `no-es-un-email`
+- **ALESHORES** es mostra un error de validació i no es fa cap crida a l'API (o l'API retorna 400 i l'error es mostra)
+
+---
+
+### Requisit: Casos d'error E2E — pàgina ResetPassword
+
+La suite Playwright HA DE verificar tots els camins d'error a la pàgina `/reset-password`.
+
+#### Escenari: Contrasenyes no coincidents — la validació del client bloqueja l'enviament
+
+- **DONAT** el visitant navega a `/reset-password?token=<validToken>`
+- **QUAN** el visitant introdueix `Pass1234!` al primer camp i `Diferente!` al segon i envia
+- **ALESHORES** es mostra un error de validació del client
+- **I** no es fa cap crida a `POST /auth/reset-password`
+
+#### Escenari: Contrasenya massa curta — la validació del client bloqueja l'enviament
+
+- **DONAT** el visitant és a `/reset-password?token=<validToken>`
+- **QUAN** el visitant introdueix `curta` en tots dos camps de contrasenya i envia
+- **ALESHORES** es mostra un error de validació del client (mínim 8 caràcters)
+
+#### Escenari: Token expirat — el backend retorna 400, es mostra l'error i l'enllaç de reintent
+
+- **DONAT** un `PasswordResetToken` existeix amb `expiresAt` en el passat (injectat via helper de test amb expiració manipulada)
+- **QUAN** el visitant envia el formulari amb aquell token
+- **ALESHORES** un missatge d'error és visible
+- **I** un enllaç a `/forgot-password` és present a la pàgina
+
+#### Escenari: Token ja usat — el backend retorna 400, es mostra l'error
+
+- **DONAT** un token que ja ha estat consumit (injectar i usar-lo una vegada, i intentar-ho de nou)
+- **QUAN** el visitant envia el formulari amb el token usat
+- **ALESHORES** un missatge d'error és visible
+- **I** un enllaç a `/forgot-password` és present
+
+#### Escenari: La pàgina ResetPassword és públicament accessible sense JWT
+
+- **DONAT** el visitant no té JWT a localStorage
+- **QUAN** el visitant navega a `/reset-password?token=abc`
+- **ALESHORES** el formulari de restabliment de contrasenya es renderitza (sense redirecció a `/login`)
+
+---
+
+### Requisit: Integració E2E en CI
+
+Els nous tests E2E HAN DE ser executats automàticament al pipeline de CI de GitHub Actions juntament amb la suite Playwright existent. No calen credencials SMTP addicionals perquè l'endpoint d'injecció bypassa el lliurament d'email.
+
+#### Escenari: CI executa els tests de forgot-password automàticament
+
+- **DONAT** el workflow E2E de GitHub Actions arrenca el backend amb `E2E_TESTING=true`
+- **QUAN** Playwright descobreix `e2e/tests/forgot-password.spec.ts`
+- **ALESHORES** tots els tests d'aquell arxiu s'executen com a part del run de CI
+- **I** el workflow NO requereix `MAIL_USER`, `MAIL_OAUTH_CLIENT_ID`, `MAIL_OAUTH_CLIENT_SECRET`, ni `MAIL_OAUTH_REFRESH_TOKEN` per passar
