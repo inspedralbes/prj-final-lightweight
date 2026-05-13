@@ -1,8 +1,8 @@
-# Diagrama del Modelo de Datos
+# Diagrama del Model de Dades
 
-**Actualizado**: 2026-05-08 — Añadida tabla `session_progress` para persistir progreso por usuario en Friend Sessions (LW-288). Tablas en negrita son core para MVP. Tablas en cursiva son para expansiones post-MVP.
+**Actualitzat**: 2026-05-08 — Afegida taula `session_progress` per persistir el progrés per usuari en Friend Sessions (LW-288). Les taules en **negreta** són bàsiques per al MVP. Les taules en *cursiva* són per a extensions post-MVP.
 
-## Tablas y Campos
+## Taules i Camps
 
 ### **users**
 
@@ -10,26 +10,26 @@
 - username (String, unique)
 - passwordHash (String)
 - role (Enum: COACH, CLIENT)
-- coachId (Int?, FK to users.id) — Para clientes asignados (se rellena al aceptar invitación)
+- coachId (Int?, FK to users.id) — Per a clients assignats (s'omple en acceptar la invitació)
 - createdAt (DateTime)
 
 ### **invitations**
 
 - id (Int, PK)
-- coachId (Int, FK to users.id) — Coach que genera la invitación
-- clientId (Int?, FK to users.id) — Se rellena al aceptar
-- code (String, unique) — Token único generado por invitación
+- coachId (Int, FK to users.id) — Coach que genera la invitació
+- clientId (Int?, FK to users.id) — S'omple en acceptar
+- code (String, unique) — Token únic generat per invitació
 - status (Enum: PENDING, ACCEPTED, EXPIRED, REVOKED)
-- expiresAt (DateTime?) — Expiración opcional por invitación
+- expiresAt (DateTime?) — Expiració opcional per invitació
 - createdAt (DateTime)
-- acceptedAt (DateTime?) — Momento de aceptación
+- acceptedAt (DateTime?) — Moment d'acceptació
 
-### _exercise_catalog_
+### *exercise_catalog*
 
 - id (Int, PK)
 - name (String)
 - description (String?)
-- category (String?) — e.g., "upper body", "cardio"
+- category (String?) — p. ex. "upper body", "cardio"
 - createdAt (DateTime)
 
 ### **routines**
@@ -47,16 +47,16 @@
 - exerciseId (Int, FK to exercise_catalog.id)
 - sets (Int)
 - reps (Int)
-- rest (Int) — segundos
+- rest (Int) — segons
 - notes (String?)
-- order (Int) — para orden en rutina
+- order (Int) — per a l'ordre a la rutina
 
 ### **sessions**
 
 - id (Int, PK)
 - hostId (Int, FK to users.id)
 - guestId (Int?, FK to users.id)
-- code (String, unique) — Código para Friend Session
+- code (String, unique) — Codi per a Friend Session
 - status (Enum: ACTIVE, COMPLETED)
 - createdAt (DateTime)
 - timeout (DateTime)
@@ -65,7 +65,7 @@
 
 - id (Int, PK)
 - sessionId (Int, FK to live_sessions.id)
-- participantId (String) — UUID temporal para clients sin auth, o userId para coaches
+- participantId (String) — UUID temporal per a clients sense auth, o userId per a coaches
 - role (Enum: COACH, CLIENT)
 - joinedAt (DateTime)
 - leftAt (DateTime?) — Nullable
@@ -74,31 +74,31 @@
 
 - id (Int, PK)
 - sessionId (Int, FK to live_sessions.id)
-- eventType (String) — e.g., "exercise:start", "set:completed"
-- data (Json) — detalles del evento
+- eventType (String) — p. ex. "exercise:start", "set:completed"
+- data (Json) — detalls de l'event
 - timestamp (DateTime)
 
 ### **chat_messages**
 
 - id (Int, PK)
 - sessionId (Int, FK to live_sessions.id)
-- sender (String) — "COACH" o "CLIENT" + identifier
+- sender (String) — "COACH" o "CLIENT" + identificador
 - message (String)
 - timestamp (DateTime)
 
 ### **session_progress** (LW-288)
 
 - id (Int, PK)
-- sessionId (Int, FK to live_sessions.id) — FK a la sesión
-- userId (Int, FK to users.id) — Usuario que completó el progreso
-- completedExercises (Int) — Número de ejercicios completados
-- completedSets (Int) — Número de series completadas
-- completionPercentage (Float) — Porcentaje de progreso (0-100)
-- completedAt (DateTime?) — Momento de finalización
-- isPartial (Boolean) — true si la sesión fue abandonada prematuramente
-- Unique: (sessionId, userId)
+- sessionId (Int, FK to live_sessions.id) — FK a la sessió
+- userId (Int, FK to users.id) — Usuari que va completar el progrés
+- completedExercises (Int) — Nombre d'exercicis completats
+- completedSets (Int) — Nombre de sèries completades
+- completionPercentage (Float) — Percentatge de progrés (0-100)
+- completedAt (DateTime?) — Moment de finalització
+- isPartial (Boolean) — true si la sessió va ser abandonada prematurament
+- Únic: (sessionId, userId)
 
-### _food_catalog_
+### *food_catalog*
 
 - id (Int, PK)
 - name (String)
@@ -106,25 +106,25 @@
 - protein (Float)
 - carbs (Float)
 - fat (Float)
-- unit (String) — e.g., "g", "ml"
+- unit (String) — p. ex. "g", "ml"
 - createdAt (DateTime)
 
-### _diet_plans_
+### *diet_plans*
 
 - id (Int, PK)
 - coachId (Int, FK to users.id)
 - name (String)
 - createdAt (DateTime)
 
-### _diet_meals_
+### *diet_meals*
 
 - id (Int, PK)
 - dietPlanId (Int, FK to diet_plans.id)
 - name (String)
-- mealType (String) — e.g., "breakfast", "lunch"
+- mealType (String) — p. ex. "breakfast", "lunch"
 - order (Int)
 
-### _diet_meal_items_
+### *diet_meal_items*
 
 - id (Int, PK)
 - dietMealId (Int, FK to diet_meals.id)
@@ -132,11 +132,11 @@
 - quantity (Float)
 - unit (String)
 
-## Relaciones
+## Relacions
 
 - invitations.coachId -> users.id
-- invitations.clientId -> users.id (nullable, se rellena al aceptar)
-- users.coachId -> users.id (relación coach→cliente, se establece al aceptar invitación)
+- invitations.clientId -> users.id (nullable, s'omple en acceptar)
+- users.coachId -> users.id (relació coach→client, s'estableix en acceptar la invitació)
 - routines.coachId -> users.id
 - routine_exercises.routineId -> routines.id
 - routine_exercises.exerciseId -> exercise_catalog.id

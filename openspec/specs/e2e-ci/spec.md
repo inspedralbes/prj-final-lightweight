@@ -1,195 +1,195 @@
-# Spec: Integración E2E en CI
+# Spec: Integració E2E en CI
 
-## Propósito
+## Propòsit
 
-Automatizar la ejecución de la suite Playwright E2E en GitHub Actions en cada pull request que apunte a `main`, usando un entorno efímero con el stack completo (PostgreSQL + NestJS backend + Vite frontend) levantado de forma nativa dentro del runner. Los runs fallidos DEBEN subir artefactos de Playwright (trace, captura de pantalla, vídeo) para la depuración post-mortem. El merge a `main` queda bloqueado hasta que el check de estado `e2e / playwright` pase.
-
----
-
-## Requirements
-
-### Requirement: Workflow de CI E2E en GitHub Actions
-
-El repositorio DEBE incluir un workflow de GitHub Actions en `.github/workflows/e2e.yml` que se dispare en cada evento `pull_request` que apunte a `main` (y opcionalmente en `workflow_dispatch`). El workflow DEBE ejecutar un único job llamado `playwright` que: arranque un service container de PostgreSQL 17; instale Node 20 y todas las dependencias de los workspaces (back, front, e2e) con caché de npm activada; construya el backend NestJS; arranque el proceso del backend con `E2E_TESTING=true` y `NODE_ENV=test` y espere a que esté disponible en el puerto 3000; arranque el frontend Vite en modo preview o dev y espere al puerto 5173; ejecute `cd e2e && npx playwright test`; y suba artefactos en caso de fallo.
-
-#### Escenario: El workflow se dispara en un PR a main
-
-- **DADO** un PR abierto contra `main` con cambios en el código
-- **CUANDO** se crea o actualiza el PR
-- **ENTONCES** el workflow `e2e.yml` se dispara automáticamente
-- **Y** el job `playwright` aparece como check pendiente en el PR
-
-#### Escenario: La suite completa pasa en verde
-
-- **DADO** que todos los tests E2E pasan con el stack arrancado en el runner
-- **CUANDO** el job `playwright` termina
-- **ENTONCES** el check `e2e / playwright` queda en estado `success`
-- **Y** el PR puede mergearse (si el resto de checks también pasan)
-- **Y** no se suben artefactos (solo se suben en fallo)
-
-#### Escenario: La suite falla y bloquea el merge
-
-- **DADO** que al menos un test E2E falla durante la ejecución del job
-- **CUANDO** el job `playwright` termina con código distinto de 0
-- **ENTONCES** el check `e2e / playwright` queda en estado `failure`
-- **Y** el PR no puede mergearse mientras el check esté en `failure`
-- **Y** se suben los artefactos `e2e/test-results/` y `e2e/playwright-report/` al artefacto `e2e-report-<run_id>`
-
-#### Escenario: El workflow se puede disparar manualmente
-
-- **DADO** un desarrollador con permisos de `write` en el repositorio
-- **CUANDO** accede a Actions → e2e.yml → Run workflow
-- **ENTONCES** el job se dispara con los mismos pasos que en un PR
-- **Y** los resultados son visibles en la pestaña de Actions
+Automatitzar l'execució de la suite Playwright E2E a GitHub Actions en cada pull request que apunti a `main`, usant un entorn efímer amb el stack complet (PostgreSQL + NestJS backend + Vite frontend) aixecat de forma nativa dins del runner. Les execucions fallides HAN DE pujar artefactes de Playwright (trace, captura de pantalla, vídeo) per a la depuració post-mortem. El merge a `main` queda bloquejat fins que el check d'estat `e2e / playwright` passi.
 
 ---
 
-### Requirement: Stack efímero con service container de PostgreSQL
+## Requisits
 
-El workflow DEBE usar un service container de GitHub Actions para PostgreSQL 17 (`image: postgres:17`) con health-check (`pg_isready`) para que el backend solo arranque una vez que la base de datos esté lista. La base de datos DEBE llamarse `lw_e2e`, el usuario `postgres` y la contraseña `postgres`. La `DATABASE_URL` inyectada en el backend DEBE ser `postgresql://postgres:postgres@localhost:5432/lw_e2e`.
+### Requisit: Workflow de CI E2E a GitHub Actions
 
-#### Escenario: El backend arranca con la DB lista
+El repositori HA D'incloure un workflow de GitHub Actions a `.github/workflows/e2e.yml` que es dispari en cada event `pull_request` que apunti a `main` (i opcionalment en `workflow_dispatch`). El workflow HA D'executar un únic job anomenat `playwright` que: aixequi un service container de PostgreSQL 17; instal·li Node 20 i totes les dependències dels workspaces (back, front, e2e) amb caché de npm activada; compili el backend NestJS; aixequi el procés del backend amb `E2E_TESTING=true` i `NODE_ENV=test` i esperi que estigui disponible al port 3000; aixequi el frontend Vite en mode preview o dev i esperi al port 5173; executi `cd e2e && npx playwright test`; i pugi artefactes en cas de falla.
 
-- **DADO** que el service container de PostgreSQL ha superado su health-check
-- **CUANDO** se ejecuta el step de build e inicio del backend
-- **ENTONCES** `npm run start:prod` (o equivalente) arranca sin errores de conexión a la DB
-- **Y** Prisma completa las migraciones automáticamente (`prisma migrate deploy`)
-- **Y** el seed inicial se aplica vía `npx prisma db seed`
+#### Escenari: El workflow es dispara en un PR a main
 
-#### Escenario: El backend no arranca sin DB
+- **DONAT** un PR obert contra `main` amb canvis al codi
+- **QUAN** es crea o actualitza el PR
+- **ALESHORES** el workflow `e2e.yml` es dispara automàticament
+- **I** el job `playwright` apareix com a check pendent al PR
 
-- **DADO** que el service container de PostgreSQL no está listo (p.ej. health-check fallando)
-- **CUANDO** el step intenta arrancar el backend
-- **ENTONCES** el step falla con un error de conexión a PostgreSQL
-- **Y** el job termina con `failure` antes de intentar ejecutar Playwright
+#### Escenari: La suite completa passa en verd
 
-#### Escenario: La DB es efímera — no persiste entre runs
+- **DONAT** que tots els tests E2E passen amb el stack aixecat al runner
+- **QUAN** el job `playwright` finalitza
+- **ALESHORES** el check `e2e / playwright` queda en estat `success`
+- **I** el PR es pot fer merge (si la resta de checks també passen)
+- **I** no es pugen artefactes (només es pugen en falla)
 
-- **DADO** un run anterior que dejó datos en la DB del runner
-- **CUANDO** comienza un nuevo run del workflow
-- **ENTONCES** el service container de PostgreSQL se inicia con una DB vacía
-- **Y** el seed se aplica desde cero al arrancar el backend
+#### Escenari: La suite falla i bloqueja el merge
 
----
+- **DONAT** que almenys un test E2E falla durant l'execució del job
+- **QUAN** el job `playwright` finalitza amb codi distint de 0
+- **ALESHORES** el check `e2e / playwright` queda en estat `failure`
+- **I** el PR no es pot fer merge mentre el check estigui en `failure`
+- **I** es pugen els artefactes `e2e/test-results/` i `e2e/playwright-report/` a l'artefacte `e2e-report-<run_id>`
 
-### Requirement: Credenciales de prueba hardcodeadas en el workflow (no en secrets)
+#### Escenari: El workflow es pot disparar manualment
 
-El workflow DEBE inyectar `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, `VITE_BACK_URL`, `E2E_TESTING` y `NODE_ENV` como variables `env:` directamente en el YAML, usando valores seguros y no productivos. No se DEBEN requerir nuevos secrets de GitHub Actions para ejecutar E2E en CI.
-
-#### Escenario: El workflow es ejecutable sin configurar secrets adicionales
-
-- **DADO** un fork del repositorio sin ningún secret configurado
-- **CUANDO** se abre un PR en el fork (o se dispara manualmente el workflow)
-- **ENTONCES** el job `playwright` arranca y usa las credenciales hardcodeadas del YAML
-- **Y** no falla por `Secret not found` ni por variables de entorno faltantes
-
-#### Escenario: Las credenciales de CI no son reutilizables en producción
-
-- **DADO** el archivo `.github/workflows/e2e.yml` inspeccionado por un auditor
-- **CUANDO** se revisan los valores de `JWT_SECRET` y `DATABASE_URL`
-- **ENTONCES** los valores están claramente etiquetados con un comentario `# Solo CI — nunca usar en producción`
-- **Y** el valor de `JWT_SECRET` es distinto del que usa el secret `ENV_FILE` de producción
+- **DONAT** un desenvolupador amb permisos de `write` al repositori
+- **QUAN** accedeix a Actions → e2e.yml → Run workflow
+- **ALESHORES** el job es dispara amb els mateixos passos que en un PR
+- **I** els resultats són visibles a la pestanya d'Actions
 
 ---
 
-### Requirement: Caché de dependencias npm y browsers de Playwright
+### Requisit: Stack efímer amb service container de PostgreSQL
 
-El workflow DEBE cachear `node_modules` de cada workspace (`src/back`, `src/front`, `e2e`) con clave basada en el hash del `package-lock.json` correspondiente, y DEBE cachear los binarios de browsers de Playwright en `~/.cache/ms-playwright` con clave basada en `e2e/package-lock.json`. Un MISS de caché DEBE seguir resultando en un run exitoso (fallback a instalación nueva).
+El workflow HA D'usar un service container de GitHub Actions per a PostgreSQL 17 (`image: postgres:17`) amb health-check (`pg_isready`) perquè el backend només arrenqui quan la base de dades estigui llesta. La base de dades HA DE dir-se `lw_e2e`, l'usuari `postgres` i la contrasenya `postgres`. La `DATABASE_URL` injectada al backend HA DE ser `postgresql://postgres:postgres@localhost:5432/lw_e2e`.
 
-#### Escenario: Un cache hit acelera el job
+#### Escenari: El backend arrenca amb la BD llesta
 
-- **DADO** un run previo que calentó la caché con las mismas versiones de dependencias
-- **CUANDO** se ejecuta el job con el mismo `package-lock.json`
-- **ENTONCES** el step `Cache node_modules` reporta `Cache hit`
-- **Y** el step `Cache Playwright browsers` reporta `Cache hit`
-- **Y** el tiempo total del job es inferior a 4 minutos (frente a ~8 min en frío)
+- **DONAT** que el service container de PostgreSQL ha superat el seu health-check
+- **QUAN** s'executa el pas de build i inici del backend
+- **ALESHORES** `npm run start:prod` (o equivalent) arrenca sense errors de connexió a la BD
+- **I** Prisma completa les migracions automàticament (`prisma migrate deploy`)
+- **I** el seed inicial s'aplica via `npx prisma db seed`
 
-#### Escenario: Un cache miss no rompe el job
+#### Escenari: El backend no arrenca sense BD
 
-- **DADO** un cambio en `e2e/package-lock.json` (p.ej. bump de `@playwright/test`)
-- **CUANDO** el job se ejecuta por primera vez con la nueva versión
-- **ENTONCES** el step `Cache Playwright browsers` reporta `Cache miss`
-- **Y** los browsers se descargan e instalan correctamente
-- **Y** el job termina con éxito (o falla por razón de los tests, no del setup)
+- **DONAT** que el service container de PostgreSQL no està llest (p. ex. health-check fallant)
+- **QUAN** el pas intenta arrencar el backend
+- **ALESHORES** el pas falla amb un error de connexió a PostgreSQL
+- **I** el job finalitza amb `failure` abans d'intentar executar Playwright
 
----
+#### Escenari: La BD és efímera — no persisteix entre runs
 
-### Requirement: Artefactos de depuración subidos en caso de fallo
-
-El workflow DEBE subir `e2e/test-results/` y `e2e/playwright-report/` como un único artefacto de GitHub Actions llamado `e2e-report-${{ github.run_id }}` con retención de 7 días cuando el step `playwright` falle o se cancele. El step de subida DEBE usar `if: failure()` para que no se ejecute en builds en verde.
-
-#### Escenario: Los artefactos están disponibles tras un fallo
-
-- **DADO** un test E2E que falla y genera trace, captura de pantalla y vídeo
-- **CUANDO** el job `playwright` termina con `failure`
-- **ENTONCES** el step `Upload Playwright report` se ejecuta
-- **Y** el artefacto `e2e-report-<run_id>` aparece en la pestaña Summary del run
-- **Y** el artefacto contiene `playwright-report/index.html` con los detalles del fallo
-- **Y** el artefacto contiene los archivos `trace.zip`, `.png` y `.webm` del test fallido
-
-#### Escenario: Los artefactos no se suben en un run verde
-
-- **DADO** que todos los tests E2E pasan
-- **CUANDO** el job `playwright` termina con `success`
-- **ENTONCES** el step `Upload Playwright report` se salta (`if: failure()` evalúa a false)
-- **Y** no aparece ningún artefacto en la pestaña Summary del run
-
-#### Escenario: Los artefactos expiran tras 7 días
-
-- **DADO** un artefacto `e2e-report-<run_id>` subido hace más de 7 días
-- **CUANDO** se accede al run en la UI de GitHub
-- **ENTONCES** el artefacto ya no está disponible para descarga
-- **Y** el run muestra `Artifact expired` o equivalente
+- **DONAT** un run anterior que va deixar dades a la BD del runner
+- **QUAN** comença un nou run del workflow
+- **ALESHORES** el service container de PostgreSQL s'inicia amb una BD buida
+- **I** el seed s'aplica des de zero en arrencar el backend
 
 ---
 
-### Requirement: Espera activa (readiness check) antes de lanzar Playwright
+### Requisit: Credencials de prova hardcoded al workflow (no a secrets)
 
-El workflow DEBE esperar a que tanto el backend (puerto 3000) como el frontend (puerto 5173) sean alcanzables antes de ejecutar Playwright, usando un bucle de reintentos (`curl --retry 30 --retry-delay 2 --retry-connrefused`) o equivalente. Si alguno de los servicios no responde en 60 segundos, el step DEBE fallar con un mensaje de error explícito.
+El workflow HA D'injectar `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, `VITE_BACK_URL`, `E2E_TESTING` i `NODE_ENV` com a variables `env:` directament al YAML, usant valors segurs i no productius. NO s'han de requerir nous secrets de GitHub Actions per executar E2E en CI.
 
-#### Escenario: El backend está listo antes de que Playwright arranque
+#### Escenari: El workflow és executable sense configurar secrets addicionals
 
-- **DADO** que el backend tarda 15 segundos en compilar y arrancar
-- **CUANDO** el step de readiness-check ejecuta el bucle de reintentos
-- **ENTONCES** el step espera hasta que `GET http://localhost:3000/api` responde con cualquier código HTTP
-- **Y** solo entonces comienza el step siguiente (`npx playwright test`)
+- **DONAT** un fork del repositori sense cap secret configurat
+- **QUAN** s'obre un PR al fork (o es dispara manualment el workflow)
+- **ALESHORES** el job `playwright` arrenca i usa les credencials hardcoded del YAML
+- **I** no falla per `Secret not found` ni per variables d'entorn que falten
 
-#### Escenario: El backend no responde — el job falla rápido
+#### Escenari: Les credencials de CI no són reutilitzables en producció
 
-- **DADO** un error en el paso de build del backend que impide su arranque
-- **CUANDO** el step de readiness-check espera 60 segundos sin respuesta
-- **ENTONCES** el step falla con el mensaje `"El backend no estuvo listo en el puerto 3000 en 60s"`
-- **Y** el job termina con `failure` sin haber ejecutado ningún test
-
----
-
-### Requirement: `PLAYWRIGHT_API_URL` documentado en `e2e/.env.example`
-
-El archivo `e2e/.env.example` DEBE incluir la variable `PLAYWRIGHT_API_URL` con el valor por defecto `http://localhost:3000/api` y un comentario en línea explicando su propósito. Esta variable ya es consumida por `e2e/global-setup.ts`.
-
-#### Escenario: La variable está documentada en .env.example
-
-- **DADO** `e2e/.env.example` en el repositorio
-- **CUANDO** un desarrollador lo abre
-- **ENTONCES** encuentra la línea `PLAYWRIGHT_API_URL=http://localhost:3000/api` con un comentario explicativo
-- **Y** la documentación es coherente con el uso en `e2e/global-setup.ts`
+- **DONAT** l'arxiu `.github/workflows/e2e.yml` inspeccionat per un auditor
+- **QUAN** es revisen els valors de `JWT_SECRET` i `DATABASE_URL`
+- **ALESHORES** els valors estan clarament etiquetats amb un comentari `# Només CI — mai usar en producció`
+- **I** el valor de `JWT_SECRET` és diferent del que usa el secret `ENV_FILE` de producció
 
 ---
 
-### Requirement: Branch protection activa en `main` para el check E2E
+### Requisit: Caché de dependències npm i browsers de Playwright
 
-El repositorio DEBE tener una regla de branch protection en `main` que exija que el check de estado `e2e / playwright` pase antes de que cualquier PR pueda mergearse. Este es un cambio en la configuración del repositorio de GitHub, no un cambio de código, pero forma parte de la Definición de Hecho para LW-445.
+El workflow HA DE cachear `node_modules` de cada workspace (`src/back`, `src/front`, `e2e`) amb clau basada en el hash del `package-lock.json` corresponent, i HA DE cachear els binaris de browsers de Playwright a `~/.cache/ms-playwright` amb clau basada en `e2e/package-lock.json`. Un MISS de caché HA DE seguir resultant en un run exitós (fallback a instal·lació nova).
 
-#### Escenario: El merge queda bloqueado si el check falla
+#### Escenari: Un cache hit accelera el job
 
-- **DADO** la branch protection activada en `main`
-- **Y** un PR cuyo check `e2e / playwright` está en estado `failure`
-- **CUANDO** un desarrollador intenta mergear el PR
-- **ENTONCES** GitHub bloquea el merge con el mensaje `"Required status check 'e2e / playwright' has not passed"`
+- **DONAT** un run previ que va escalfar la caché amb les mateixes versions de dependències
+- **QUAN** s'executa el job amb el mateix `package-lock.json`
+- **ALESHORES** el pas `Cache node_modules` reporta `Cache hit`
+- **I** el pas `Cache Playwright browsers` reporta `Cache hit`
+- **I** el temps total del job és inferior a 4 minuts (enfront de ~8 min en fred)
 
-#### Escenario: El merge se permite si el check pasa
+#### Escenari: Un cache miss no trenca el job
 
-- **DADO** la branch protection activada en `main`
-- **Y** un PR cuyo check `e2e / playwright` está en estado `success`
-- **CUANDO** un desarrollador con permisos intenta mergear el PR
-- **ENTONCES** el merge se permite (asumiendo que el resto de checks requeridos también pasan)
+- **DONAT** un canvi a `e2e/package-lock.json` (p. ex. bump de `@playwright/test`)
+- **QUAN** el job s'executa per primera vegada amb la nova versió
+- **ALESHORES** el pas `Cache Playwright browsers` reporta `Cache miss`
+- **I** els browsers es descarreguen i instal·len correctament
+- **I** el job finalitza amb èxit (o falla per raó dels tests, no del setup)
+
+---
+
+### Requisit: Artefactes de depuració pujats en cas de falla
+
+El workflow HA DE pujar `e2e/test-results/` i `e2e/playwright-report/` com a un únic artefacte de GitHub Actions anomenat `e2e-report-${{ github.run_id }}` amb retenció de 7 dies quan el pas `playwright` falli o es cancel·li. El pas de pujada HA D'usar `if: failure()` perquè no s'executi en builds en verd.
+
+#### Escenari: Els artefactes estan disponibles després d'una falla
+
+- **DONAT** un test E2E que falla i genera trace, captura de pantalla i vídeo
+- **QUAN** el job `playwright` finalitza amb `failure`
+- **ALESHORES** el pas `Upload Playwright report` s'executa
+- **I** l'artefacte `e2e-report-<run_id>` apareix a la pestanya Summary del run
+- **I** l'artefacte conté `playwright-report/index.html` amb els detalls de la falla
+- **I** l'artefacte conté els arxius `trace.zip`, `.png` i `.webm` del test fallat
+
+#### Escenari: Els artefactes no es pugen en un run verd
+
+- **DONAT** que tots els tests E2E passen
+- **QUAN** el job `playwright` finalitza amb `success`
+- **ALESHORES** el pas `Upload Playwright report` es salta (`if: failure()` avalua a false)
+- **I** no apareix cap artefacte a la pestanya Summary del run
+
+#### Escenari: Els artefactes expiren després de 7 dies
+
+- **DONAT** un artefacte `e2e-report-<run_id>` pujat fa més de 7 dies
+- **QUAN** s'accedeix al run a la UI de GitHub
+- **ALESHORES** l'artefacte ja no està disponible per a descàrrega
+- **I** el run mostra `Artifact expired` o equivalent
+
+---
+
+### Requisit: Espera activa (readiness check) abans de llançar Playwright
+
+El workflow HA D'esperar que tant el backend (port 3000) com el frontend (port 5173) siguin accessibles abans d'executar Playwright, usant un bucle de reintents (`curl --retry 30 --retry-delay 2 --retry-connrefused`) o equivalent. Si algun dels serveis no respon en 60 segons, el pas HA DE fallar amb un missatge d'error explícit.
+
+#### Escenari: El backend està llest abans que Playwright arrenqui
+
+- **DONAT** que el backend tarda 15 segons a compilar i arrencar
+- **QUAN** el pas de readiness-check executa el bucle de reintents
+- **ALESHORES** el pas espera fins que `GET http://localhost:3000/api` respon amb qualsevol codi HTTP
+- **I** només aleshores comença el pas següent (`npx playwright test`)
+
+#### Escenari: El backend no respon — el job falla ràpid
+
+- **DONAT** un error al pas de build del backend que impedeix el seu arrencada
+- **QUAN** el pas de readiness-check espera 60 segons sense resposta
+- **ALESHORES** el pas falla amb el missatge `"El backend no estava llest al port 3000 en 60s"`
+- **I** el job finalitza amb `failure` sense haver executat cap test
+
+---
+
+### Requisit: `PLAYWRIGHT_API_URL` documentat a `e2e/.env.example`
+
+L'arxiu `e2e/.env.example` HA D'incloure la variable `PLAYWRIGHT_API_URL` amb el valor per defecte `http://localhost:3000/api` i un comentari en línia explicant el seu propòsit. Aquesta variable ja és consumida per `e2e/global-setup.ts`.
+
+#### Escenari: La variable està documentada a .env.example
+
+- **DONAT** `e2e/.env.example` al repositori
+- **QUAN** un desenvolupador l'obre
+- **ALESHORES** troba la línia `PLAYWRIGHT_API_URL=http://localhost:3000/api` amb un comentari explicatiu
+- **I** la documentació és coherent amb l'ús a `e2e/global-setup.ts`
+
+---
+
+### Requisit: Protecció de branca activa a `main` per al check E2E
+
+El repositori HA DE tenir una regla de branch protection a `main` que exigeixi que el check d'estat `e2e / playwright` passi abans que qualsevol PR pugui fer-se merge. Aquest és un canvi a la configuració del repositori de GitHub, no un canvi de codi, però forma part de la Definició de Fet per a LW-445.
+
+#### Escenari: El merge queda bloquejat si el check falla
+
+- **DONAT** la branch protection activada a `main`
+- **I** un PR el check `e2e / playwright` del qual està en estat `failure`
+- **QUAN** un desenvolupador intenta fer merge del PR
+- **ALESHORES** GitHub bloqueja el merge amb el missatge `"Required status check 'e2e / playwright' has not passed"`
+
+#### Escenari: El merge es permet si el check passa
+
+- **DONAT** la branch protection activada a `main`
+- **I** un PR el check `e2e / playwright` del qual està en estat `success`
+- **QUAN** un desenvolupador amb permisos intenta fer merge del PR
+- **ALESHORES** el merge es permet (assumint que la resta de checks requerits també passen)

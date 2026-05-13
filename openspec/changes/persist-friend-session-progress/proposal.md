@@ -1,40 +1,40 @@
-## Why
+## Per què
 
-Currently, Friend Sessions (co-op workout sessions between friends) synchronize progress in real-time via Socket.IO, but this state is not persisted to the database. When a session completes, the progress data exists only in memory and is lost. This prevents users from viewing their session history or analytics (LW-258), as there's no persisted data to query. This task implements the persistence layer required for those downstream features.
+Actualment, les Friend Sessions (sessions d'entrenament cooperatiu entre amics) sincronitzen el progrés en temps real via Socket.IO, però aquest estat no es persisteix a la base de dades. Quan una sessió es completa, les dades de progrés existeixen únicament en memòria i es perden. Això impedeix que els usuaris puguin consultar el seu historial de sessions o analítiques (LW-258), ja que no hi ha dades persistides per consultar. Aquesta tasca implementa la capa de persistència requerida per a aquelles funcionalitats derivades.
 
-## What Changes
+## Què canvia
 
-- Add new Prisma model `SessionProgress` to store per-user progress at session completion
-- Modify `RoomGateway` to persist progress when `room:complete` event is received
-- Handle partial progress for abandoned sessions (when a participant leaves before completion)
-- Create Prisma migration for the new model
+- Afegir el nou model Prisma `SessionProgress` per emmagatzemar el progrés per usuari en completar la sessió
+- Modificar `RoomGateway` per persistir el progrés quan es rep l'event `room:complete`
+- Gestionar el progrés parcial per a sessions abandonades (quan un participant abandona abans de completar-la)
+- Crear la migració Prisma per al nou model
 
-## Capabilities
+## Capacitats
 
-### New Capabilities
-- `session-progress-persistence`: Persists per-user workout progress to PostgreSQL when Friend Sessions complete
+### Noves capacitats
+- `session-progress-persistence`: Persisteix el progrés d'entrenament per usuari a PostgreSQL quan les Friend Sessions es completen
 
-### Modified Capabilities
-- `coop-session`: Extends existing capability to persist progress data to database (no spec changes, implementation only)
-- `progress-api`: This capability now has the required data source (LW-258 will depend on this)
+### Capacitats modificades
+- `coop-session`: Estén la capacitat existent per persistir dades de progrés a la base de dades (sense canvis d'especificació, només implementació)
+- `progress-api`: Aquesta capacitat ara té la font de dades requerida (LW-258 en dependrà)
 
-## Impact
+## Impacte
 
-- **Backend modules affected**: `room` (RoomGateway), `session` (LiveSession model)
-- **Frontend features affected**: None (backend-only, UI already covered by LW-279)
-- **Database**: New `SessionProgress` table, migration required
-- **Socket.IO**: `room:complete` event handler now persists data to DB
+- **Mòduls de backend afectats**: `room` (RoomGateway), `session` (model LiveSession)
+- **Funcionalitats de frontend afectades**: Cap (backend únícament, la UI ja està coberta per LW-279)
+- **Base de dades**: Nova taula `SessionProgress`, migració requerida
+- **Socket.IO**: El gestor de l'event `room:complete` ara persisteix dades a la BD
 
-## Non-Goals
+## Fora d'abast
 
-- This does NOT implement PRs (personal records) tracking
-- This does NOT add physical metrics (heart rate, calories, etc.)
-- This does NOT include any mobile logic
-- This does NOT build the history API endpoints (those are LW-258)
+- Això NO implementa el seguiment de PRs (marques personals)
+- Això NO afegeix mètriques físiques (freqüència cardíaca, calories, etc.)
+- Això NO inclou cap lògica mòbil
+- Això NO construeix els endpoints de l'API d'historial (aquells són LW-258)
 
-## Linked Issues
+## Incidències vinculades
 
-- **LW-288**: Persist Friend Session progress to PostgreSQL (this task)
-- **LW-257**: Epic for friend sessions and progress tracking
-- **LW-258**: Progress history API (depends on this)
-- **LW-279**: UI for session summary (already done, this is backend-only)
+- **LW-288**: Persistir el progrés de Friend Session a PostgreSQL (aquesta tasca)
+- **LW-257**: Èpica per a friend sessions i seguiment de progrés
+- **LW-258**: API d'historial de progrés (depèn d'aquesta)
+- **LW-279**: UI per al resum de sessió (ja fet, això és backend únícament)

@@ -1,15 +1,56 @@
 # Proves d'Usuari — LightWeight
 
-Manual QA checklist for production smoke tests.
+Llista de verificació de QA manual per a proves de producció i smoke tests.
 
 ---
 
-## Progress API (LW-258)
+## Autenticació (LW-441)
 
-### Pre-requisits
-- Backend running at `http://localhost:3000` (or via Docker Compose)
-- At least one coach and one client user registered and linked via invitation
-- At least one completed workout session (solo or co-op)
+### Registre d'usuari nou
+1. Navega a `/register`.
+2. Omple nom d'usuari, correu electrònic, contrasenya i confirmació.
+3. **Esperat**: redirigeix a `/login` i apareix el toast "Compte creat correctament".
+4. Inicia sessió amb les credencials creades.
+5. **Esperat**: redirigeix al dashboard correcte (COACH → `/dashboard`, CLIENT → `/client-home`).
+
+### Registre amb dades invàlides
+1. Envia el formulari amb correu electrònic invàlid (p. ex. "notanemail").
+   - **Esperat**: la validació HTML5 evita l'enviament, el camp de correu es marca com a invàlid.
+2. Envia el formulari amb contrasenyes no coincidents.
+   - **Esperat**: apareix el missatge "Les contrasenyes no coincideixen".
+3. Intenta registrar-se amb un nom d'usuari ja existent.
+   - **Esperat**: apareix el missatge "Aquest usuari ja existeix".
+
+### Login
+1. Navega a `/login` i entra credencials correctes d'un COACH.
+   - **Esperat**: redirigeix a `/dashboard`, toast "Sessió iniciada correctament", token a localStorage.
+2. Entra credencials correctes d'un CLIENT.
+   - **Esperat**: redirigeix a `/client-home`.
+3. Entra una contrasenya incorrecta.
+   - **Esperat**: apareix l'alerta "Usuari o contrasenya invàlids", romanem a `/login`, cap token emmagatzemat.
+4. Prem Enter al camp de contrasenya en lloc de fer clic al botó.
+   - **Esperat**: el formulari s'envia igual que amb el botó.
+
+### Logout
+1. Inicia sessió i fes clic al botó "Tancar sessió" de la barra lateral.
+   - **Esperat**: redirigeix a `/login`, localStorage buit.
+2. Intenta navegar directament a `/dashboard` després de logout.
+   - **Esperat**: redirigeix a `/login`.
+
+### Persistència de sessió
+1. Inicia sessió i recarrega la pàgina (F5).
+   - **Esperat**: romanem al dashboard sense necessitat de tornar a iniciar sessió.
+2. Inicia sessió, navega entre `/dashboard` i `/clients`, recarrega en cada pàgina.
+   - **Esperat**: el token a localStorage no canvia i no hi ha redirects inesperats.
+
+---
+
+## API de Progrés (LW-258)
+
+### Prerequisits
+- Backend en marxa a `http://localhost:3000` (o via Docker Compose)
+- Almenys un coach i un client registrats i vinculats via invitació
+- Almenys una sessió d'entrenament completada (en solitari o cooperativa)
 
 ### Proves
 
@@ -71,9 +112,47 @@ Al completar una sessió (POST `/api/session/:code/status`):
 
 ---
 
-## Tests E2E en CI — Com interpretar el check de GitHub Actions (LW-445)
+## Progrés de clients (LW-279)
 
-### Quan obre un PR
+### Llista d'activitat de clients
+1. Inicia sessió com a entrenador.
+2. Fes clic a "Progrés de clients" a la barra lateral.
+3. **Esperat**: s'obre `/clients/progress` amb una taula de clients. Per a cada client, es mostra el nom d'usuari, la data de l'última sessió completada (o "—" si no n'hi ha cap) i el total de sessions.
+4. **Cas buit**: si cap client té sessions completades, es mostra el missatge "Cap sessió completada".
+
+### Navegació al detall d'un client
+1. Des de `/clients/progress`, fes clic sobre qualsevol fila de client.
+2. **Esperat**: navega a `/clients/progress/:clientId` i es carrega la pàgina de detall.
+3. Fes clic a "Tornar a la llista".
+4. **Esperat**: torna a `/clients/progress`.
+
+### Historial de sessions i estadístiques
+1. A la pàgina de detall d'un client que té sessions completades:
+   - **Esperat**: tres targetes d'estadístiques (Sessions totals, Sèries totals, Exercicis totals) amb valors reals.
+   - **Esperat**: taula d'historial amb columnes Rutina, Data, % completat i Sèries.
+   - Una sessió amb `completionPercentage` null ha de mostrar "0%" a la taula.
+
+### Gràfic de barres
+1. A la pàgina de detall d'un client amb sessions:
+   - **Esperat**: apareix un gràfic de barres taronja (fins a 10 barres). L'alçada de cada barra és proporcional al % completat.
+   - Una barra amb 0% ha de tenir alçada mínima (pràcticament plana).
+2. Per a un client sense sessions, el gràfic no s'ha de renderitzar.
+
+### Control d'accés
+1. Tanca la sessió i accedeix directament a `/clients/progress`.
+   - **Esperat**: redirigeix a `/login`.
+2. Inicia sessió com a client (no entrenador) i accedeix a `/clients/progress`.
+   - **Esperat**: redirigeix a `/client-home`.
+
+### Internacionalització
+1. A la pàgina de progrés, canvia l'idioma al castellà.
+   - **Esperat**: totes les etiquetes (Última sesión, Sesiones totales, etc.) canvien sense recarregar la pàgina.
+
+---
+
+## Tests E2E en CI (LW-445)
+
+### Quan s'obre un PR
 
 Cada PR contra `main` dispara automàticament el workflow **"E2E Tests (Playwright)"**.
 A la pàgina del PR, a la secció **Checks**, trobaràs el check `e2e / playwright`.
@@ -84,7 +163,7 @@ A la pàgina del PR, a la secció **Checks**, trobaràs el check `e2e / playwrig
 | ❌ `failure` | Algun test ha fallat. El merge queda bloquejat fins que es corregeixi. |
 | 🟡 `in_progress` | El workflow encara s'està executant (~5–8 min). |
 
-### Com accedir als artefactes en cas de fallo
+### Com accedir als artefactes en cas de fallada
 
 1. Fes clic a **Details** al costat del check `e2e / playwright` en fallida.
 2. A la pàgina del run, fes clic a la pestanya **Summary**.
@@ -93,18 +172,18 @@ A la pàgina del PR, a la secció **Checks**, trobaràs el check `e2e / playwrig
    ```bash
    npx playwright show-report ruta/a/playwright-report
    ```
-5. El report mostra cada test fallat amb la seva **traça** (trace), **captura de pantalla** i **vídeo** del moment del fallo.
+5. El report mostra cada test fallat amb la seva **traça** (trace), **captura de pantalla** i **vídeo** del moment de la fallada.
 
 ### Notes importants
 
 - Els artefactes s'eliminen automàticament als **7 dies** — descarrega'ls aviat si els necessites.
 - Els tests amb comportament inestable (*flaky*) es reintenten automàticament fins a 2 vegades en CI.
   Si un test falla constantment, obre una issue i assigna-la a la pròxima sprint.
-- **Mai activar `E2E_TESTING=true` en producció** — aquest flag habilita endpoints que esborra dades.
+- **Mai activar `E2E_TESTING=true` en producció** — aquest flag habilita endpoints que esborren dades.
 
 ---
 
-## LW-270 — Web Client: Vista de Historial y Estadísticas
+## Historial i Estadístiques del Client (LW-270)
 
 ### Prerequisits
 - Stack en marxa: `docker compose up`
@@ -135,11 +214,11 @@ A la pàgina del PR, a la secció **Checks**, trobaràs el check `e2e / playwrig
 - Inicia sessió com a COACH i navega a `/client/history` → ha de redirigir al dashboard del coach
 
 #### 5. Botó Tornar
-- A `/client/history`, fes clic al botó "Volver" → confirma que torna a `/client-home`
+- A `/client/history`, fes clic al botó "Tornar" → confirma que torna a `/client-home`
 
 ---
 
-## LW-454 — Flux de Recuperació de Contrasenya (Forgot Password)
+## Flux de Recuperació de Contrasenya (LW-454)
 
 ### Prerequisits
 - Stack en marxa: `docker compose up` (amb `E2E_TESTING=true` al `.env` per als tests manuals)
@@ -185,4 +264,3 @@ A la pàgina del PR, a la secció **Checks**, trobaràs el check `e2e / playwrig
 - Navega a `/reset-password?token=<token_usat_o_expirat>`
 - Intenta restablir la contrasenya → confirma missatge d'error
 - Confirma que la pàgina mostra un enllaç a `/forgot-password` per sol·licitar un nou token
-

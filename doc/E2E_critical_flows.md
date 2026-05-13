@@ -1,65 +1,65 @@
-# E2E Critical User Flows - Priority Reference
+# Fluxos Crítics d'Usuari E2E — Referència de Prioritats
 
-This document lists the prioritized user flows for E2E test coverage on the LightWeight platform.
+Aquest document llista els fluxos d'usuari prioritzats per a la cobertura de tests E2E a la plataforma LightWeight.
 
-## Prioritization Framework
+## Marc de Priorització
 
-**Criteria:** Impact × Frequency
-- **Impact:** Critical business value (revenue, core feature)
-- **Frequency:** How often the flow is used by real users
+**Criteris:** Impacte × Freqüència
+- **Impacte:** Valor de negoci crític (ingressos, funcionalitat principal)
+- **Freqüència:** Amb quina freqüència utilitzen els usuaris reals el flux
 
-## Priority Levels
+## Nivells de Prioritat
 
-| Priority | Description | Test Coverage |
-|----------|-------------|--------------|
-| P0 | Critical business flows - core platform differentiators | First |
-| P1 | High value flows - direct revenue/engagement | Second |
-| P2 | Important flows - regular usage | Third |
-| P3 | Nice to have - low frequency | Last |
+| Prioritat | Descripció | Cobertura |
+|-----------|------------|-----------|
+| P0 | Fluxos de negoci crítics — diferenciadors principals de la plataforma | Primer |
+| P1 | Fluxos d'alt valor — ingressos/engagement directes | Segon |
+| P2 | Fluxos importants — ús regular | Tercer |
+| P3 | Interessant tenir — baixa freqüència | Últim |
 
-## Prioritized User Flows
+## Fluxos d'Usuari Prioritzats
 
-| # | Flow | Priority | Module | Notes |
-|---|------|----------|--------|-------|
+| # | Flux | Prioritat | Mòdul | Notes |
+|---|------|-----------|-------|-------|
 | 1 | Login | P0 | auth | |
-| 2 | Client runs solo workout | P0 | workout | |
-| 3 | Co-op session (coach creates + client joins) | P0 | session/room | |
-| 4 | Registration | P1 | auth | |
-| 5 | Invitation acceptance | P1 | invitations | |
-| 6 | Video call initiation | P1 | events | |
-| 7 | Coach creates routine | P2 | routines | |
-| 8 | Coach assigns routine to client | P2 | routines | |
-| 9 | Client creates own routine | P2 | routines | |
-| 10 | Exercise catalog search | P2 | exercises | |
-| 11 | P2P chat | P2 | chat | Realtime only (online) |
-| 12 | Coach client list | P2 | clients | |
-| 13 | Client profile notes | P2 | clients | |
-| 14 | Client views coach info | P3 | client | |
-| 15 | Theme switching | P3 | shared | NOT YET IMPLEMENTED |
-| 16 | Profile settings | P3 | auth | NOT YET IMPLEMENTED |
-| 17 | Notification delivery (offline) | P2 | events | NOT YET IMPLEMENTED |
+| 2 | Client executa entrenament en solitari | P0 | workout | |
+| 3 | Sessió cooperativa (coach crea + client s'uneix) | P0 | session/room | |
+| 4 | Registre | P1 | auth | |
+| 5 | Acceptació d'invitació | P1 | invitations | |
+| 6 | Inici de videollamada | P1 | events | |
+| 7 | Coach crea rutina | P2 | routines | |
+| 8 | Coach assigna rutina a client | P2 | routines | |
+| 9 | Client crea la seva pròpia rutina | P2 | routines | |
+| 10 | Cerca al catàleg d'exercicis | P2 | exercises | |
+| 11 | Xat P2P | P2 | chat | Només en temps real (online) |
+| 12 | Llista de clients del coach | P2 | clients | |
+| 13 | Notes del perfil del client | P2 | clients | |
+| 14 | Client veu la informació del coach | P3 | client | |
+| 15 | Canvi de tema | P3 | shared | ENCARA NO IMPLEMENTAT |
+| 16 | Configuració del perfil | P3 | auth | ENCARA NO IMPLEMENTAT |
+| 17 | Lliurament de notificacions (offline) | P2 | events | ENCARA NO IMPLEMENTAT |
 
-## Flows Requiring Socket.IO Testing
+## Fluxos que Requereixen Tests amb Socket.IO
 
-The following flows require Socket.IO/WebSocket testing due to real-time behavior:
+Els fluxos següents requereixen tests Socket.IO/WebSocket per al seu comportament en temps real:
 
-| Flow | Socket Events | Implementation Status |
-|------|--------------|----------------------|
-| Co-op session | `room:join`, `room:state`, `room:exercise-progress` | ✅ Implemented |
-| P2P chat | `chat:send`, `chat:message` | ✅ Implemented (online only) |
-| Video call | `video-call-invite`, `video-call-accept`, `webrtc-*` | ✅ Implemented |
-| Notifications | `notification:new` | ⚠️ Online only - offline pending |
+| Flux | Events de Socket | Estat d'implementació |
+|------|-----------------|----------------------|
+| Sessió cooperativa | `room:join`, `room:state`, `room:exercise-progress` | ✅ Implementat |
+| Xat P2P | `chat:send`, `chat:message` | ✅ Implementat (només online) |
+| Videollamada | `video-call-invite`, `video-call-accept`, `webrtc-*` | ✅ Implementat |
+| Notificacions | `notification:new` | ⚠️ Només online - offline pendent |
 
-### Not Yet Implemented (Future Features)
+### Encara No Implementat (Funcionalitats Futures)
 
-| Flow | Description | Priority |
-|------|-------------|----------|
-| Theme switching | Dark/light mode toggle | P3 |
-| Profile settings | User profile management | P3 |
-| Offline notifications | Push notifications when offline | P2 |
+| Flux | Descripció | Prioritat |
+|------|------------|-----------|
+| Canvi de tema | Toggle mode fosc/clar | P3 |
+| Configuració del perfil | Gestió del perfil d'usuari | P3 |
+| Notificacions offline | Notificacions push quan l'usuari està offline | P2 |
 
-## Quarterly Review
+## Revisió Trimestral
 
-This list should be re-evaluated quarterly or before new E2E test implementation phases.
+Aquesta llista s'ha de réévaluar trimestralment o abans de noves fases d'implementació de tests E2E.
 
-Last updated: 2026-05-06
+Última actualització: 2026-05-06
