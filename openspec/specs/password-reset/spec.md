@@ -8,7 +8,7 @@ Defineix els requisits funcionals per al flux complet de restabliment de contras
 
 ### Requisit: Endpoint de forgot-password
 
-El sistema DEBE exponer `POST /auth/forgot-password` que acepta una dirección de email, la busca en la base de datos y — si la encuentra — genera un token de restablecimiento seguro de un solo uso, persiste su hash SHA-256 en `PasswordResetToken` y envía un enlace de restablecimiento al email registrado. La respuesta DEBE ser siempre `200 OK` con un mensaje genérico independientemente de si el email existe, para prevenir la enumeración de emails. El endpoint DEBE estar limitado a 3 peticiones por minuto por IP mediante `@nestjs/throttler`.
+El sistema HA D'exposar `POST /auth/forgot-password` que accepta una adreça d'email, la busca a la base de dades i — si la troba — genera un token de restabliment segur d'un sol ús, persisteix el seu hash SHA-256 a `PasswordResetToken` i envia un enllaç de restabliment a l'email registrat. La resposta HA DE ser sempre `200 OK` amb un missatge genèric independentment de si l'email existeix, per prevenir l'enumeració d'emails. L'endpoint HA D'estar limitat a 3 peticions per minut per IP mitjançant `@nestjs/throttler`.
 
 #### Escenari: El email existeix — token creat i email enviat
 
@@ -49,7 +49,7 @@ El sistema DEBE exponer `POST /auth/forgot-password` que acepta una dirección d
 
 ### Requisit: Endpoint de reset-password
 
-El sistema DEBE exponer `POST /auth/reset-password` que acepta un token de restablecimiento en bruto y una nueva contraseña. El endpoint DEBE validar el token (coincidencia de hash, `used = false`, `expiresAt > now()`), actualizar el `passwordHash` del usuario con bcrypt (10 rondas) y marcar el token como consumido. En cualquier fallo de validación la respuesta DEBE ser `400 Bad Request` con el mensaje `"Invalid or expired token"`. En caso de éxito la respuesta es `200 OK`.
+El sistema HA D'exposar `POST /auth/reset-password` que accepta un token de restabliment en brut i una nova contrasenya. L'endpoint HA DE validar el token (coincidència de hash, `used = false`, `expiresAt > now()`), actualitzar el `passwordHash` de l'usuari amb bcrypt (10 rondes) i marcar el token com a consumit. En qualsevol falla de validació la resposta HA DE ser `400 Bad Request` amb el missatge `"Invalid or expired token"`. En cas d'èxit la resposta és `200 OK`.
 
 #### Escenari: Restabliment de contrasenya exitós
 
@@ -88,7 +88,7 @@ El sistema DEBE exponer `POST /auth/reset-password` que acepta un token de resta
 
 ### Requisit: Model Prisma PasswordResetToken
 
-El sistema DEBE persistir los tokens de restablecimiento en una nueva tabla `password_reset_tokens` a través del modelo Prisma `PasswordResetToken`. El campo `token` DEBE almacenar el hash hex SHA-256 del token en bruto (nunca el token en bruto). El modelo DEBE eliminar en cascada cuando el `User` padre se elimine.
+El sistema HA DE persistir els tokens de restabliment en una nova taula `password_reset_tokens` a través del model Prisma `PasswordResetToken`. El camp `token` HA D'emmagatzemar el hash hex SHA-256 del token en brut (mai el token en brut). El model HA D'eliminar en cascada quan l'`User` pare s'elimini.
 
 #### Escenari: Token eliminat quan s'elimina l'usuari
 
@@ -106,7 +106,7 @@ El sistema DEBE persistir los tokens de restablecimiento en una nueva tabla `pas
 
 ### Requisit: MailService — Nodemailer amb transport adaptat a l'entorn
 
-El sistema DEBE proporcionar un `MailService` (en `src/back/src/mail/`) que envíe emails transaccionales via Nodemailer. En producción (`NODE_ENV=production`) DEBE usar credenciales Gmail OAuth2 obtenidas de las variables de entorno. En todos los demás entornos DEBE crear automáticamente una cuenta de prueba Ethereal y loguear la URL de previsualización en la consola. El servicio DEBE ser inyectable y mockeable mediante un token de proveedor de NestJS.
+El sistema HA DE proporcionar un `MailService` (a `src/back/src/mail/`) que enviï emails transaccionals via Nodemailer. En producció (`NODE_ENV=production`) HA D'usar credencials Gmail OAuth2 obtingudes de les variables d'entorn. En tots els altres entorns HA DE crear automàticament un compte de prova Ethereal i registrar la URL de previsualització a la consola. El servei HA DE ser injectable i mockejable mitjançant un token de proveïdor de NestJS.
 
 #### Escenari: Email enviat en producció amb Gmail OAuth2
 
@@ -133,7 +133,7 @@ El sistema DEBE proporcionar un `MailService` (en `src/back/src/mail/`) que env�
 
 ### Requisit: Pàgina frontend ForgotPassword — crida real a la API
 
-La página `ForgotPassword` de la SPA en `/forgot-password` DEBE llamar a `POST /auth/forgot-password` con el email enviado en lugar de simular el éxito. El formulario DEBE deshabilitar el botón de envío mientras la petición está en vuelo. Si el backend devuelve error (email no registrado), DEBE mostrarse un mensaje de error en línea bajo el campo email. En caso de éxito DEBE mostrarse un toast y redirigir a `/login` tras ~2 segundos.
+La pàgina `ForgotPassword` de la SPA a `/forgot-password` HA DE cridar `POST /auth/forgot-password` amb l'email enviat en lloc de simular l'èxit. El formulari HA DE deshabilitar el botó d'enviament mentre la petició és en vol. Si el backend retorna error (email no registrat), HA DE mostrar-se un missatge d'error en línia sota el camp email. En cas d'èxit HA DE mostrar-se un toast i redirigir a `/login` després de ~2 segons.
 
 #### Escenari: Email enviat — ruta d'èxit
 
@@ -163,7 +163,7 @@ La página `ForgotPassword` de la SPA en `/forgot-password` DEBE llamar a `POST 
 
 ### Requisit: Pàgina frontend ResetPassword
 
-La SPA DEBE exponer una nueva página `ResetPassword` en `/reset-password?token=...`. La página DEBE renderizar dos campos de contraseña ("nueva contraseña" + "confirmar contraseña"), validar que coinciden y que cada una tiene al menos 8 caracteres antes de llamar al backend, llamar a `POST /auth/reset-password` con el token de la cadena de consulta y la nueva contraseña, mostrar un toast de éxito y redirigir a `/login` en caso de éxito, y mostrar un mensaje de error con un enlace a `/forgot-password` en cualquier error del backend (token inválido/expirado).
+La SPA HA D'exposar una nova pàgina `ResetPassword` a `/reset-password?token=...`. La pàgina HA DE renderitzar dos camps de contrasenya ("nova contrasenya" + "confirmar contrasenya"), validar que coincideixen i que cadascuna té almenys 8 caràcters abans de cridar el backend, cridar `POST /auth/reset-password` amb el token de la cadena de consulta i la nova contrasenya, mostrar un toast d'èxit i redirigir a `/login` en cas d'èxit, i mostrar un missatge d'error amb un enllaç a `/forgot-password` en qualsevol error del backend (token invàlid/expirat).
 
 #### Escenari: Flux de restabliment de contrasenya exitós (frontend)
 
@@ -205,7 +205,7 @@ La SPA DEBE exponer una nueva página `ResetPassword` en `/reset-password?token=
 
 ### Requisit: Claus i18n per a la UI de restabliment de contrasenya
 
-Totes les cadenes visibles per l'usuari a les pàgines `ForgotPassword` i `ResetPassword` DEBEN existir a `ca.json`, `es.json` i `en.json`. Les cadenes en català són els valors canònics; anglès i espanyol són traduccions.
+Totes les cadenes visibles per l'usuari a les pàgines `ForgotPassword` i `ResetPassword` HAN D'existir a `ca.json`, `es.json` i `en.json`. Les cadenes en català són els valors canònics; anglès i espanyol són traduccions.
 
 #### Escenari: Claus i18n presents en tots els idiomes
 
@@ -231,7 +231,7 @@ Totes les cadenes visibles per l'usuari a les pàgines `ForgotPassword` i `Reset
 
 ### Requisit: Variables d'entorn per a la configuració del correu
 
-Tota la configuració relacionada amb el correu DEBE proporcionarse mediante variables de entorno. Las variables DEBEN estar documentadas en `.env.example` en la raíz del repositorio y en `src/back/.env.example`. En producción el secreto `ENV_FILE` de GitHub Actions las inyecta. En desarrollo no son necesarias (se usa Ethereal en su lugar).
+Tota la configuració relacionada amb el correu HA DE proporcionar-se mitjançant variables d'entorn. Les variables HAN D'estar documentades a `.env.example` a l'arrel del repositori i a `src/back/.env.example`. En producció el secret `ENV_FILE` de GitHub Actions les injecta. En desenvolupament no són necessàries (s'usa Ethereal en el seu lloc).
 
 #### Escenari: .env.example conté totes les claus de correu requerides
 
@@ -254,90 +254,90 @@ Tota la configuració relacionada amb el correu DEBE proporcionarse mediante var
 
 ---
 
-### Requirement: AuthService.forgotPassword unit tests
+### Requisit: Tests unitaris d'AuthService.forgotPassword
 
-The unit test suite for `AuthService.forgotPassword` SHALL cover all normative scenarios defined in `openspec/specs/password-reset/spec.md` using Vitest + NestJS `TestingModule`. The `PrismaService`, `MailService`, and `ConfigService` MUST be injected as mocks. No real DB or SMTP connection SHALL be made.
+La suite de tests unitaris per a `AuthService.forgotPassword` HA DE cobrir tots els escenaris normatius definits a `openspec/specs/password-reset/spec.md` usant Vitest + NestJS `TestingModule`. `PrismaService`, `MailService` i `ConfigService` HAN DE ser injectats com a mocks. No s'ha de fer cap connexió real a BD ni SMTP.
 
-#### Scenario: Known email — token created and mail sent
+#### Escenari: Email conegut — token creat i email enviat
 
-- **GIVEN** `prismaMock.user.findUnique` returns a user with `id: 1, email: 'user@example.com'`
-- **AND** `prismaMock.passwordResetToken.updateMany` resolves (marks old tokens used)
-- **AND** `prismaMock.passwordResetToken.create` resolves
-- **WHEN** `service.forgotPassword({ email: 'user@example.com' })` is called
-- **THEN** `prismaMock.passwordResetToken.updateMany` is called once with `{ where: { userId: 1, used: false }, data: { used: true } }`
-- **AND** `prismaMock.passwordResetToken.create` is called once with a `data` object containing `userId: 1`, a `token` string (64-char hex SHA-256), and an `expiresAt` Date approximately 30 minutes in the future
-- **AND** `mailMock.sendPasswordReset` is called once with `'user@example.com'` and a URL containing `/reset-password?token=`
+- **DONAT** `prismaMock.user.findUnique` retorna un usuari amb `id: 1, email: 'user@example.com'`
+- **I** `prismaMock.passwordResetToken.updateMany` resol (marca els tokens antics com a usats)
+- **I** `prismaMock.passwordResetToken.create` resol
+- **QUAN** es crida `service.forgotPassword({ email: 'user@example.com' })`
+- **ALESHORES** `prismaMock.passwordResetToken.updateMany` es crida una vegada amb `{ where: { userId: 1, used: false }, data: { used: true } }`
+- **I** `prismaMock.passwordResetToken.create` es crida una vegada amb un objecte `data` que conté `userId: 1`, una cadena `token` (SHA-256 hex de 64 caràcters), i una `expiresAt` Date aproximadament 30 minuts en el futur
+- **I** `mailMock.sendPasswordReset` es crida una vegada amb `'user@example.com'` i una URL que conté `/reset-password?token=`
 
-#### Scenario: Unknown email — NotFoundException thrown
+#### Escenari: Email desconegut — NotFoundException llançada
 
-- **GIVEN** `prismaMock.user.findUnique` returns `null`
-- **WHEN** `service.forgotPassword({ email: 'unknown@example.com' })` is called
-- **THEN** the promise rejects with `NotFoundException`
-- **AND** `prismaMock.passwordResetToken.create` is NOT called
-- **AND** `mailMock.sendPasswordReset` is NOT called
+- **DONAT** `prismaMock.user.findUnique` retorna `null`
+- **QUAN** es crida `service.forgotPassword({ email: 'unknown@example.com' })`
+- **ALESHORES** la promesa rebutja amb `NotFoundException`
+- **I** `prismaMock.passwordResetToken.create` NO es crida
+- **I** `mailMock.sendPasswordReset` NO es crida
 
-#### Scenario: Existing unused token invalidated before creating a new one
+#### Escenari: Token no usat existent invalidat abans de crear-ne un de nou
 
-- **GIVEN** a user has an existing unused token in the DB
-- **WHEN** `service.forgotPassword` is called for that user
-- **THEN** `prismaMock.passwordResetToken.updateMany` is called BEFORE `prismaMock.passwordResetToken.create`
+- **DONAT** un usuari té un token no usat existent a la BD
+- **QUAN** es crida `service.forgotPassword` per a aquell usuari
+- **ALESHORES** `prismaMock.passwordResetToken.updateMany` es crida ABANS de `prismaMock.passwordResetToken.create`
 
-#### Scenario: Token expiry uses RESET_TOKEN_EXPIRY_MINUTES config value
+#### Escenari: L'expiració del token usa el valor de configuració RESET_TOKEN_EXPIRY_MINUTES
 
-- **GIVEN** `ConfigService.get('RESET_TOKEN_EXPIRY_MINUTES')` returns `'60'`
-- **WHEN** `service.forgotPassword` is called with a known email
-- **THEN** the `expiresAt` passed to `passwordResetToken.create` is approximately 60 minutes from `Date.now()`
+- **DONAT** `ConfigService.get('RESET_TOKEN_EXPIRY_MINUTES')` retorna `'60'`
+- **QUAN** es crida `service.forgotPassword` amb un email conegut
+- **ALESHORES** l'`expiresAt` passat a `passwordResetToken.create` és aproximadament 60 minuts a partir de `Date.now()`
 
-#### Scenario: Testability — MailService injected as mock
+#### Escenari: Testabilitat — MailService injectat com a mock
 
-- **GIVEN** the `TestingModule` uses `overrideProvider(MailService).useValue({ sendPasswordReset: vi.fn() })`
-- **WHEN** `service.forgotPassword` completes
-- **THEN** no real SMTP connection is attempted and the test passes
+- **DONAT** el `TestingModule` usa `overrideProvider(MailService).useValue({ sendPasswordReset: vi.fn() })`
+- **QUAN** `service.forgotPassword` es completa
+- **ALESHORES** no s'intenta cap connexió SMTP real i el test passa
 
 ---
 
-### Requirement: AuthService.resetPassword unit tests
+### Requisit: Tests unitaris d'AuthService.resetPassword
 
-The unit test suite for `AuthService.resetPassword` SHALL verify token validation, password update, and token consumption using Vitest + mocked Prisma. Time-sensitive assertions MUST use `vi.useFakeTimers()` / `vi.setSystemTime()`.
+La suite de tests unitaris per a `AuthService.resetPassword` HA DE verificar la validació del token, l'actualització de contrasenya i el consum del token usant Vitest + Prisma mockat. Les assertes sensibles al temps HAN D'usar `vi.useFakeTimers()` / `vi.setSystemTime()`.
 
-#### Scenario: Valid token — password updated and token marked used
+#### Escenari: Token vàlid — contrasenya actualitzada i token marcat com a usat
 
-- **GIVEN** `prismaMock.passwordResetToken.findFirst` returns `{ id: 10, userId: 1, used: false, expiresAt: <future date> }`
-- **AND** `prismaMock.user.update` resolves
-- **AND** `prismaMock.passwordResetToken.update` resolves
-- **WHEN** `service.resetPassword({ token: '<raw>', password: 'NewPass123!' })` is called
-- **THEN** `prismaMock.user.update` is called with `{ where: { id: 1 }, data: { passwordHash: expect.any(String) } }`
-- **AND** `prismaMock.passwordResetToken.update` is called with `{ where: { id: 10 }, data: { used: true } }`
+- **DONAT** `prismaMock.passwordResetToken.findFirst` retorna `{ id: 10, userId: 1, used: false, expiresAt: <data futura> }`
+- **I** `prismaMock.user.update` resol
+- **I** `prismaMock.passwordResetToken.update` resol
+- **QUAN** es crida `service.resetPassword({ token: '<raw>', password: 'NewPass123!' })`
+- **ALESHORES** `prismaMock.user.update` es crida amb `{ where: { id: 1 }, data: { passwordHash: expect.any(String) } }`
+- **I** `prismaMock.passwordResetToken.update` es crida amb `{ where: { id: 10 }, data: { used: true } }`
 
-#### Scenario: Token not found — BadRequestException thrown
+#### Escenari: Token no trobat — BadRequestException llançada
 
-- **GIVEN** `prismaMock.passwordResetToken.findFirst` returns `null`
-- **WHEN** `service.resetPassword({ token: 'invalid', password: 'NewPass123!' })` is called
-- **THEN** the promise rejects with `BadRequestException` and message `'Invalid or expired token'`
-- **AND** `prismaMock.user.update` is NOT called
+- **DONAT** `prismaMock.passwordResetToken.findFirst` retorna `null`
+- **QUAN** es crida `service.resetPassword({ token: 'invalid', password: 'NewPass123!' })`
+- **ALESHORES** la promesa rebutja amb `BadRequestException` i el missatge `'Invalid or expired token'`
+- **I** `prismaMock.user.update` NO es crida
 
-#### Scenario: Expired token — BadRequestException thrown
+#### Escenari: Token expirat — BadRequestException llançada
 
-- **GIVEN** `vi.setSystemTime` is used to set current time past the token's `expiresAt`
-- **AND** `prismaMock.passwordResetToken.findFirst` returns `null` (Prisma filter on `expiresAt: { gt: new Date() }` returns nothing)
-- **WHEN** `service.resetPassword` is called
-- **THEN** the promise rejects with `BadRequestException` and message `'Invalid or expired token'`
+- **DONAT** `vi.setSystemTime` s'usa per establir el temps actual més tard que l'`expiresAt` del token
+- **I** `prismaMock.passwordResetToken.findFirst` retorna `null` (el filtre Prisma sobre `expiresAt: { gt: new Date() }` no retorna res)
+- **QUAN** es crida `service.resetPassword`
+- **ALESHORES** la promesa rebutja amb `BadRequestException` i el missatge `'Invalid or expired token'`
 
-#### Scenario: Already-used token — BadRequestException thrown
+#### Escenari: Token ja usat — BadRequestException llançada
 
-- **GIVEN** the DB has a token with `used: true`
-- **AND** `prismaMock.passwordResetToken.findFirst` returns `null` (Prisma filter on `used: false` excludes it)
-- **WHEN** `service.resetPassword` is called with the matching raw token
-- **THEN** the promise rejects with `BadRequestException` and message `'Invalid or expired token'`
+- **DONAT** la BD té un token amb `used: true`
+- **I** `prismaMock.passwordResetToken.findFirst` retorna `null` (el filtre Prisma sobre `used: false` l'exclou)
+- **QUAN** es crida `service.resetPassword` amb el token en brut coincident
+- **ALESHORES** la promesa rebutja amb `BadRequestException` i el missatge `'Invalid or expired token'`
 
-#### Scenario: Token stored as SHA-256 hash of the raw value
+#### Escenari: Token emmagatzemat com a hash SHA-256 del valor en brut
 
-- **GIVEN** `prismaMock.passwordResetToken.findFirst` is set up to capture the `where` argument
-- **WHEN** `service.resetPassword({ token: 'abc123', password: 'NewPass123!' })` is called
-- **THEN** the `where.token` passed to `findFirst` equals `sha256('abc123')` (64-char hex)
+- **DONAT** `prismaMock.passwordResetToken.findFirst` s'ha configurat per capturar l'argument `where`
+- **QUAN** es crida `service.resetPassword({ token: 'abc123', password: 'NewPass123!' })`
+- **ALESHORES** el `where.token` passat a `findFirst` és igual a `sha256('abc123')` (hex de 64 caràcters)
 
-#### Scenario: Password updated with bcrypt 10 rounds
+#### Escenari: Contrasenya actualitzada amb bcrypt 10 rondes
 
-- **GIVEN** a valid token record is returned by `findFirst`
-- **WHEN** `service.resetPassword` completes successfully
-- **THEN** `prismaMock.user.update` is called with `data.passwordHash` that is a valid bcrypt hash (starts with `$2b$10$`)
+- **DONAT** un registre de token vàlid és retornat per `findFirst`
+- **QUAN** `service.resetPassword` es completa amb èxit
+- **ALESHORES** `prismaMock.user.update` es crida amb `data.passwordHash` que és un hash bcrypt vàlid (comença amb `$2b$10$`)

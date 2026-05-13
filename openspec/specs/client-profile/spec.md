@@ -1,22 +1,22 @@
-# Spec: Perfil del Cliente
+# Spec: Perfil del Client
 
-## Propósito
+## Propòsit
 
-Gestiona las capacidades del dashboard principal del cliente (`ClientDashboard`), incluyendo los puntos de entrada de navegación hacia otras secciones de la aplicación cliente.
+Gestiona les capacitats del dashboard principal del client (`ClientDashboard`), incloent els punts d'entrada de navegació cap a altres seccions de l'aplicació client.
 
-## Requisitos
+## Requisits
 
-### Requisito: El dashboard del cliente expone un enlace a la página de Historial y Estadísticas
-El sistema DEBE renderizar un botón o enlace de navegación en `ClientDashboard` (la página principal del cliente) que navegue al usuario a `/client/history`.
+### Requisit: El dashboard del client exposa un enllaç a la pàgina d'Historial i Estadístiques
+El sistema HA DE renderitzar un botó o enllaç de navegació a `ClientDashboard` (la pàgina principal del client) que navegui l'usuari a `/client/history`.
 
-#### Escenario: El enlace de navegación es visible en el dashboard del cliente
-- **CUANDO** un CLIENT autenticado visita `/client-home`
-- **ENTONCES** el área de cabecera del dashboard contiene un enlace/botón con la etiqueta de la clave i18n `history.navLabel` apuntando a `/client/history`
+#### Escenari: L'enllaç de navegació és visible al dashboard del client
+- **QUAN** un CLIENT autenticat visita `/client-home`
+- **ALESHORES** l'àrea de capçalera del dashboard conté un enllaç/botó amb l'etiqueta de la clau i18n `history.navLabel` que apunta a `/client/history`
 
-#### Escenario: Al hacer clic en el enlace se navega a la página de historial
-- **CUANDO** el CLIENT hace clic en el enlace de navegación de Historial en el dashboard
-- **ENTONCES** React Router navega a `/client/history` sin recargar la página completa
+#### Escenari: En fer clic a l'enllaç es navega a la pàgina d'historial
+- **QUAN** el CLIENT fa clic a l'enllaç de navegació d'Historial al dashboard
+- **ALESHORES** React Router navega a `/client/history` sense recarregar la pàgina completa
 
-#### Escenario: i18n — la etiqueta de navegación existe en todos los idiomas
-- **CUANDO** el dashboard se renderiza en catalán, español o inglés
-- **ENTONCES** la etiqueta del enlace de historial se lee de `history.navLabel` en el archivo de localización activo
+#### Escenari: i18n — l'etiqueta de navegació existeix en tots els idiomes
+- **QUAN** el dashboard es renderitza en català, castellà o anglès
+- **ALESHORES** l'etiqueta de l'enllaç d'historial es llegeix de `history.navLabel` a l'arxiu de localització actiu
