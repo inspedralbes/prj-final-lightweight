@@ -23,7 +23,6 @@ model User {
   routinesCreated        Routine[]    @relation("CoachRoutines")
   routineAssignments     RoutineAssignment[]
   liveSessions           LiveSession[]
-  dietPlans              DietPlan[]
   invitationsAsCoach     Invitation[] @relation("CoachInvitations")
   invitationsAsClient    Invitation[] @relation("ClientInvitations")
   invitationsAsTargetClient Invitation[] @relation("TargetClientInvitations")
@@ -225,54 +224,6 @@ model P2PChatMessage {
   @@map("p2p_chat_messages")
 }
 
-model FoodCatalog {
-  id            Int            @id @default(autoincrement())
-  name          String
-  calories      Float
-  protein       Float
-  carbs         Float
-  fat           Float
-  unit          String
-  createdAt     DateTime       @default(now()) @map("created_at")
-  dietMealItems DietMealItem[]
-
-  @@map("food_catalog")
-}
-
-model DietPlan {
-  id        Int        @id @default(autoincrement())
-  coachId   Int        @map("coach_id")
-  name      String
-  createdAt DateTime   @default(now()) @map("created_at")
-  meals     DietMeal[]
-  coach     User       @relation(fields: [coachId], references: [id])
-
-  @@map("diet_plans")
-}
-
-model DietMeal {
-  id         Int            @id @default(autoincrement())
-  dietPlanId Int            @map("diet_plan_id")
-  name       String
-  mealType   String         @map("meal_type")
-  order      Int
-  mealItems  DietMealItem[]
-  dietPlan   DietPlan       @relation(fields: [dietPlanId], references: [id], onDelete: Cascade)
-
-  @@map("diet_meals")
-}
-
-model DietMealItem {
-  id         Int         @id @default(autoincrement())
-  dietMealId Int         @map("diet_meal_id")
-  foodId     Int         @map("food_id")
-  quantity   Float
-  unit       String
-  dietMeal   DietMeal    @relation(fields: [dietMealId], references: [id], onDelete: Cascade)
-  food       FoodCatalog @relation(fields: [foodId], references: [id])
-
-  @@map("diet_meal_items")
-}
 
 enum UserRole {
   COACH
