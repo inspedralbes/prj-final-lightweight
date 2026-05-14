@@ -91,6 +91,14 @@ export class AuthService {
     });
   }
 
+  async hasActiveSession(userId: number): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { activeSessionToken: true },
+    });
+    return !!user?.activeSessionToken;
+  }
+
   async logout(userId: number): Promise<void> {
     await this.clearSession(userId);
   }

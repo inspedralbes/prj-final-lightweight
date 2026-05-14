@@ -41,7 +41,7 @@ const RootRedirect = () => {
 const AppContent = () => {
   const [isConnected, setIsConnected] = useState(socket.connected);
   const { addNotification, clearAll } = useNotification();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { t } = useTranslation();
   const ringtone = useRingtone();
 
@@ -112,6 +112,18 @@ const AppContent = () => {
       }
     });
     socket.on("disconnect", () => setIsConnected(false));
+
+    // Session expired on another device: backend cleared activeSessionToken
+    // after the grace period. Clear local state and redirect to /login.
+    socket.on("session-invalidated", () => {
+      console.log("[Auth] session-invalidated received — logging out");
+      localStorage.removeItem("token");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("username");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("coachId");
+      void logout();
+    });
 
     // ── Global video-call-invite listener (always alive) ─────────────────
     socket.on(
@@ -223,11 +235,12 @@ const AppContent = () => {
     return () => {
       socket.off("connect");
       socket.off("disconnect");
+      socket.off("session-invalidated");
       socket.off("p2p-message-notification");
       socket.off("video-call-invite");
       socket.off("video-call-end");
     };
-  }, [addNotification, user]);
+  }, [addNotification, user, logout]);
 
   // Limpiar notificaciones al cerrar sesión
   useEffect(() => {

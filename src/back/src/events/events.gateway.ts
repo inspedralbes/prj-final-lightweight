@@ -31,23 +31,25 @@ export class EventsGateway
   @WebSocketServer()
   server: Server;
 
-  private userSockets: Map<number, string> = new Map(); // userId -> socketId
-  private userOpenChats: Map<number, Set<string>> = new Map(); // userId -> set of roomIds currently open
-  private disconnectTimers: Map<number, ReturnType<typeof setTimeout>> =
-    new Map(); // userId -> pending logout timer
+  // userId -> Set of active socketIds (one per browser tab/device)
+  private userSockets: Map<number, Set<string>> = new Map();
+  private userOpenChats: Map<number, Set<string>> = new Map();
+  // userId -> { timer, disconnectedSocketId }
+  private disconnectTimers: Map<number, { timer: ReturnType<typeof setTimeout>; socketId: string }> = new Map();
+  // userIds whose session was cleared by the grace timer; next register-user invalidates them
+  private invalidatedUsers: Set<number> = new Set();
 
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
   ) {}
 
-  afterInit(server: Server) {
+  afterInit(_server: Server) {
     console.log('✅ Socket Gateway inicializado');
   }
 
   handleConnection(client: Socket) {
     console.log(`🔌 Cliente conectado: ${client.id}`);
-    // debug: log all incoming events and payloads
     client.onAny((event, ...args) => {
       console.log(`[Socket ${client.id}] event "${event}" args:`, args);
     });
@@ -55,25 +57,51 @@ export class EventsGateway
 
   handleDisconnect(client: Socket) {
     console.log(`❌ Cliente desconectado: ${client.id}`);
-    for (const [userId, socketId] of this.userSockets.entries()) {
-      if (socketId === client.id) {
+
+    for (const [userId, sockets] of this.userSockets.entries()) {
+      if (!sockets.has(client.id)) continue;
+
+      sockets.delete(client.id);
+      if (sockets.size === 0) {
         this.userSockets.delete(userId);
-        this.userOpenChats.delete(userId);
-        // Start grace timer — if user doesn't reconnect, clear their session
+      }
+
+      // Only start the grace timer when there are NO remaining sockets for this user.
+      // If another tab is still open, the session stays alive.
+      if (!this.userSockets.has(userId)) {
+        // Cancel any existing timer before creating a new one (handles simultaneous disconnects).
+        const existing = this.disconnectTimers.get(userId);
+        if (existing) {
+          clearTimeout(existing.timer);
+          this.disconnectTimers.delete(userId);
+        }
+
+        const disconnectedSocketId = client.id;
         const timer = setTimeout(async () => {
           this.disconnectTimers.delete(userId);
-          console.log(
-            `[Auth] Grace period expired for user ${userId} — clearing session`,
-          );
+          console.log(`[Auth] Grace period expired for user ${userId} — clearing session`);
           try {
             await this.authService.clearSession(userId);
+            this.invalidatedUsers.add(userId);
+            // Notify sockets already connected when the timer fires.
+            const remainingSockets = this.userSockets.get(userId);
+            if (remainingSockets && remainingSockets.size > 0) {
+              for (const sid of remainingSockets) {
+                console.log(`[Auth] Emitting session-invalidated to socket ${sid}`);
+                this.server.to(sid).emit('session-invalidated');
+              }
+            }
           } catch {
             // user may have already logged out via beacon
           }
         }, DISCONNECT_GRACE_MS);
-        this.disconnectTimers.set(userId, timer);
-        break;
+
+        this.disconnectTimers.set(userId, { timer, socketId: disconnectedSocketId });
+        console.log(`[Auth] Grace timer started for user ${userId} (socket ${disconnectedSocketId})`);
+      } else {
+        console.log(`[Auth] User ${userId} still has ${this.userSockets.get(userId)!.size} socket(s) — no timer`);
       }
+      break;
     }
   }
 
@@ -84,19 +112,50 @@ export class EventsGateway
   ) {
     const id = Number(userId);
     if (!Number.isNaN(id)) {
-      // Cancel any pending logout timer (e.g. page refresh reconnect)
+      // Add this socket to the user's set
+      const existing = this.userSockets.get(id) ?? new Set<string>();
+      existing.add(client.id);
+      this.userSockets.set(id, existing);
+
+      // Any reconnect from this user cancels the pending logout timer.
       const pending = this.disconnectTimers.get(id);
       if (pending) {
-        clearTimeout(pending);
+        clearTimeout(pending.timer);
         this.disconnectTimers.delete(id);
-        console.log(`[Auth] Reconnect detected for user ${id} — cancelled logout timer`);
+        this.invalidatedUsers.delete(id);
+        console.log(`[Auth] Reconnect for user ${id} (socket ${client.id}) — cancelled logout timer`);
       }
-      this.userSockets.set(id, client.id);
-      console.log(`[Auth] Usuario ${id} registrado con socket ${client.id}`);
+
+      console.log(`[Auth] Usuario ${id} registrado con socket ${client.id} (total: ${existing.size})`);
+
+      // Session was cleared while all sockets were gone — invalidate on next reconnect.
+      if (this.invalidatedUsers.has(id)) {
+        this.invalidatedUsers.delete(id);
+        console.log(`[Auth] Invalidated user ${id} reconnected — emitting session-invalidated to ${client.id}`);
+        client.emit('session-invalidated');
+      }
     } else {
-      console.warn(
-        `[Auth] register-user received invalid userId: ${userId} from socket ${client.id}`,
-      );
+      console.warn(`[Auth] register-user received invalid userId: ${userId} from socket ${client.id}`);
+    }
+  }
+
+  // Helper: get any one socketId for a user (for unicast events)
+  private getAnySocket(userId: number): string | undefined {
+    const sockets = this.userSockets.get(userId);
+    if (!sockets || sockets.size === 0) return undefined;
+    return sockets.values().next().value;
+  }
+
+  // Helper: emit to all sockets of a user
+  private emitToUser(userId: number, event: string, payload?: any) {
+    const sockets = this.userSockets.get(userId);
+    if (!sockets) return;
+    for (const sid of sockets) {
+      if (payload !== undefined) {
+        this.server.to(sid).emit(event, payload);
+      } else {
+        this.server.to(sid).emit(event);
+      }
     }
   }
 
@@ -106,43 +165,20 @@ export class EventsGateway
     @MessageBody() payload: any,
   ) {
     if (!payload) {
-      console.warn(
-        '[Chat] open-chat called with empty payload from',
-        client.id,
-      );
+      console.warn('[Chat] open-chat called with empty payload from', client.id);
       return;
     }
-    const {
-      userId,
-      roomId,
-      otherUserId,
-    }: { userId: number; roomId: string; otherUserId?: number } = payload;
+    const { userId, roomId, otherUserId }: { userId: number; roomId: string; otherUserId?: number } = payload;
     const set = this.userOpenChats.get(userId) || new Set<string>();
     set.add(roomId);
     this.userOpenChats.set(userId, set);
     console.log(`[Chat] Usuario ${userId} abrió chat ${roomId}`);
 
-    // Notificar al otro usuario (si está conectado) del estado
     if (otherUserId) {
-      const otherSocketId = this.userSockets.get(otherUserId);
-      if (otherSocketId) {
-        const otherHasChatOpen =
-          this.userOpenChats.get(otherUserId)?.has(roomId) || false;
-        // Ambos tienen abierto el chat → VERDE
-        const status = otherHasChatOpen ? 'connected' : 'connecting';
-        console.log(
-          `[Chat] informing otherUser ${otherUserId} (socket ${otherSocketId}) that user ${userId} opened chat; status=${status}`,
-        );
-        this.server.to(otherSocketId).emit('chat-partner-status', {
-          roomId,
-          userId,
-          status, // 'connected' si ambos tienen abierto, 'connecting' si solo uno
-        });
-      } else {
-        console.log(
-          `[Chat] otherUser ${otherUserId} not connected, cannot inform status`,
-        );
-      }
+      const otherHasChatOpen = this.userOpenChats.get(otherUserId)?.has(roomId) || false;
+      const status = otherHasChatOpen ? 'connected' : 'connecting';
+      console.log(`[Chat] informing otherUser ${otherUserId} that user ${userId} opened chat; status=${status}`);
+      this.emitToUser(otherUserId, 'chat-partner-status', { roomId, userId, status });
     }
   }
 
@@ -152,17 +188,10 @@ export class EventsGateway
     @MessageBody() payload: any,
   ) {
     if (!payload) {
-      console.warn(
-        '[Chat] close-chat called with empty payload from',
-        client.id,
-      );
+      console.warn('[Chat] close-chat called with empty payload from', client.id);
       return;
     }
-    const {
-      userId,
-      roomId,
-      otherUserId,
-    }: { userId: number; roomId: string; otherUserId?: number } = payload;
+    const { userId, roomId, otherUserId }: { userId: number; roomId: string; otherUserId?: number } = payload;
     const set = this.userOpenChats.get(userId);
     if (set) {
       set.delete(roomId);
@@ -171,43 +200,21 @@ export class EventsGateway
     }
     console.log(`[Chat] Usuario ${userId} cerró chat ${roomId}`);
 
-    // Notificar al otro usuario del cambio de estado
     if (otherUserId) {
-      const otherSocketId = this.userSockets.get(otherUserId);
-      if (otherSocketId) {
-        const otherHasChatOpen =
-          this.userOpenChats.get(otherUserId)?.has(roomId) || false;
-        // Si el otro sigue teniendo abierto → NARANJA (solo uno conectado)
-        const status = otherHasChatOpen ? 'connecting' : 'disconnected';
-        console.log(
-          `[Chat] informing otherUser ${otherUserId} that user ${userId} closed chat; status=${status}`,
-        );
-        this.server.to(otherSocketId).emit('chat-partner-status', {
-          roomId,
-          userId,
-          status,
-        });
-      } else {
-        console.log(
-          `[Chat] otherUser ${otherUserId} not connected when user ${userId} closed chat`,
-        );
-      }
+      const otherHasChatOpen = this.userOpenChats.get(otherUserId)?.has(roomId) || false;
+      const status = otherHasChatOpen ? 'connecting' : 'disconnected';
+      console.log(`[Chat] informing otherUser ${otherUserId} that user ${userId} closed chat; status=${status}`);
+      this.emitToUser(otherUserId, 'chat-partner-status', { roomId, userId, status });
     }
   }
 
   @SubscribeMessage('join-room')
   handleJoinRoom(client: Socket, roomId: string) {
     client.join(roomId);
-    console.log(
-      `[Signaling] Cliente ${client.id} se unió a la sala: ${roomId}`,
-    );
-    // Obtener lista de sockets ya presentes (excepto el que acaba de entrar)
-    const clientsInRoom =
-      this.server.sockets.adapter.rooms.get(roomId) || new Set<string>();
+    console.log(`[Signaling] Cliente ${client.id} se unió a la sala: ${roomId}`);
+    const clientsInRoom = this.server.sockets.adapter.rooms.get(roomId) || new Set<string>();
     const others = Array.from(clientsInRoom).filter((id) => id !== client.id);
-    // responder al remitente con los existentes
     client.emit('current-peers', { roomId, peers: others });
-    // Notificar a TODOS en la sala (incluido el nuevo) que la sala se ha actualizado
     this.server.to(roomId).emit('user-joined', { socketId: client.id, roomId });
   }
 
@@ -215,37 +222,23 @@ export class EventsGateway
   handleLeaveRoom(client: Socket, roomId: string) {
     client.leave(roomId);
     console.log(`[Signaling] Cliente ${client.id} abandonó la sala: ${roomId}`);
-    // Notificar a los restantes en la sala que alguien se fue
     this.server.to(roomId).emit('user-left', { socketId: client.id, roomId });
   }
 
   @SubscribeMessage('offer')
-  handleOffer(
-    client: Socket,
-    { roomId, offer }: { roomId: string; offer: any },
-  ) {
-    console.log(
-      `[Signaling] Reenviando OFFER en sala ${roomId} de ${client.id}`,
-    );
+  handleOffer(client: Socket, { roomId, offer }: { roomId: string; offer: any }) {
+    console.log(`[Signaling] Reenviando OFFER en sala ${roomId} de ${client.id}`);
     client.to(roomId).emit('offer', offer);
   }
 
   @SubscribeMessage('answer')
-  handleAnswer(
-    client: Socket,
-    { roomId, answer }: { roomId: string; answer: any },
-  ) {
-    console.log(
-      `[Signaling] Reenviando ANSWER en sala ${roomId} de ${client.id}`,
-    );
+  handleAnswer(client: Socket, { roomId, answer }: { roomId: string; answer: any }) {
+    console.log(`[Signaling] Reenviando ANSWER en sala ${roomId} de ${client.id}`);
     client.to(roomId).emit('answer', answer);
   }
 
   @SubscribeMessage('ice-candidate')
-  handleIceCandidate(
-    client: Socket,
-    { roomId, candidate }: { roomId: string; candidate: any },
-  ) {
+  handleIceCandidate(client: Socket, { roomId, candidate }: { roomId: string; candidate: any }) {
     console.log(`[Signaling] Reenviando ICE en sala ${roomId} de ${client.id}`);
     client.to(roomId).emit('ice-candidate', candidate);
   }
@@ -256,35 +249,15 @@ export class EventsGateway
     @MessageBody() payload: any,
   ) {
     if (!payload) {
-      console.warn(
-        '[Chat] get-chat-status called with empty payload from',
-        client.id,
-      );
+      console.warn('[Chat] get-chat-status called with empty payload from', client.id);
       return;
     }
-    const {
-      roomId,
-      userId,
-      otherUserId,
-    }: { roomId: string; userId: number; otherUserId: number } = payload;
-    const userHasChatOpen =
-      this.userOpenChats.get(userId)?.has(roomId) || false;
-    const otherHasChatOpen =
-      this.userOpenChats.get(otherUserId)?.has(roomId) || false;
-
-    // Ambos abiertos → VERDE (connected)
-    // Solo uno abierto → NARANJA (connecting)
+    const { roomId, userId, otherUserId }: { roomId: string; userId: number; otherUserId: number } = payload;
+    const userHasChatOpen = this.userOpenChats.get(userId)?.has(roomId) || false;
+    const otherHasChatOpen = this.userOpenChats.get(otherUserId)?.has(roomId) || false;
     const status = otherHasChatOpen ? 'connected' : 'connecting';
-
-    console.log(
-      `[Chat] Get chat status: user ${userId} (open=${userHasChatOpen}), other ${otherUserId} (open=${otherHasChatOpen}) → ${status}`,
-    );
-
-    client.emit('chat-status', {
-      roomId,
-      status,
-      otherUserConnected: otherHasChatOpen,
-    });
+    console.log(`[Chat] Get chat status: user ${userId} (open=${userHasChatOpen}), other ${otherUserId} (open=${otherHasChatOpen}) → ${status}`);
+    client.emit('chat-status', { roomId, status, otherUserConnected: otherHasChatOpen });
   }
 
   @SubscribeMessage('send-p2p-message')
@@ -293,61 +266,41 @@ export class EventsGateway
     @MessageBody() payload: any,
   ) {
     if (!payload) {
-      console.warn(
-        '[Chat] send-p2p-message called with empty payload from',
-        client.id,
-      );
+      console.warn('[Chat] send-p2p-message called with empty payload from', client.id);
       return;
     }
-    const {
-      receiverId,
-      text,
-      senderId,
-    }: { receiverId: any; text: string; senderId: any } = payload;
+    const { receiverId, text, senderId }: { receiverId: any; text: string; senderId: any } = payload;
     const recvId = Number(receiverId);
     const sendId = Number(senderId);
     console.log(`[Chat P2P] Mensaje de ${sendId} a ${recvId}: ${text}`);
 
     try {
-      // Guardar el mensaje en la BD
       const message = await this.chatService.sendMessage(sendId, recvId, text);
       const senderUsername = message.sender?.username || 'Unknown';
-
-      // Si el receptor está conectado, enviarle mensaje y posiblemente notificación
-      const receiverSocketId = this.userSockets.get(recvId);
       const roomId = `chat_client_${recvId}`;
-      const receiverOpenRooms = this.userOpenChats.get(recvId);
-      const receiverHasThisChatOpen = receiverOpenRooms
-        ? receiverOpenRooms.has(roomId)
-        : false;
+      const receiverHasThisChatOpen = this.userOpenChats.get(recvId)?.has(roomId) || false;
+      const receiverConnected = this.userSockets.has(recvId);
 
-      if (receiverSocketId) {
-        console.log(
-          `[Chat P2P] Delivering real-time message to socket ${receiverSocketId}`,
-        );
-        // enviar siempre el mensaje real-time para que aparezca en la ventana si está abierta
-        this.server.to(receiverSocketId).emit('p2p-message', {
+      if (receiverConnected) {
+        console.log(`[Chat P2P] Delivering real-time message to user ${recvId}`);
+        this.emitToUser(recvId, 'p2p-message', {
           from: senderId,
           fromUsername: senderUsername,
-          text: text,
+          text,
           messageId: message.id,
           timestamp: message.createdAt,
         });
-
-        // enviar notificación sólo si el receptor NO tiene abierto este chat
         if (!receiverHasThisChatOpen) {
-          this.server.to(receiverSocketId).emit('p2p-message-notification', {
+          this.emitToUser(recvId, 'p2p-message-notification', {
             from: senderId,
             fromUsername: senderUsername,
-            text: text,
+            text,
             messageId: message.id,
             timestamp: message.createdAt,
           });
         }
       } else {
-        console.log(
-          `[Chat P2P] Receptor ${recvId} no conectado; no se entregó el mensaje en tiempo real`,
-        );
+        console.log(`[Chat P2P] Receptor ${recvId} no conectado; no se entregó el mensaje en tiempo real`);
       }
     } catch (error) {
       console.error('[Chat P2P] Error sending message:', error);
@@ -360,102 +313,65 @@ export class EventsGateway
   @SubscribeMessage('video-call-invite')
   handleVideoCallInvite(
     @ConnectedSocket() client: Socket,
-    @MessageBody()
-    payload: {
-      callerId: number;
-      calleeId: number;
-      callerName: string;
-      roomId: string;
-    },
+    @MessageBody() payload: { callerId: number; calleeId: number; callerName: string; roomId: string },
   ) {
-    const calleeSocketId = this.userSockets.get(Number(payload.calleeId));
-    if (calleeSocketId) {
-      this.server.to(calleeSocketId).emit('video-call-invite', payload);
-      // Confirm to caller that the invite was delivered
-      client.emit('video-call-delivered', {
-        callerId: payload.callerId,
-        calleeId: payload.calleeId,
-      });
-      console.log(
-        `[VideoCall] Invite delivered from ${payload.callerId} to ${payload.calleeId}`,
-      );
+    const calleeSocket = this.getAnySocket(Number(payload.calleeId));
+    if (calleeSocket) {
+      this.server.to(calleeSocket).emit('video-call-invite', payload);
+      client.emit('video-call-delivered', { callerId: payload.callerId, calleeId: payload.calleeId });
+      console.log(`[VideoCall] Invite delivered from ${payload.callerId} to ${payload.calleeId}`);
     } else {
-      // Callee is not connected — tell caller explicitly
-      client.emit('video-call-unavailable', {
-        callerId: payload.callerId,
-        calleeId: payload.calleeId,
-      });
-      console.log(
-        `[VideoCall] Callee ${payload.calleeId} offline — notified caller ${payload.callerId}`,
-      );
+      client.emit('video-call-unavailable', { callerId: payload.callerId, calleeId: payload.calleeId });
+      console.log(`[VideoCall] Callee ${payload.calleeId} offline — notified caller ${payload.callerId}`);
     }
   }
 
   @SubscribeMessage('video-call-accept')
   handleVideoCallAccept(
     @ConnectedSocket() _client: Socket,
-    @MessageBody()
-    payload: { callerId: number; calleeId: number; roomId: string },
+    @MessageBody() payload: { callerId: number; calleeId: number; roomId: string },
   ) {
-    const callerSocketId = this.userSockets.get(Number(payload.callerId));
-    if (callerSocketId) {
-      this.server.to(callerSocketId).emit('video-call-accept', payload);
-      console.log(
-        `[VideoCall] Accept from callee ${payload.calleeId} to caller ${payload.callerId}`,
-      );
+    const callerSocket = this.getAnySocket(Number(payload.callerId));
+    if (callerSocket) {
+      this.server.to(callerSocket).emit('video-call-accept', payload);
+      console.log(`[VideoCall] Accept from callee ${payload.calleeId} to caller ${payload.callerId}`);
     }
   }
 
   @SubscribeMessage('video-call-reject')
   handleVideoCallReject(
     @ConnectedSocket() _client: Socket,
-    @MessageBody()
-    payload: { callerId: number; calleeId: number },
+    @MessageBody() payload: { callerId: number; calleeId: number },
   ) {
-    const callerSocketId = this.userSockets.get(Number(payload.callerId));
-    if (callerSocketId) {
-      this.server.to(callerSocketId).emit('video-call-reject', payload);
-      console.log(
-        `[VideoCall] Reject from callee ${payload.calleeId} to caller ${payload.callerId}`,
-      );
+    const callerSocket = this.getAnySocket(Number(payload.callerId));
+    if (callerSocket) {
+      this.server.to(callerSocket).emit('video-call-reject', payload);
+      console.log(`[VideoCall] Reject from callee ${payload.calleeId} to caller ${payload.callerId}`);
     }
   }
 
   @SubscribeMessage('video-call-end')
   handleVideoCallEnd(
     @ConnectedSocket() _client: Socket,
-    @MessageBody()
-    payload: { fromUserId: number; toUserId: number },
+    @MessageBody() payload: { fromUserId: number; toUserId: number },
   ) {
-    const toSocketId = this.userSockets.get(Number(payload.toUserId));
-    if (toSocketId) {
-      this.server.to(toSocketId).emit('video-call-end', payload);
-      console.log(
-        `[VideoCall] End from ${payload.fromUserId} to ${payload.toUserId}`,
-      );
+    const toSocket = this.getAnySocket(Number(payload.toUserId));
+    if (toSocket) {
+      this.server.to(toSocket).emit('video-call-end', payload);
+      console.log(`[VideoCall] End from ${payload.fromUserId} to ${payload.toUserId}`);
     }
   }
 
-  // Emite una invitación de coach a cliente vía WebSocket
   emitCoachInvitation(
     clientId: number,
-    payload: {
-      coachId: number;
-      coachName: string;
-      invitationCode: string;
-      invitationId: number;
-    },
+    payload: { coachId: number; coachName: string; invitationCode: string; invitationId: number },
   ) {
-    const socketId = this.userSockets.get(clientId);
+    const socketId = this.getAnySocket(clientId);
     if (socketId) {
       this.server.to(socketId).emit('coach-invitation', payload);
-      console.log(
-        `[CoachInvitation] Sent invite to client ${clientId} (socket ${socketId})`,
-      );
+      console.log(`[CoachInvitation] Sent invite to client ${clientId} (socket ${socketId})`);
     } else {
-      console.warn(
-        `[CoachInvitation] Client ${clientId} is not connected — invitation not delivered in real time`,
-      );
+      console.warn(`[CoachInvitation] Client ${clientId} is not connected — invitation not delivered in real time`);
     }
   }
 }
