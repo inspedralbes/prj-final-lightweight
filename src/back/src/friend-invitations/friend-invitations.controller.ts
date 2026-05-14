@@ -30,6 +30,12 @@ export class FriendInvitationsController {
     return this.friendInvitationsService.getPendingInvitations(req.user.userId);
   }
 
+  @Get("sent")
+  @UseGuards(JwtAuthGuard)
+  async getSent(@Request() req: any) {
+    return this.friendInvitationsService.getSentInvitations(req.user.userId);
+  }
+
   @Patch(":id/accept")
   @UseGuards(JwtAuthGuard)
   async accept(

@@ -44,6 +44,13 @@ export const friendInvitationService = {
     return data;
   },
 
+  async getSentInvitations(): Promise<FriendInvitation[]> {
+    const { data } = await api.get<FriendInvitation[]>(
+      "/friend-invitations/sent",
+    );
+    return data;
+  },
+
   async acceptInvitation(
     invitationId: number,
   ): Promise<{ invitation: FriendInvitation; roomId: string }> {

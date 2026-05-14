@@ -12,6 +12,7 @@ import ClientsProgressPage from "@/features/coach/pages/ClientsProgressPage";
 import ClientProgressDetailPage from "@/features/coach/pages/ClientProgressDetailPage";
 import RoutineExercisesEdit from "@/features/routines/pages/RoutineExercisesEdit";
 import CoopSessionLobby from "@/features/workout/pages/CoopSessionLobby";
+import SoloWorkoutSession from "@/features/workout/pages/SoloWorkoutSession";
 import ClientMyCoach from "@/features/client/pages/ClientMyCoach";
 import ClientHistoryStats from "@/features/client/pages/ClientHistoryStats";
 import WorkoutRoom from "@/features/workout/pages/WorkoutRoom";
@@ -133,6 +134,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredRole="CLIENT">
             <ClientHistoryStats />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/workout/:id"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <SoloWorkoutSession />
           </ProtectedRoute>
         }
       />
@@ -301,6 +310,18 @@ const AppContent = () => {
       }
     });
 
+    socket.on("friend-invite:rejected", (payload: any) => {
+      console.log("[Friend Invite Rejected] Received payload:", payload);
+      const inviteeName = payload?.invitation?.invitee?.username;
+      window.dispatchEvent(
+        new CustomEvent("friend-invite:rejected", { detail: payload }),
+      );
+      if (inviteeName) {
+        // Toast shown globally (visible even outside /friend-session)
+        // The CoopSessionLobby also handles this to update its local state
+      }
+    });
+
     // Registrar el usuario con su ID (también emitir cuando cambie user)
     if (user) {
       console.log("[Socket] emitting register-user for", user.id);
@@ -355,6 +376,7 @@ const AppContent = () => {
       socket.off("disconnect");
       socket.off("p2p-message-notification");
       socket.off("friend-invite:notify");
+      socket.off("friend-invite:rejected");
       socket.off("video-call-invite");
       socket.off("video-call-end");
     };

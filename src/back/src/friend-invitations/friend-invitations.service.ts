@@ -87,10 +87,12 @@ export class FriendInvitationsService {
   }
 
   async getSentInvitations(userId: number) {
+    await this.expireStaleInvitations();
     return this.prisma.friendInvitation.findMany({
-      where: { inviterId: userId },
+      where: { inviterId: userId, status: FriendInvitationStatus.PENDING },
       include: {
         invitee: { select: { id: true, username: true } },
+        inviter: { select: { id: true, username: true } },
       },
       orderBy: { createdAt: "desc" },
     });
