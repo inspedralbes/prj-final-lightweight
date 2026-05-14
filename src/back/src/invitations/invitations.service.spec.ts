@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { InvitationStatus } from '@prisma/client';
 import { InvitationsService } from './invitations.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -106,7 +106,7 @@ describe('InvitationsService', () => {
       prismaMock.user.findUnique.mockResolvedValue({ coachId: 5 });
 
       await expect(service.accept(20, 'valid-code')).rejects.toThrow(
-        BadRequestException,
+        ConflictException,
       );
       expect(prismaMock.$transaction).not.toHaveBeenCalled();
     });
