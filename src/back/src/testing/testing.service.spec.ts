@@ -21,6 +21,7 @@ interface PrismaMock {
   };
   routine: { deleteMany: ReturnType<typeof vi.fn> };
   invitation: { deleteMany: ReturnType<typeof vi.fn> };
+  liveSession: { deleteMany: ReturnType<typeof vi.fn> };
 }
 
 function buildPrismaMock(): PrismaMock {
@@ -32,6 +33,7 @@ function buildPrismaMock(): PrismaMock {
     },
     routine: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
     invitation: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    liveSession: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
   };
 }
 
