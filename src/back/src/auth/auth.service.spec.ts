@@ -14,7 +14,6 @@ import * as bcryptLib from 'bcrypt';
 import { AuthService } from './auth.service';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { MailService } from '../mail/mail.service';
 import type { RegisterDto } from './dto/register.dto';
 
 vi.mock('bcrypt', () => ({
@@ -214,6 +213,8 @@ describe('AuthService', () => {
         data: { activeSessionToken: null },
       });
     });
+  });
+
   describe('forgotPassword', () => {
     const mockUser = {
       id: 1,
