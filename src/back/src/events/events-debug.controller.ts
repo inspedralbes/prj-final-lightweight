@@ -7,9 +7,10 @@ export class EventsDebugController {
 
   @Get('sockets')
   getSockets() {
+    // expose user->socket mapping for debugging
     const result: { [userId: number]: string[] } = {};
-    this.gateway['userSockets'].forEach((socketSet: Set<string>, userId: number) => {
-      result[userId] = Array.from(socketSet);
+    this.gateway['userSockets'].forEach((socketIds, userId) => {
+      result[userId] = Array.from(socketIds);
     });
     return result;
   }

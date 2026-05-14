@@ -11,4 +11,7 @@ const SOCKET_URL = backUrl.startsWith("http")
 
 export const socket: Socket = io(SOCKET_URL, {
   autoConnect: true,
+  transports: ["websocket", "polling"],
+  timeout: 20000,
+  forceNew: false,
 });
