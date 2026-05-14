@@ -8,7 +8,7 @@ import {
   HttpStatus,
   Query,
 } from '@nestjs/common';
-import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
+import { ThrottlerGuard, Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RegisterDto } from './dto/register.dto';
@@ -27,7 +27,7 @@ export class AuthController {
 
   @Post('login')
   @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ default: { limit: process.env.E2E_TESTING === 'true' ? 1000 : 20, ttl: 60000 } })
   async login(@Body() loginDto: LoginDto) {
     return await this.authService.login(loginDto);
   }

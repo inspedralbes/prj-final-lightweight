@@ -43,6 +43,21 @@ Llista de verificació de QA manual per a proves de producció i smoke tests.
 2. Inicia sessió, navega entre `/dashboard` i `/clients`, recarrega en cada pàgina.
    - **Esperat**: el token a localStorage no canvia i no hi ha redirects inesperats.
 
+### Restricció de sessió única per usuari (LW-460)
+1. Obre dos navegadors (o dos perfils de navegador independents).
+2. Inicia sessió amb el **mateix compte** al primer navegador.
+   - **Esperat**: login exitós, redirigeix al dashboard.
+3. Intenta iniciar sessió amb el **mateix compte** al segon navegador.
+   - **Esperat**: apareix un missatge d'error indicant que el compte ja té una sessió activa; l'usuari roman a `/login`.
+4. Tanca la sessió al primer navegador (botó "Tancar sessió").
+   - **Esperat**: redirigeix a `/login`, localStorage buit.
+5. Intenta iniciar sessió de nou al segon navegador.
+   - **Esperat**: login exitós, redirigeix al dashboard.
+6. Inicia sessió al primer navegador. Tanca la pestanya (sense fer logout explícit) i espera ~5 segons.
+   - **Esperat**: el segon navegador pot iniciar sessió correctament (el beacon logout ha alliberat la sessió).
+7. Inicia sessió i fes logout. Intenta cridar `GET /api/auth/profile` amb el token capturat abans del logout (p. ex. des de les DevTools → Network → copia el Bearer token).
+   - **Esperat**: la crida retorna `401 Unauthorized`.
+
 ---
 
 ## API de Progrés (LW-258)
