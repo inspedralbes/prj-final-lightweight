@@ -237,6 +237,7 @@
     "notificationReceived": "You received a new friend invitation.",
     "searchError": "Could not search for users.",
     "inviteSentToast": "Invitation sent to {{username}}.",
+    "inviteAlreadySent": "Invitation already sent to {{username}}.",
     "acceptSuccess": "Invitation accepted.",
     "acceptError": "Unable to accept invitation.",
     "rejectSuccess": "Invitation rejected.",
@@ -245,6 +246,8 @@
     "howItWorksStep1": "Search online users by username.",
     "howItWorksStep2": "Send a friend invitation to someone online.",
     "howItWorksStep3": "Accept invitations to start a shared session.",
+    "backToRoutines": "Back to routines",
+    "backToInvitations": "Back to coach",
     "tipLabel": "Tip",
     "tipText": "If a friend is online, they will receive your invitation instantly."
   },

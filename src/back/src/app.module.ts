@@ -30,7 +30,7 @@ const e2eTestingEnabled =
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
+    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60, limit: 60 }] }),
     PrismaModule,
     AuthModule,
     RoutinesModule,

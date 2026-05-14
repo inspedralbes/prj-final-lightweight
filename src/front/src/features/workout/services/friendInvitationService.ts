@@ -44,10 +44,13 @@ export const friendInvitationService = {
     return data;
   },
 
-  async acceptInvitation(invitationId: number): Promise<FriendInvitation> {
-    const { data } = await api.patch<FriendInvitation>(
-      `/friend-invitations/${invitationId}/accept`,
-    );
+  async acceptInvitation(
+    invitationId: number,
+  ): Promise<{ invitation: FriendInvitation; roomId: string }> {
+    const { data } = await api.patch<{
+      invitation: FriendInvitation;
+      roomId: string;
+    }>(`/friend-invitations/${invitationId}/accept`);
     return data;
   },
 

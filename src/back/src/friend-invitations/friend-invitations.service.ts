@@ -9,8 +9,13 @@ import {
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateFriendInvitationDto } from "./dto/create-friend-invitation.dto";
-import { FriendInvitationStatus } from "@prisma/client";
+import { FriendInvitationStatus, Prisma } from "@prisma/client";
 import { EventsGateway } from "../events/events.gateway";
+import {
+  FriendInviteAcceptedPayload,
+  FriendInviteNotifyPayload,
+  FriendInviteRejectedPayload,
+} from "./interfaces/friend-invite-payload.interface";
 
 @Injectable()
 export class FriendInvitationsService {
@@ -104,11 +109,31 @@ export class FriendInvitationsService {
   }
 
   async acceptInvitation(invitationId: number, userId: number) {
-    return this.updateInvitationStatus(invitationId, userId, FriendInvitationStatus.ACCEPTED);
+    return this.updateInvitationStatus(
+      invitationId,
+      userId,
+      FriendInvitationStatus.ACCEPTED,
+    );
   }
 
   async rejectInvitation(invitationId: number, userId: number) {
-    return this.updateInvitationStatus(invitationId, userId, FriendInvitationStatus.REJECTED);
+    return this.updateInvitationStatus(
+      invitationId,
+      userId,
+      FriendInvitationStatus.REJECTED,
+    );
+  }
+
+  private generateRoomCode() {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+
+  private emitSocketEvent<T>(room: string, event: string, payload: T) {
+    try {
+      this.eventsGateway.server?.to(room).emit(event, payload);
+    } catch (error) {
+      console.warn(`Failed to emit socket event ${event} to ${room}:`, error);
+    }
   }
 
   private async updateInvitationStatus(
@@ -144,36 +169,115 @@ export class FriendInvitationsService {
       throw new ForbiddenException("Only the invitee can reject the invitation");
     }
 
-    const result = await this.prisma.friendInvitation.update({
-      where: { id: invitationId },
-      data: { status: newStatus },
-      include: {
-        inviter: { select: { id: true, username: true } },
-        invitee: { select: { id: true, username: true } },
-      },
-    });
+    let result;
+    try {
+      result = await this.prisma.friendInvitation.update({
+        where: { id: invitationId },
+        data: { status: newStatus },
+        include: {
+          inviter: { select: { id: true, username: true } },
+          invitee: { select: { id: true, username: true } },
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const duplicate = await this.prisma.friendInvitation.findFirst({
+          where: {
+            inviterId: invitation.inviterId,
+            inviteeId: invitation.inviteeId,
+            status: newStatus,
+          },
+          include: {
+            inviter: { select: { id: true, username: true } },
+            invitee: { select: { id: true, username: true } },
+          },
+        });
 
-    const eventType = newStatus === FriendInvitationStatus.ACCEPTED ? 'friend-invite:accepted' : 'friend-invite:rejected';
-    this.eventsGateway.server?.to(`user:${result.inviter.id}`).emit(eventType, {
+        if (duplicate) {
+          await this.prisma.friendInvitation.delete({
+            where: { id: duplicate.id },
+          });
+
+          result = await this.prisma.friendInvitation.update({
+            where: { id: invitationId },
+            data: { status: newStatus },
+            include: {
+              inviter: { select: { id: true, username: true } },
+              invitee: { select: { id: true, username: true } },
+            },
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        throw error;
+      }
+    }
+
+    const payload = {
       invitation: {
         id: result.id,
         invitee: result.invitee,
         status: result.status,
         updatedAt: new Date(),
       },
-    });
+    };
 
-    return result;
+    if (newStatus === FriendInvitationStatus.ACCEPTED) {
+      const roomId = this.generateRoomCode();
+      const eventPayload: FriendInviteAcceptedPayload = {
+        invitation: {
+          id: result.id,
+          invitee: result.invitee,
+          status: result.status,
+          updatedAt: new Date(),
+        },
+        roomId,
+        isHost: true,
+      };
+      this.emitSocketEvent(`user:${result.inviter.id}`, 'friend-invite:accepted', eventPayload);
+      return { invitation: result, roomId };
+    }
+
+    const eventPayload: FriendInviteRejectedPayload = payload;
+    this.emitSocketEvent(`user:${result.inviter.id}`, 'friend-invite:rejected', eventPayload);
+
+    return { invitation: result, roomId: '' };
   }
 
   private async expireStaleInvitations() {
-    await this.prisma.friendInvitation.updateMany({
+    const staleInvitations = await this.prisma.friendInvitation.findMany({
       where: {
         status: FriendInvitationStatus.PENDING,
         expiresAt: { lte: new Date() },
       },
-      data: { status: FriendInvitationStatus.EXPIRED },
+      select: {
+        id: true,
+      },
     });
+
+    for (const invitation of staleInvitations) {
+      try {
+        await this.prisma.friendInvitation.update({
+          where: { id: invitation.id },
+          data: { status: FriendInvitationStatus.EXPIRED },
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002"
+        ) {
+          await this.prisma.friendInvitation.delete({
+            where: { id: invitation.id },
+          });
+          continue;
+        }
+        throw error;
+      }
+    }
   }
 
   @Cron(CronExpression.EVERY_MINUTE)

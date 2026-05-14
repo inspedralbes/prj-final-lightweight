@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Login from "@/features/auth/pages/Login";
 import Register from "@/features/auth/pages/Register";
@@ -15,11 +15,11 @@ import CoopSessionLobby from "@/features/workout/pages/CoopSessionLobby";
 import ClientMyCoach from "@/features/client/pages/ClientMyCoach";
 import ClientHistoryStats from "@/features/client/pages/ClientHistoryStats";
 import WorkoutRoom from "@/features/workout/pages/WorkoutRoom";
-import SoloWorkoutSession from "@/features/workout/pages/SoloWorkoutSession";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useNotification } from "@/features/notifications/context/NotificationContext";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
+import FriendInviteNotificationCenter from "@/features/notifications/components/FriendInviteNotificationCenter";
 import VideoCallModal from "@/features/chat/components/VideoCallModal";
 import { VideoCamera } from "@/shared/components/Icons";
 import { useRingtone } from "@/shared/hooks/useRingtone";
@@ -37,10 +37,129 @@ const RootRedirect = () => {
   return <Navigate to="/client-home" replace />;
 };
 
+// Componente que contiene las rutas y puede usar useNavigate
+const AppRoutes = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Socket event listener that needs navigation
+    socket.on("friend-invite:accepted", (payload: any) => {
+      console.log("[Friend Invite Accepted]", payload);
+      // Navigate to the room when invitation is accepted
+      if (payload.roomId) {
+        navigate(`/room/${payload.roomId}`, {
+          state: { isHost: payload.isHost ?? true },
+        });
+      }
+    });
+
+    return () => {
+      socket.off("friend-invite:accepted");
+    };
+  }, [navigate]);
+
+  return (
+    <Routes>
+      {/* Ruta raíz con redirección inteligente por rol */}
+      <Route path="/" element={<RootRedirect />} />
+
+      {/* Rutas públicas */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* Rutas protegidas para COACH */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute requiredRole="COACH">
+            <CoachDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clients"
+        element={
+          <ProtectedRoute requiredRole="COACH">
+            <CoachClientList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clients/progress"
+        element={
+          <ProtectedRoute requiredRole="COACH">
+            <ClientsProgressPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clients/progress/:clientId"
+        element={
+          <ProtectedRoute requiredRole="COACH">
+            <ClientProgressDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/routine/:id/edit"
+        element={
+          <ProtectedRoute>
+            <RoutineExercisesEdit />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Rutas protegidas para CLIENT */}
+      <Route
+        path="/client-home"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <ClientDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clients/invitations"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <ClientMyCoach />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/client/history"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <ClientHistoryStats />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/friend-session"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <CoopSessionLobby />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/room/:roomId"
+        element={
+          <ProtectedRoute>
+            <WorkoutRoom />
+          </ProtectedRoute>
+        }
+      />
+      {/* /programs removed — unused placeholder page deleted */}
+    </Routes>
+  );
+};
+
 // Componente wrapper que escucha las notificaciones del socket
 const AppContent = () => {
-  const [isConnected, setIsConnected] = useState(socket.connected);
-  const { addNotification, clearAll } = useNotification();
+  const { addNotification, addFriendInviteNotification, clearAll } = useNotification();
   const { user } = useAuth();
   const { t } = useTranslation();
   const ringtone = useRingtone();
@@ -105,13 +224,11 @@ const AppContent = () => {
 
   useEffect(() => {
     socket.on("connect", () => {
-      setIsConnected(true);
       if (user) {
         console.log("[Socket] connected - emitting register-user for", user.id);
         socket.emit("register-user", user.id);
       }
     });
-    socket.on("disconnect", () => setIsConnected(false));
 
     // ── Global video-call-invite listener (always alive) ─────────────────
     socket.on(
@@ -171,10 +288,17 @@ const AppContent = () => {
       );
     });
 
-    socket.on("friend-invite:notify", (payload: { inviterId: number; inviterUsername?: string; invitationId: number }) => {
-      if (!user) return;
-      console.log("[Friend Invite Notification]", payload);
-      window.dispatchEvent(new CustomEvent("friend-invite:notify", { detail: payload }));
+    socket.on("friend-invite:notify", (payload: any) => {
+      console.log("[Friend Invite Notify] Received payload:", payload);
+      window.dispatchEvent(
+        new CustomEvent("friend-invite:notify", { detail: payload }),
+      );
+      if (payload.invitation?.inviter?.username && payload.invitation?.id) {
+        const inviterName = payload.invitation.inviter.username;
+        const inviterId = payload.invitation.inviter.id;
+        const friendInvitationId = payload.invitation.id;
+        addFriendInviteNotification(inviterId, inviterName, friendInvitationId);
+      }
     });
 
     // Registrar el usuario con su ID (también emitir cuando cambie user)
@@ -245,134 +369,16 @@ const AppContent = () => {
 
   return (
     <>
-      <BrowserRouter>
-        <Routes>
-          {/* Ruta raíz con redirección inteligente por rol */}
-          <Route path="/" element={<RootRedirect />} />
-
-          {/* Rutas públicas */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-
-          {/* Rutas protegidas para COACH */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <CoachDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <CoachClientList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients/progress"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <ClientsProgressPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients/progress/:clientId"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <ClientProgressDetailPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/routine/:id/edit"
-            element={
-              <ProtectedRoute>
-                <RoutineExercisesEdit />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Rutas protegidas para CLIENT */}
-          <Route
-            path="/client-home"
-            element={
-              <ProtectedRoute requiredRole="CLIENT">
-                <ClientDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients/invitations"
-            element={
-              <ProtectedRoute requiredRole="CLIENT">
-                <ClientMyCoach />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/client/history"
-            element={
-              <ProtectedRoute requiredRole="CLIENT">
-                <ClientHistoryStats />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/friend-session"
-            element={
-              <ProtectedRoute>
-                <CoopSessionLobby />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/room/:roomId"
-            element={
-              <ProtectedRoute>
-                <WorkoutRoom />
-              </ProtectedRoute>
-            }
-          />
-          {/* /programs removed — unused placeholder page deleted */}
-
-          {/* Ruta de debug WebSocket */}
-          <Route
-            path="/ws"
-            element={
-              <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white">
-                <h1 className="text-4xl font-bold mb-8">
-                  Test de WebSockets 🔌
-                </h1>
-                <div
-                  className={`p-6 rounded-xl text-2xl font-semibold ${isConnected ? "bg-green-600" : "bg-red-600"}`}
-                >
-                  {isConnected
-                    ? "ESTADO: CONECTADO 🟢"
-                    : "ESTADO: DESCONECTADO 🔴"}
-                </div>
-              </div>
-            }
-          />
-          <Route
-            path="/workout/:id"
-            element={
-              <ProtectedRoute>
-                <SoloWorkoutSession />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
+      <AppRoutes />
 
       {/* Notification Center */}
       <NotificationCenter
         onChatClick={handleNotificationChatClick}
+        position={user?.role === "CLIENT" ? "top-right" : "bottom-right"}
+      />
+
+      {/* Friend Invite Notification Center */}
+      <FriendInviteNotificationCenter
         position={user?.role === "CLIENT" ? "top-right" : "bottom-right"}
       />
 

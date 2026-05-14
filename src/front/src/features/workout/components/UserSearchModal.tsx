@@ -42,7 +42,7 @@ export default function UserSearchModal({
 
     const timeout = window.setTimeout(() => {
       onSearch(query.trim());
-    }, 300);
+    }, 600);
 
     return () => window.clearTimeout(timeout);
   }, [query, onSearch]);
@@ -73,7 +73,7 @@ export default function UserSearchModal({
 
         <div className="p-6">
           <label className="block text-sm font-medium text-slate-200 mb-2">
-            {t("friendSession.searchPlaceholder") || "Search by username or email"}
+            Busca amigos
           </label>
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -81,9 +81,7 @@ export default function UserSearchModal({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               className="w-full rounded-2xl border border-slate-700 bg-slate-950 text-white pl-11 pr-4 py-3 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 outline-none"
-              placeholder={
-                t("friendSession.searchPlaceholder") || "Search by username or email"
-              }
+              placeholder="Escribe el nombre de usuario"
               autoFocus
             />
           </div>
@@ -129,9 +127,7 @@ export default function UserSearchModal({
                           className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${invited ? "bg-slate-700 text-slate-400 cursor-not-allowed" : "bg-orange-500 text-white hover:bg-orange-600"}`}
                         >
                           <UserPlus className="w-4 h-4 inline mr-2" />
-                          {invited
-                            ? t("friendSession.inviteSentButton") || "Invited"
-                            : t("friendSession.sendInvite") || "Send invite"}
+                          {invited ? "Invitado" : "Invitar"}
                         </button>
                       </div>
                     </div>

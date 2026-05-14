@@ -237,6 +237,7 @@
     "notificationReceived": "Has rebut una nova invitació d'amic.",
     "searchError": "No s'ha pogut cercar usuaris.",
     "inviteSentToast": "Invitació enviada a {{username}}.",
+    "inviteAlreadySent": "Ja has enviat una invitació a {{username}}.",
     "acceptSuccess": "Invitació acceptada.",
     "acceptError": "No s'ha pogut acceptar la invitació.",
     "rejectSuccess": "Invitació rebutjada.",
@@ -245,6 +246,8 @@
     "howItWorksStep1": "Cerca usuaris en línia per nom d'usuari.",
     "howItWorksStep2": "Envia una invitació d'amic a algú en línia.",
     "howItWorksStep3": "Accepta les invitacions per començar una sessió compartida.",
+    "backToRoutines": "Tornar a les rutines",
+    "backToInvitations": "Tornar al coach",
     "tipLabel": "Consell",
     "tipText": "Si un amic està en línia, rebrà la teva invitació al moment."
   },

@@ -42,9 +42,9 @@
   - `friend-invite:notify` — emetre a `user:{inviteeId}` quan s'envia invitació
   - `friend-invite:accepted` — emetre a `user:{inviterId}` quan s'accepta invitació
   - `friend-invite:rejected` — emetre a `user:{inviterId}` quan es rebutja invitació
-- [ ] 4.2 Definir interfícies de payload d'esdeveniments en `src/back/src/friend-invitations/interfaces/` o inline al gateway
+- [x] 4.2 Definir interfícies de payload d'esdeveniments en `src/back/src/friend-invitations/interfaces/` o inline al gateway
 - [x] 4.3 Assegurar que el rastreig de connexió Socket.IO manté un conjunt/mapa viu de `userId → llista de sockets`
-- [ ] 4.4 Gestionar fallades de broadcast Socket.IO amb gràcia (registrar error però no revertir transacció de base de dades)
+- [x] 4.4 Gestionar fallades de broadcast Socket.IO amb gràcia (registrar error però no revertir transacció de base de dades)
 
 ## 5. Backend: Gestió d'Errors HTTP & Codis d'Estat
 
@@ -118,7 +118,7 @@
   - Llista de sessions acceptades (lògica d'auto-unió)
 - [x] 11.2 Obtenir invitacions pendents en càrrega de pàgina: `friendInvitationService.getPendingInvitations()`
 - [x] 11.3 Configurar polling o listener Socket.IO per refrescar invitacions pendents cada 10 segons
-- [ ] 11.4 En acceptar invitació: extreure sessionCode i cridar `workoutService.joinSession(sessionCode)`
+- [x] 11.4 En acceptar invitació: extreure sessionCode i cridar `workoutService.joinSession(sessionCode)`
 - [x] 11.5 Gestionar accés basat en rols: assegurar ruta és només CLIENT
 
 ## 12. Frontend: Integració amb App.tsx
@@ -127,7 +127,7 @@
   - `friend-invite:notify` → mostrar toast, afegir a NotificationContext
   - `friend-invite:accepted` → mostrar toast "Usuari va acceptar la teva invitació"
   - `friend-invite:rejected` → mostrar toast "Usuari va declinar la teva invitació"
-- [x] 12.2 Afegir ruta `/friend-session-lobby` a `App.tsx` dins `<ProtectedRoute allowedRoles={["CLIENT"]}>`
+- [x] 12.2 Afegir ruta `/friend-session` a `App.tsx` dins `<ProtectedRoute allowedRoles={["CLIENT"]}>`
 - [x] 12.3 Afegir enllaç de navegació de barra lateral en `src/front/src/shared/layout/Layout.tsx` (només visible per rol CLIENT)
 
 ## 13. Frontend: Serveis & Hooks
@@ -184,7 +184,9 @@
 - [ ] 18.2 Documentar nous esdeveniments Socket.IO en design.md d'aquest spec (ja fet, verificar claredat)
 - [ ] 18.3 Afegir nota a README.md o AGENTS.md si hi ha nous patrons arquitectònics
 
-## 19. Verificació Final
+## 20. Correccions Addicionals
 
-- [x] 19.1 Comprovació de tipus backend: `npm run build` en `src/back/` té èxit
+- [x] 20.1 Corregir errors de sintaxi en `CoopSessionLobby.tsx` (imports faltants, noms de funcions corruptes)
+- [x] 20.2 Corregir error de context Router amb `useNavigate()` reestructurant `App.tsx` en components separats
+- [x] 20.3 Verificar build frontend: `npm run build` té èxit sense errors TypeScript
 

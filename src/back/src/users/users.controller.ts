@@ -5,6 +5,7 @@ import {
   UseGuards,
   Request,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
@@ -14,6 +15,7 @@ export class UsersController {
 
   @Get("search")
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 20, ttl: 60 } })
   async searchUsers(
     @Query("q") query: string,
     @Request() req: any,

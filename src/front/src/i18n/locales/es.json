@@ -237,6 +237,7 @@
     "notificationReceived": "Has recibido una nueva invitación de amigo.",
     "searchError": "No se pudo buscar usuarios.",
     "inviteSentToast": "Invitación enviada a {{username}}.",
+    "inviteAlreadySent": "Ya has enviado una invitación a {{username}}.",
     "acceptSuccess": "Invitación aceptada.",
     "acceptError": "No se pudo aceptar la invitación.",
     "rejectSuccess": "Invitación rechazada.",
@@ -245,6 +246,8 @@
     "howItWorksStep1": "Busca usuarios en línea por nombre de usuario.",
     "howItWorksStep2": "Envía una invitación de amigo a alguien en línea.",
     "howItWorksStep3": "Acepta invitaciones para iniciar una sesión compartida.",
+    "backToRoutines": "Volver a rutinas",
+    "backToInvitations": "Volver al coach",
     "tipLabel": "Consejo",
     "tipText": "Si un amigo está en línea, recibirá tu invitación al instante."
   },
