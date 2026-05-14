@@ -20,6 +20,7 @@ interface RoutineExercise {
     equipment?: string;
     primaryMuscle?: string[];
     description?: string;
+    images?: string[];
   };
   sets: number;
   reps: number;
@@ -84,6 +85,7 @@ export const ExercisesEdit = () => {
           equipment: ex.exercise?.equipment,
           primaryMuscle: ex.exercise?.primaryMuscle,
           description: ex.exercise?.description,
+          images: ex.exercise?.images,
         }));
         setRoutineName(r.name);
         setInitial({ name: r.name, exercises });

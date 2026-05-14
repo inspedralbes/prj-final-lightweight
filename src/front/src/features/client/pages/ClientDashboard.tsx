@@ -18,7 +18,7 @@ import { useAuth } from "@/features/auth/context/AuthContext";
 import { ConfirmModal } from "@/shared/components/ConfirmModal";
 import { useNotification } from "@/features/notifications/context/NotificationContext";
 
-const POLL_INTERVAL_MS = 10_000;
+const POLL_INTERVAL_MS = 30_000;
 
 const ClientHome = () => {
   const { user, updateCoachId } = useAuth();

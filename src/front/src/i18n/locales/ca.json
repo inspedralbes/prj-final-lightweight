@@ -59,7 +59,10 @@
     "resetPasswordButton": "Restablir contrasenya",
     "resetTokenInvalid": "Aquest enllaç no és vàlid o ha expirat.",
     "requestNewReset": "Sol·licitar un nou enllaç",
-    "emailNotRegistered": "Aquest correu no està registrat."
+    "emailNotRegistered": "Aquest correu no està registrat.",
+    "errors": {
+      "sessionAlreadyActive": "Ja tens una sessió activa en un altre dispositiu"
+    }
   },
   "sidebar": {
     "dashboard": "Panell de control",

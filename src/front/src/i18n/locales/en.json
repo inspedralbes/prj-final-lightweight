@@ -59,7 +59,10 @@
     "acceptTerms": "I accept the",
     "termsLink": "Terms and Conditions",
     "passwordMinLength": "Password must be at least {{count}} characters",
-    "emailNotRegistered": "This email is not registered."
+    "emailNotRegistered": "This email is not registered.",
+    "errors": {
+      "sessionAlreadyActive": "You already have an active session on another device"
+    }
   },
   "sidebar": {
     "dashboard": "Dashboard",

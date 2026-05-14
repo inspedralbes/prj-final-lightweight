@@ -49,8 +49,15 @@ export default function Login() {
         setIsLoading(false);
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        toast.error(t("auth.invalidCredentials"));
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          toast.error(t("auth.invalidCredentials"));
+        } else if (error.response?.status === 409) {
+          toast.error(t("auth.errors.sessionAlreadyActive"));
+        } else {
+          console.error("Error during login:", error);
+          toast.error(t("messages.errorOccurred"));
+        }
       } else {
         console.error("Error during login:", error);
         toast.error(t("messages.errorOccurred"));

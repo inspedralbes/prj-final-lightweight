@@ -47,6 +47,6 @@ const e2eTestingEnabled =
     ...(e2eTestingEnabled ? [TestingModule] : []),
   ],
   controllers: [AppController, EventsDebugController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [AppService],
 })
 export class AppModule {}

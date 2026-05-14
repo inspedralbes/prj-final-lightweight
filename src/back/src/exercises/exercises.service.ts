@@ -82,7 +82,7 @@ export class ExerciseService {
           level: exerciseData.level || null,
           mechanic: exerciseData.mechanic || null,
           equipment: exerciseData.equipment || null,
-          // imgUrl: imageUrl, // Assign image URL if available, otherwise null
+          images: imgUrl,
         };
 
         await this.prisma.exerciseCatalog.upsert({
@@ -96,7 +96,7 @@ export class ExerciseService {
             level: formattedExercises.level,
             mechanic: formattedExercises.mechanic,
             equipment: formattedExercises.equipment,
-            // Anira la imatge
+            images: imgUrl,
           },
           create: formattedExercises,
         });

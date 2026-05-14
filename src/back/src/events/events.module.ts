@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { EventsGateway } from './events.gateway';
 import { ChatModule } from '../chat/chat.module';
-import { PresenceModule } from '../presence/presence.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [ChatModule, PresenceModule],
+  imports: [ChatModule, AuthModule],
   providers: [EventsGateway],
   exports: [EventsGateway],
 })

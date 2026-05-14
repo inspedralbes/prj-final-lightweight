@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "@/shared/utils/api";
+import ExerciseImage from "@/features/exercises/components/ExerciseImage";
 
 interface Exercise {
   id: number;
@@ -11,6 +12,7 @@ interface Exercise {
   equipment?: string;
   primaryMuscle?: string[];
   description?: string;
+  images?: string[];
 }
 
 type Props = {
@@ -605,6 +607,9 @@ export default function ExerciseSearchModal({
                     </div>
                   </div>
                 )}
+
+              {/* Exercise Images */}
+              <ExerciseImage key={selectedExercise.id} images={selectedExercise.images || []} className="mb-4" />
 
               {/* Instructions/Description */}
               {selectedExercise.description && (
