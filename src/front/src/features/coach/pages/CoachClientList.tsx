@@ -75,13 +75,30 @@ const Clients = () => {
   };
 
   useEffect(() => {
-    fetchClients();
+    void fetchClients();
+  }, []);
 
+  useEffect(() => {
     // Escuchar evento de apertura de chat desde notificaciones
     const handleOpenChat = (event: Event) => {
       const customEvent = event as CustomEvent;
       const roomId = customEvent.detail?.roomId;
-      if (roomId && roomId.startsWith("chat_client_")) {
+      if (!roomId || !roomId.startsWith("chat_client_")) return;
+
+      const clientId = Number(roomId.replace("chat_client_", ""));
+      if (Number.isNaN(clientId)) return;
+
+      const client = clients.find((c) => c.id === clientId);
+      if (client) {
+        notifications
+          .filter(
+            (n) =>
+              n.type === "chat" &&
+              n.roomId === `chat_client_${client.id}` &&
+              !n.read,
+          )
+          .forEach((n) => markAsRead(n.id));
+        setSelectedClient(client);
         setIsChatOpen(true);
       }
     };
@@ -91,7 +108,7 @@ const Clients = () => {
     return () => {
       window.removeEventListener("openChat", handleOpenChat);
     };
-  }, []);
+  }, [clients, notifications, markAsRead]);
 
   const handleViewProfile = (client: Client) => {
     setSelectedClient(client);

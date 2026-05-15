@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Login from "@/features/auth/pages/Login";
 import Register from "@/features/auth/pages/Register";
@@ -88,11 +88,34 @@ const AppContent = () => {
 
   const handleCalleeCallEnd = () => setCalleeActiveCall(null);
 
-  const handleNotificationChatClick = (roomId: string) => {
-    console.log("[Notification] Opening chat for room:", roomId);
-    // El evento será manejado por las páginas que tengan el chat abierto
-    // Se puede expandir para abrir el chat automáticamente usando un evento global
-    window.dispatchEvent(new CustomEvent("openChat", { detail: { roomId } }));
+  const ClientSideNotificationCenter = () => {
+    const navigate = useNavigate();
+
+    const handleNotificationChatClick = useCallback(
+      (roomId: string) => {
+        console.log("[Notification] Opening chat for room:", roomId);
+
+        if (user?.role === "CLIENT") {
+          navigate("/client-home");
+        } else if (user?.role === "COACH") {
+          navigate("/clients");
+        }
+
+        window.setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent("openChat", { detail: { roomId } }),
+          );
+        }, 0);
+      },
+      [navigate, user],
+    );
+
+    return (
+      <NotificationCenter
+        onChatClick={handleNotificationChatClick}
+        position={user?.role === "CLIENT" ? "top-right" : "bottom-right"}
+      />
+    );
   };
 
   useEffect(() => {
@@ -374,13 +397,8 @@ const AppContent = () => {
             }
           />
         </Routes>
+        <ClientSideNotificationCenter />
       </BrowserRouter>
-
-      {/* Notification Center */}
-      <NotificationCenter
-        onChatClick={handleNotificationChatClick}
-        position={user?.role === "CLIENT" ? "top-right" : "bottom-right"}
-      />
 
       {/* ── Global incoming video call popup ──────────────────────────────── */}
       {incomingCall && (
