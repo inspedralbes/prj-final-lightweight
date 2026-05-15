@@ -93,6 +93,8 @@ const sessions = await this.prisma.liveSession.findMany({
   async getClientOwnSessionHistory(
     clientId: number,
   ): Promise<SessionHistoryItemDto[]> {
+    console.log(`[DEBUG-progress] getClientOwnSessionHistory called for clientId=${clientId}`);
+
     const assignedSessions = await this.prisma.liveSession.findMany({
       where: {
         status: SessionStatus.COMPLETED,
@@ -102,6 +104,10 @@ const sessions = await this.prisma.liveSession.findMany({
       include: { routine: { select: { name: true } }, participants: true },
       orderBy: { completedAt: 'desc' },
     });
+    console.log(`[DEBUG-progress] assignedSessions count=${assignedSessions.length}`);
+    for (const s of assignedSessions) {
+      console.log(`[DEBUG-progress] assigned session: id=${s.id}, routine=${s.routine.name}, invitationCode=${s.invitationCode}`);
+    }
 
     const coopSessions = await this.prisma.liveSession.findMany({
       where: {
@@ -180,6 +186,14 @@ const sessions = await this.prisma.liveSession.findMany({
       };
     });
 
+    console.log(`[DEBUG-progress] coopSessions count=${coopSessions.length}`);
+    for (const s of coopSessions) {
+      console.log(`[DEBUG-progress] coop session: id=${s.id}, routine=${s.routine.name}, participants=${s.participants.length}`);
+      for (const p of s.participants) {
+        console.log(`[DEBUG-progress]   participant: participantId='${p.participantId}'`);
+      }
+    }
+
     const allSessions = [...assigned, ...coop].sort(
       (a, b) =>
         (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0),
@@ -189,6 +203,8 @@ const sessions = await this.prisma.liveSession.findMany({
   }
 
   async getClientStats(clientId: number): Promise<ClientStatsDto> {
+    console.log(`[DEBUG-progress] getClientStats called for clientId=${clientId}`);
+
     const assignedSessions = await this.prisma.liveSession.findMany({
       where: {
         status: SessionStatus.COMPLETED,
@@ -197,6 +213,7 @@ const sessions = await this.prisma.liveSession.findMany({
       },
       select: { completedSets: true, completedExercises: true },
     });
+    console.log(`[DEBUG-progress] getClientStats assigned count=${assignedSessions.length}`);
 
     const coopSessions = await this.prisma.liveSession.findMany({
       where: {
@@ -207,6 +224,7 @@ const sessions = await this.prisma.liveSession.findMany({
       },
       select: { completedSets: true, completedExercises: true },
     });
+    console.log(`[DEBUG-progress] getClientStats coop count=${coopSessions.length}`);
 
     const allSessions = [...assignedSessions, ...coopSessions];
 
@@ -218,6 +236,8 @@ const sessions = await this.prisma.liveSession.findMany({
   }
 
   async getClientFriendStats(clientId: number): Promise<ClientFriendStatsDto> {
+    console.log(`[DEBUG-progress] getClientFriendStats called for clientId=${clientId}`);
+
     const coopSessions = await this.prisma.liveSession.findMany({
       where: {
         status: SessionStatus.COMPLETED,
@@ -228,6 +248,10 @@ const sessions = await this.prisma.liveSession.findMany({
       include: { participants: true },
       orderBy: { completedAt: 'desc' },
     });
+    console.log(`[DEBUG-progress] getClientFriendStats found ${coopSessions.length} sessions`);
+    for (const s of coopSessions) {
+      console.log(`[DEBUG-progress]   session id=${s.id}, participants count=${s.participants.length}`);
+    }
 
     let totalCoopSets = 0;
     let totalCoopExercises = 0;
@@ -259,11 +283,13 @@ const sessions = await this.prisma.liveSession.findMany({
       }))
       .sort((a, b) => b.sessionCount - a.sessionCount);
 
-    return {
+    const result = {
       totalCoopSessions: coopSessions.length,
       totalCoopSets,
       totalCoopExercises,
       partners,
     };
+    console.log(`[DEBUG-progress] getClientFriendStats returning:`, JSON.stringify(result));
+    return result;
   }
 }

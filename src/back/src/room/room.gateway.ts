@@ -148,14 +148,10 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleJoinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody()
-    payload: {
-      roomId: string;
-      userId: string;
-      username?: string;
-      isHost?: boolean;
-    },
+    payload: { roomId: string; userId: string; username?: string; isHost?: boolean },
   ) {
     console.log('📥 [Room] joinRoom recibido:', payload);
+    console.log(`[DEBUG-joinRoom] userId=${payload.userId}, type=${typeof payload.userId}`);
     const { roomId, userId, username, isHost: requestedIsHost } = payload;
 
     try {
@@ -230,6 +226,14 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const { roomId, routine } = payload;
     const routineId = routine.id;
 
+    console.log(`[DEBUG-startSession] roomId=${roomId}, routineId=${routineId}`);
+
+    const usersInRoom = this.roomUsers.get(roomId) ?? [];
+    console.log(`[DEBUG-startSession] usersInRoom count: ${usersInRoom.length}`);
+    for (const u of usersInRoom) {
+      console.log(`[DEBUG-startSession] user in room: id=${u.id} (type=${typeof u.id}), username=${u.username}`);
+    }
+
     try {
       const sessionCode = Math.random()
         .toString(36)
@@ -244,19 +248,29 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
           status: 'ACTIVE',
         },
       });
+      console.log(`[DEBUG-startSession] LiveSession created: id=${session.id}, sessionCode=${sessionCode}`);
 
-      const usersInRoom = this.roomUsers.get(roomId) ?? [];
       await Promise.all(
         usersInRoom.map((u) =>
           this.prisma.liveParticipant.create({
             data: {
               sessionId: session.id,
-              participantId: u.id,
+              participantId: String(u.id),
               role: 'CLIENT',
             },
           }),
         ),
       );
+      console.log(`[DEBUG-startSession] Participants created for ${usersInRoom.length} users`);
+
+      // Verify participants were stored
+      const storedParticipants = await this.prisma.liveParticipant.findMany({
+        where: { sessionId: session.id },
+      });
+      console.log(`[DEBUG-startSession] Verified participants in DB: ${storedParticipants.length}`);
+      for (const p of storedParticipants) {
+        console.log(`[DEBUG-startSession] participant: id=${p.id}, participantId=${p.participantId} (type=${typeof p.participantId})`);
+      }
 
       console.log(
         `[Room] Created LiveSession ${session.id} for invitationCode ${roomId}`,
@@ -382,6 +396,8 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
 
     const { roomId, userId, finalStats } = payload;
+    console.log(`[DEBUG-sessionFinished] userId=${userId} type=${typeof userId}`);
+    console.log(`[DEBUG-sessionFinished] roomId=${roomId}`);
 
     client.to(roomId).emit('partnerFinished', { userId, finalStats });
 
@@ -397,6 +413,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       const userIdInt = parseInt(userId, 10);
+      console.log(`[DEBUG-sessionFinished] userIdInt=${userIdInt}`);
 
       const session = await this.prisma.liveSession.findUnique({
         where: { invitationCode: roomId },
@@ -408,6 +425,12 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return { success: false, error: 'Session not found' };
       }
 
+      console.log(`[DEBUG-sessionFinished] Session FOUND: id=${session.id}, status=${session.status}, coachId=${session.coachId}`);
+      console.log(`[DEBUG-sessionFinished] Participants in session: ${session.participants.length}`);
+      for (const p of session.participants) {
+        console.log(`[DEBUG-sessionFinished] participant: id=${p.id}, participantId='${p.participantId}' (type=${typeof p.participantId}), role=${p.role}`);
+      }
+
       const existingProgress = await this.prisma.sessionProgress.findUnique({
         where: {
           sessionId_userId: {
@@ -416,6 +439,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
           },
         },
       });
+      console.log(`[DEBUG-sessionFinished] existingProgress: ${existingProgress ? 'FOUND' : 'NOT FOUND'}`);
 
       if (!existingProgress) {
         await this.prisma.sessionProgress.upsert({
@@ -442,24 +466,32 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
             isPartial: false,
           },
         });
+        console.log(`[DEBUG-sessionFinished] SessionProgress CREATED for userId=${userIdInt}`);
       }
 
       const participantExists = session.participants.some(
         (p) => parseInt(p.participantId, 10) === userIdInt,
       );
+      console.log(`[DEBUG-sessionFinished] participantExists=${participantExists}`);
       if (!participantExists) {
         await this.prisma.liveParticipant.create({
           data: {
             sessionId: session.id,
-            participantId: userId,
+            participantId: String(userId),
             role: 'CLIENT',
           },
         });
+        console.log(`[DEBUG-sessionFinished] LiveParticipant CREATED for userId=${userId}`);
       }
 
       const updatedProgress = await this.prisma.sessionProgress.findMany({
         where: { sessionId: session.id },
       });
+      console.log(`[DEBUG-sessionFinished] Total sessionProgress records: ${updatedProgress.length}`);
+      for (const p of updatedProgress) {
+        console.log(`[DEBUG-sessionFinished] progress: userId=${p.userId}, sets=${p.completedSets}, exercises=${p.completedExercises}`);
+      }
+
       const totalCompletedSets = updatedProgress.reduce(
         (sum, p) => Math.max(sum, p.completedSets),
         0,
