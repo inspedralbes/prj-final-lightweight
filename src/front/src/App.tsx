@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Login from "@/features/auth/pages/Login";
 import Register from "@/features/auth/pages/Register";
@@ -219,11 +219,34 @@ const AppContent = () => {
 
   const handleCalleeCallEnd = () => setCalleeActiveCall(null);
 
-  const handleNotificationChatClick = (roomId: string) => {
-    console.log("[Notification] Opening chat for room:", roomId);
-    // El evento será manejado por las páginas que tengan el chat abierto
-    // Se puede expandir para abrir el chat automáticamente usando un evento global
-    window.dispatchEvent(new CustomEvent("openChat", { detail: { roomId } }));
+  const ClientSideNotificationCenter = () => {
+    const navigate = useNavigate();
+
+    const handleNotificationChatClick = useCallback(
+      (roomId: string) => {
+        console.log("[Notification] Opening chat for room:", roomId);
+
+        if (user?.role === "CLIENT") {
+          navigate("/client-home");
+        } else if (user?.role === "COACH") {
+          navigate("/clients");
+        }
+
+        window.setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent("openChat", { detail: { roomId } }),
+          );
+        }, 0);
+      },
+      [navigate, user],
+    );
+
+    return (
+      <NotificationCenter
+        onChatClick={handleNotificationChatClick}
+        position={user?.role === "CLIENT" ? "top-right" : "bottom-right"}
+      />
+    );
   };
 
   useEffect(() => {
@@ -407,18 +430,131 @@ const AppContent = () => {
 
   return (
     <>
-      <AppRoutes />
+      <BrowserRouter>
+        <Routes>
+          {/* Ruta raíz con redirección inteligente por rol */}
+          <Route path="/" element={<RootRedirect />} />
 
-      {/* Notification Center */}
-      <NotificationCenter
-        onChatClick={handleNotificationChatClick}
-        position={user?.role === "CLIENT" ? "top-right" : "bottom-right"}
-      />
+          {/* Rutas públicas */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-      {/* Friend Invite Notification Center */}
-      <FriendInviteNotificationCenter
-        position={user?.role === "CLIENT" ? "top-right" : "bottom-right"}
-      />
+          {/* Rutas protegidas para COACH */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute requiredRole="COACH">
+                <CoachDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clients"
+            element={
+              <ProtectedRoute requiredRole="COACH">
+                <CoachClientList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clients/progress"
+            element={
+              <ProtectedRoute requiredRole="COACH">
+                <ClientsProgressPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clients/progress/:clientId"
+            element={
+              <ProtectedRoute requiredRole="COACH">
+                <ClientProgressDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/routine/:id/edit"
+            element={
+              <ProtectedRoute>
+                <RoutineExercisesEdit />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Rutas protegidas para CLIENT */}
+          <Route
+            path="/client-home"
+            element={
+              <ProtectedRoute requiredRole="CLIENT">
+                <ClientDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clients/invitations"
+            element={
+              <ProtectedRoute requiredRole="CLIENT">
+                <ClientMyCoach />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/client/history"
+            element={
+              <ProtectedRoute requiredRole="CLIENT">
+                <ClientHistoryStats />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/friend-session"
+            element={
+              <ProtectedRoute>
+                <CoopSessionLobby />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId"
+            element={
+              <ProtectedRoute>
+                <WorkoutRoom />
+              </ProtectedRoute>
+            }
+          />
+          {/* /programs removed — unused placeholder page deleted */}
+
+          {/* Ruta de debug WebSocket */}
+          <Route
+            path="/ws"
+            element={
+              <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white">
+                <h1 className="text-4xl font-bold mb-8">
+                  Test de WebSockets 🔌
+                </h1>
+                <div
+                  className={`p-6 rounded-xl text-2xl font-semibold ${isConnected ? "bg-green-600" : "bg-red-600"}`}
+                >
+                  {isConnected
+                    ? "ESTADO: CONECTADO 🟢"
+                    : "ESTADO: DESCONECTADO 🔴"}
+                </div>
+              </div>
+            }
+          />
+          <Route
+            path="/workout/:id"
+            element={
+              <ProtectedRoute>
+                <SoloWorkoutSession />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+        <ClientSideNotificationCenter />
+      </BrowserRouter>
 
       {/* ── Global incoming video call popup ──────────────────────────────── */}
       {incomingCall && (
