@@ -31,6 +31,8 @@ model User {
   receivedMessages       P2PChatMessage[] @relation("ReceivedMessages")
   sessionProgress        SessionProgress[]
   passwordResetTokens       PasswordResetToken[]
+  sentFriendInvitations    FriendInvitation[] @relation("FriendInvitations_inviter")
+  receivedFriendInvitations FriendInvitation[] @relation("FriendInvitations_invitee")
 
   @@map("users")
 }
@@ -246,4 +248,28 @@ enum InvitationStatus {
   ACCEPTED
   EXPIRED
   REVOKED
+}
+
+enum FriendInvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+model FriendInvitation {
+  id        Int      @id @default(autoincrement())
+  inviterId Int
+  inviteeId Int
+  status    FriendInvitationStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
+
+  inviter   User @relation("FriendInvitations_inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee   User @relation("FriendInvitations_invitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  @@unique([inviterId, inviteeId, status]) // Prevent multiple pending invitations between same pair
+  @@index([inviteeId, status])
 }

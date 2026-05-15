@@ -83,10 +83,10 @@ const RoutineCard = ({
 
   const formattedDate = createdAt
     ? new Date(createdAt).toLocaleDateString([], {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
     : null;
 
   const handleCardClick = () => {
@@ -143,7 +143,13 @@ const RoutineCard = ({
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
-            <span className="whitespace-nowrap shrink-0 text-xs font-medium text-gray-500 bg-[#1a1a1a] border border-[#2a2a2a] px-2.5 py-1 rounded-full">
+            <span
+              className={`whitespace-nowrap shrink-0 text-xs font-medium px-2.5 py-1 rounded-full border ${isSoloClient && exercises.length === 0
+                ? "text-orange-400 bg-orange-500/10 border-orange-500/30 animate-pulse cursor-pointer"
+                : "text-gray-500 bg-[#1a1a1a] border-[#2a2a2a]"
+                }`}
+              title={isSoloClient && exercises.length === 0 ? t("routines.clickToAddExercises") || "Pulsa aquí para añadir ejercicios" : undefined}
+            >
               {exercises.length} {t("routines.exercises")}
             </span>
           </div>
@@ -157,11 +163,10 @@ const RoutineCard = ({
           {/* Source badge — only in client mode when context is mixed */}
           {isClientMode && isOwnRoutine !== undefined && (
             <span
-              className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full mb-2 border ${
-                isOwnRoutine
-                  ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
-                  : "bg-blue-500/10 text-blue-400 border-blue-500/20"
-              }`}
+              className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full mb-2 border ${isOwnRoutine
+                ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
+                : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                }`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${isOwnRoutine ? "bg-orange-400" : "bg-blue-400"}`}
@@ -205,9 +210,18 @@ const RoutineCard = ({
           )}
           {isClientMode && exercises.length === 0 && (
             <div className="pt-4 border-t border-[#222] mt-2">
-              <p className="text-xs text-gray-600 italic">
-                {t("routines.noExercises")}
-              </p>
+              {isSoloClient ? (
+                <div className="flex flex-col items-center justify-center gap-2 py-3 border border-dashed border-orange-500/30 rounded-xl bg-orange-500/5 hover:bg-orange-500/10 hover:border-orange-500/50 transition-all cursor-pointer">
+                  <span className="w-7 h-7 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400 font-bold text-base leading-none">+</span>
+                  <p className="text-xs text-orange-400/80 font-semibold text-center">
+                    {t("routines.clickToAddExercises") || "Añade ejercicios"}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-600 italic">
+                  {t("routines.noExercises")}
+                </p>
+              )}
             </div>
           )}
 
@@ -385,11 +399,10 @@ const RoutineCard = ({
                   return (
                     <div
                       key={i}
-                      className={`flex items-start gap-3 bg-[#1a1a1a] border border-[#222] rounded-xl px-3 py-2.5 ${
-                        exDesc
-                          ? "cursor-pointer hover:border-[#333] transition-colors"
-                          : ""
-                      }`}
+                      className={`flex items-start gap-3 bg-[#1a1a1a] border border-[#222] rounded-xl px-3 py-2.5 ${exDesc
+                        ? "cursor-pointer hover:border-[#333] transition-colors"
+                        : ""
+                        }`}
                       onClick={() => exDesc && toggleDesc(i)}
                     >
                       <span className="text-xs font-bold text-orange-500/70 w-5 text-right shrink-0 mt-0.5">
@@ -402,9 +415,8 @@ const RoutineCard = ({
                         {exDesc && (
                           <>
                             <p
-                              className={`text-xs text-gray-500 mt-0.5 ${
-                                isExpanded ? "" : "line-clamp-2"
-                              }`}
+                              className={`text-xs text-gray-500 mt-0.5 ${isExpanded ? "" : "line-clamp-2"
+                                }`}
                             >
                               {exDesc}
                             </p>

@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useNotification } from "@/features/notifications/context/NotificationContext";
 import { invitationsService } from "@/shared/services/invitationsService";
+import { friendInvitationService } from "@/features/workout/services/friendInvitationService";
 
 export interface LayoutProps {
   children: React.ReactNode;
@@ -29,6 +30,7 @@ const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [username, setUsername] = useState<string>("");
   const [pendingInvitesCount, setPendingInvitesCount] = useState(0);
+  const [friendInvitesCount, setFriendInvitesCount] = useState(0);
 
   // Cargar invitaciones pendientes para clientes sin coach
   useEffect(() => {
@@ -55,6 +57,28 @@ const Layout = ({ children }: LayoutProps) => {
     return () => {
       socket.off("coach-invitation", handleNewInvite);
       window.removeEventListener("coach-invitation-accepted", handleAccepted);
+    };
+  }, [user]);
+
+  // Cargar invitaciones pendientes de friend sessions
+  useEffect(() => {
+    if (user?.role !== "CLIENT") return;
+    friendInvitationService
+      .getPendingInvitations()
+      .then((list) => setFriendInvitesCount(list.length))
+      .catch(() => setFriendInvitesCount(0));
+
+    // Nueva invitación de friend en tiempo real → recargar
+    const handleFriendInvite = () => {
+      friendInvitationService
+        .getPendingInvitations()
+        .then((list) => setFriendInvitesCount(list.length))
+        .catch(() => setFriendInvitesCount(0));
+    };
+
+    window.addEventListener("friend-invite:notify", handleFriendInvite);
+    return () => {
+      window.removeEventListener("friend-invite:notify", handleFriendInvite);
     };
   }, [user]);
 
@@ -102,7 +126,7 @@ const Layout = ({ children }: LayoutProps) => {
       path: "/client-home",
       label: t("routines.title") || "Mis rutinas",
       icon: ClipboardList,
-      badge: unreadCount,
+      badge: 0,
     },
     {
       path: "/clients/invitations",
@@ -114,7 +138,7 @@ const Layout = ({ children }: LayoutProps) => {
       path: "/friend-session",
       label: t("sidebar.friendSession") || "Entrenar con amigo",
       icon: Swords,
-      badge: 0,
+      badge: friendInvitesCount,
     },
     {
       path: "/client/history",

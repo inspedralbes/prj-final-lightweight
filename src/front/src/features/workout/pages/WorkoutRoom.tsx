@@ -72,6 +72,14 @@ export default function VirtualGymRoom() {
     exercises: number;
   } | null>(null);
 
+  const goBackOrFriendSession = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/friend-session");
+    }
+  };
+
   // Socket Effect
   useEffect(() => {
     if (!roomId || !user) return;
@@ -144,8 +152,10 @@ export default function VirtualGymRoom() {
 
     const handleHostDisconnected = () => {
       if (!isHost) {
-        roomSocket.disconnect();
+        newSocket.disconnect();
+        //roomSocket.disconnect();
         navigate("/friend-session");
+        //goBackOrFriendSession();
       }
     };
 
@@ -190,8 +200,10 @@ export default function VirtualGymRoom() {
   }, [roomId, user]);
 
   const handleLeaveRoom = () => {
-    roomSocket.disconnect();
+    socket?.disconnect();
+    //roomSocket.disconnect();
     navigate("/friend-session");
+    //goBackOfFriendSession();
   };
 
   const handleStartSession = (routine: Routine) => {

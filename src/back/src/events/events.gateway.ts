@@ -45,18 +45,18 @@ export class EventsGateway
   ) {}
 
   afterInit(_server: Server) {
-    console.log('✅ Socket Gateway inicializado');
+    console.log(' Socket Gateway inicializado');
   }
 
   handleConnection(client: Socket) {
-    console.log(`🔌 Cliente conectado: ${client.id}`);
+    console.log(` Cliente conectado: ${client.id}`);
     client.onAny((event, ...args) => {
       console.log(`[Socket ${client.id}] event "${event}" args:`, args);
     });
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`❌ Cliente desconectado: ${client.id}`);
+    console.log(` Cliente desconectado: ${client.id}`);
 
     for (const [userId, sockets] of this.userSockets.entries()) {
       if (!sockets.has(client.id)) continue;
@@ -315,7 +315,7 @@ export class EventsGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { callerId: number; calleeId: number; callerName: string; roomId: string },
   ) {
-    const calleeSocket = this.getAnySocket(Number(payload.calleeId));
++-    const calleeSocket = this.getAnySocket(Number(payload.calleeId));
     if (calleeSocket) {
       this.server.to(calleeSocket).emit('video-call-invite', payload);
       client.emit('video-call-delivered', { callerId: payload.callerId, calleeId: payload.calleeId });
