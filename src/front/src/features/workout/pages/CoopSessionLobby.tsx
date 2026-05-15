@@ -1,301 +1,327 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Copy, Check, Loader, Ticket } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Clock } from "lucide-react";
 import { useToast } from "@/shared/hooks/useToast";
 import Layout from "@/shared/layout/Layout";
-import { invitationsService } from "@/shared/services/invitationsService";
+import type {
+  FriendInvitation,
+  UserSearchResult,
+} from "@/features/workout/services/friendInvitationService";
+import { friendInvitationService } from "@/features/workout/services/friendInvitationService";
+import PendingInvitationCard from "@/features/workout/components/PendingInvitationCard";
+import UserSearchModal from "@/features/workout/components/UserSearchModal";
+import axios from "axios";
 
-export default function FriendSession() {
-  const navigate = useNavigate();
+export default function CoopSessionLobby() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const toast = useToast();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Sección A: Generar Código
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
-  const [loadingGenerate, setLoadingGenerate] = useState(false);
-  const [copied, setCopied] = useState(false);
+  // Invitations received (where I am the invitee)
+  const [pendingInvites, setPendingInvites] = useState<FriendInvitation[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(true);
+  const [activeInviteId, setActiveInviteId] = useState<number | null>(null);
+  const [rejectingInviteId, setRejectingInviteId] = useState<number | null>(null);
 
-  // Sección B: Canjear Código
-  const [inputCode, setInputCode] = useState("");
-  const [loadingAccept, setLoadingAccept] = useState(false);
+  // Invitations sent (where I am the inviter, waiting for response)
+  const [sentInvites, setSentInvites] = useState<FriendInvitation[]>([]);
 
-  // Generar nuevo código de sala
-  const handleGenerateCode = async () => {
-    setLoadingGenerate(true);
+  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [invitedIds, setInvitedIds] = useState<number[]>([]);
+
+  const getErrorMessage = (error: any, defaultMsg: string): string => {
+    if (axios.isAxiosError(error)) {
+      return error.response?.data?.message || error.message || defaultMsg;
+    }
+    return error instanceof Error ? error.message : defaultMsg;
+  };
+
+  const loadPendingInvitations = useCallback(async () => {
     try {
-      const response = await invitationsService.generateCode();
-      setGeneratedCode(response.code);
-      toast.success(
-        t("friendSession.codeGenerated") || "Code generated successfully",
-      );
+      setPendingLoading(true);
+      const [received, sent] = await Promise.all([
+        friendInvitationService.getPendingInvitations(),
+        friendInvitationService.getSentInvitations(),
+      ]);
+      setPendingInvites(received);
+      setSentInvites(sent);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to generate session code";
-      toast.error(message);
+      console.error("Error loading invitations", error);
     } finally {
-      setLoadingGenerate(false);
+      setPendingLoading(false);
     }
-  };
+  }, []);
 
-  // Copiar código al portapapeles
-  const handleCopyCode = async () => {
-    if (!generatedCode) return;
-
-    const copyViaExecCommand = () => {
-      const textarea = document.createElement("textarea");
-      textarea.value = generatedCode;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      const ok = document.execCommand("copy");
-      document.body.removeChild(textarea);
-      return ok;
-    };
-
+  const refreshSentInvitations = useCallback(async () => {
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(generatedCode);
-      } else {
-        const ok = copyViaExecCommand();
-        if (!ok) throw new Error("execCommand failed");
-      }
-      setCopied(true);
-      toast.success(
-        t("friendSession.codeCopied") || "Code copied to clipboard",
-      );
-      setTimeout(() => setCopied(false), 2000);
+      const sent = await friendInvitationService.getSentInvitations();
+      setSentInvites(sent);
     } catch (error) {
-      toast.error(t("friendSession.copyFailed") || "Failed to copy code");
+      console.error("Error refreshing sent invitations", error);
     }
-  };
+  }, []);
 
-  // Unirse a una sala con código
-  const handleJoinSession = async () => {
-    if (!inputCode.trim()) {
-      toast.error(t("friendSession.enterCode") || "Please enter a code");
-      return;
-    }
+  const searchRequestIdRef = useRef(0);
 
-    if (generatedCode && inputCode.trim() === generatedCode) {
-      toast.error(
-        t("friendSession.selfUseError") || "You cannot join your own session",
-      );
-      return;
-    }
-
-    setLoadingAccept(true);
-    try {
-      const joinCode = inputCode.trim();
-      const isValid = await invitationsService.validateSessionCode(joinCode);
-      if (!isValid) {
-        toast.error(
-          t("friendSession.invalidCode") ||
-            "Session code is invalid or does not exist",
-        );
+  const handleSearchUsers = useCallback(
+    async (query: string) => {
+      const trimmedQuery = query.trim();
+      if (trimmedQuery.length < 2) {
+        searchRequestIdRef.current += 1;
+        setSearchResults([]);
+        setSearchError(null);
+        setSearchLoading(false);
         return;
       }
-      setInputCode("");
-      toast.success(t("friendSession.codeAccepted") || "Joining session...");
-      setTimeout(() => {
-        navigate(`/room/${joinCode}`, { state: { isHost: false } });
-      }, 1000);
+
+      const requestId = ++searchRequestIdRef.current;
+      try {
+        setSearchLoading(true);
+        setSearchError(null);
+        const results = await friendInvitationService.searchUsers(trimmedQuery);
+        if (requestId !== searchRequestIdRef.current) return;
+        setSearchResults(results);
+      } catch (error) {
+        if (requestId !== searchRequestIdRef.current) return;
+        setSearchError(t("friendSession.searchError"));
+        setSearchResults([]);
+      } finally {
+        if (requestId === searchRequestIdRef.current) setSearchLoading(false);
+      }
+    },
+    [t],
+  );
+
+  const silentRefresh = useCallback(async () => {
+    try {
+      const [received, sent] = await Promise.all([
+        friendInvitationService.getPendingInvitations(),
+        friendInvitationService.getSentInvitations(),
+      ]);
+      setPendingInvites(received);
+      setSentInvites(sent);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to join session";
-      toast.error(message);
-    } finally {
-      setLoadingAccept(false);
+      console.error("Error refreshing invitations", error);
+    }
+  }, []);
+
+  // Initial load (with spinner) + silent polling every 15s
+  useEffect(() => {
+    loadPendingInvitations();
+    const interval = window.setInterval(silentRefresh, 15000);
+    return () => window.clearInterval(interval);
+  }, [loadPendingInvitations, silentRefresh]);
+
+  // Socket: new invitation received → silent reload + toast
+  useEffect(() => {
+    const handleInviteNotification = () => {
+      silentRefresh();
+      toast.success(t("friendSession.notificationReceived"));
+    };
+    window.addEventListener("friend-invite:notify", handleInviteNotification);
+    return () => window.removeEventListener("friend-invite:notify", handleInviteNotification);
+  }, [silentRefresh, t, toast]);
+
+  // Socket: my invitation was rejected → remove from sent list + toast
+  useEffect(() => {
+    const handleRejected = (event: Event) => {
+      const payload = (event as CustomEvent).detail;
+      const invitationId = payload?.invitation?.id;
+      const inviteeName = payload?.invitation?.invitee?.username;
+      const inviteeId = payload?.invitation?.invitee?.id;
+      if (invitationId) {
+        setSentInvites((list) => list.filter((inv) => inv.id !== invitationId));
+        if (inviteeId) setInvitedIds((ids) => ids.filter((id) => id !== inviteeId));
+      }
+      toast.error(
+        inviteeName
+          ? t("friendSession.inviteRejectedByUser", { username: inviteeName })
+          : t("friendSession.rejectSuccess"),
+      );
+    };
+    window.addEventListener("friend-invite:rejected", handleRejected);
+    return () => { window.removeEventListener("friend-invite:rejected", handleRejected); };
+  }, [t, toast]);
+
+  const handleSendInvitation = async (user: UserSearchResult) => {
+    if (invitedIds.includes(user.id)) return;
+
+    const removeFromSearch = (currentResults: UserSearchResult[]) =>
+      currentResults.filter((item) => item.id !== user.id);
+
+    try {
+      const invitation = await friendInvitationService.sendInvitation(user.id);
+      setInvitedIds((ids) => [...ids, user.id]);
+      setSearchResults(removeFromSearch);
+      // Optimistic add, then confirm with server
+      setSentInvites((list) => [invitation, ...list]);
+      toast.success(t("friendSession.inviteSentToast", { username: user.username }));
+      // Reload from server to ensure consistency
+      refreshSentInvitations();
+    } catch (error) {
+      console.error("Send invitation failed", error);
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        setInvitedIds((ids) => [...ids, user.id]);
+        setSearchResults(removeFromSearch);
+        toast.info(t("friendSession.inviteAlreadySent", { username: user.username }));
+        refreshSentInvitations();
+      } else {
+        toast.error(getErrorMessage(error, t("friendSession.sendInviteFailed") || "Could not send invitation."));
+      }
     }
   };
+
+  const handleAccept = async (invitationId: number) => {
+    try {
+      setActiveInviteId(invitationId);
+      const result = await friendInvitationService.acceptInvitation(invitationId);
+      setPendingInvites((list) => list.filter((inv) => inv.id !== invitationId));
+      toast.success(t("friendSession.acceptSuccess"));
+      navigate(`/room/${result.roomId}`, { state: { isHost: false } });
+    } catch (error) {
+      toast.error(getErrorMessage(error, t("friendSession.acceptError")));
+    } finally {
+      setActiveInviteId(null);
+    }
+  };
+
+  const handleReject = async (invitationId: number) => {
+    try {
+      setRejectingInviteId(invitationId);
+      await friendInvitationService.rejectInvitation(invitationId);
+      setPendingInvites((list) => list.filter((inv) => inv.id !== invitationId));
+      toast.success(t("friendSession.rejectSuccess"));
+    } catch (error) {
+      toast.error(getErrorMessage(error, t("friendSession.rejectError")));
+    } finally {
+      setRejectingInviteId(null);
+    }
+  };
+
+  const inviteButtonText = useMemo(
+    () => t("friendSession.openSearchButton"),
+    [t],
+  );
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-b p-4 md:p-8">
-        {/* Header */}
-        <div className="mb-12 flex items-center gap-4">
-          <div className="p-3 bg-orange-500/10 rounded-lg">
-            <Ticket className="w-6 h-6 text-orange-500" />
-          </div>
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white">
-              {t("friendSession.mainTitle") || "Friend Session"}
-            </h1>
-            <p className="text-gray-400 mt-1">
-              {t("friendSession.mainSubtitle") ||
-                "Create or join a virtual gym session with a friend"}
-            </p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-black p-4 md:p-8">
+        <div className="mx-auto max-w-7xl space-y-8">
 
-        {/* Grid de dos columnas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          {/* ========== SECCIÓN A: Crear Sala ========== */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 hover:border-orange-500/30 transition-colors">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-white mb-2">
-                {t("friendSession.generateTitle") || "Create a session"}
-              </h2>
-              <p className="text-sm text-gray-400">
-                {t("friendSession.generateSubtitle") ||
-                  "Generate a session code to share with a friend"}
+          {/* Header */}
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm uppercase tracking-[0.25em] text-orange-500 font-semibold mb-1">
+                {t("friendSession.sectionLabel")}
+              </p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white">
+                {t("friendSession.mainTitle")}
+              </h1>
+              <p className="max-w-2xl text-gray-400 mt-1">
+                {t("friendSession.mainSubtitle")}
               </p>
             </div>
-
-            {/* Botón Generar */}
             <button
-              onClick={handleGenerateCode}
-              disabled={loadingGenerate || !!generatedCode}
-              className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 mb-6"
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+              className="shrink-0 rounded-lg bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600"
             >
-              {loadingGenerate ? (
-                <>
-                  <Loader className="w-5 h-5 animate-spin" />
-                  {t("common.generating") || "Generating..."}
-                </>
-              ) : generatedCode ? (
-                <>
-                  <Check className="w-5 h-5 text-green-400" />
-                  {t("friendSession.generated") || "Generated"}
-                </>
-              ) : (
-                t("friendSession.generateButton") || "Generate session code"
-              )}
+              {inviteButtonText}
             </button>
-
-            {/* Mostrar código generado */}
-            {generatedCode && (
-              <div className="bg-zinc-800 border border-orange-500/30 rounded-lg p-4 space-y-3">
-                <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider">
-                  {t("friendSession.yourCode") || "Your session code"}
-                </p>
-                <div className="bg-zinc-950 border border-zinc-700 rounded-lg p-4 font-mono text-sm md:text-base text-white break-all select-all cursor-pointer hover:border-orange-500/50 transition-colors">
-                  {generatedCode}
-                </div>
-
-                {/* Botón Copiar */}
-                <button
-                  onClick={handleCopyCode}
-                  className="w-full py-2 px-3 bg-zinc-700 hover:bg-zinc-600 text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 group text-sm"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4 text-green-400" />
-                      <span>{t("friendSession.copied") || "Copied!"}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 group-hover:text-orange-400" />
-                      <span>
-                        {t("friendSession.copyButton") || "Copy code"}
-                      </span>
-                    </>
-                  )}
-                </button>
-
-                {/* Botón Entrar al Gimnasio Virtual */}
-                <button
-                  onClick={() =>
-                    navigate(`/room/${generatedCode}`, {
-                      state: { isHost: true },
-                    })
-                  }
-                  className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <Ticket className="w-5 h-5" />
-                  <span>
-                    {t("virtualGym.enterButton") || "Enter Virtual Gym"}
-                  </span>
-                </button>
-              </div>
-            )}
-
-            {/* Info box */}
-            {!generatedCode && (
-              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-center">
-                <p className="text-sm text-orange-200">
-                  {t("friendSession.generateInfo") ||
-                    "Click the button to generate a unique session code"}
-                </p>
-              </div>
-            )}
           </div>
 
-          {/* ========== SECCIÓN B: Unirse a Sala ========== */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 hover:border-orange-500/30 transition-colors">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-white mb-2">
-                {t("friendSession.redeemTitle") || "Have a session code?"}
+          {/* Sent invitations (waiting for response) */}
+          {sentInvites.length > 0 && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-orange-500/30 transition-colors">
+              <h2 className="text-lg font-bold text-white mb-4">
+                {t("friendSession.sentTitle")}
               </h2>
-              <p className="text-sm text-gray-400">
-                {t("friendSession.redeemSubtitle") ||
-                  "Enter the code shared by your friend to join the session"}
-              </p>
-            </div>
-
-            {/* Input para código */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  {t("friendSession.codeInput") || "Session Code"}
-                </label>
-                <input
-                  type="text"
-                  value={inputCode}
-                  onChange={(e) => setInputCode(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !loadingAccept) {
-                      handleJoinSession();
-                    }
-                  }}
-                  placeholder={
-                    t("friendSession.codePlaceholder") ||
-                    "Enter the code here..."
-                  }
-                  className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/50 transition-all"
-                />
+              <div className="space-y-3">
+                {sentInvites.map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="flex items-center justify-between gap-4 rounded-lg border border-zinc-700 bg-zinc-800 px-5 py-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-orange-500/15 flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-orange-400" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">{inv.invitee.username}</p>
+                        <p className="text-xs text-gray-400">{t("friendSession.sentWaiting")}</p>
+                      </div>
+                    </div>
+                    <span className="flex items-center gap-1.5 text-xs text-orange-400 font-medium bg-orange-500/10 border border-orange-500/20 rounded-full px-3 py-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                      {t("friendSession.sentPending")}
+                    </span>
+                  </div>
+                ))}
               </div>
+            </div>
+          )}
 
-              {/* Botón Unirse */}
-              <button
-                onClick={handleJoinSession}
-                disabled={loadingAccept || !inputCode.trim()}
-                className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                {loadingAccept ? (
-                  <>
-                    <Loader className="w-5 h-5 animate-spin" />
-                    {t("common.checking") || "Joining..."}
-                  </>
-                ) : (
-                  t("friendSession.redeemButton") || "Join session"
-                )}
-              </button>
+          {/* Received invitations */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 hover:border-orange-500/30 transition-colors">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  {t("friendSession.pendingTitle")}
+                </h2>
+                <p className="text-sm text-gray-400">
+                  {t("friendSession.pendingSubtitle")}
+                </p>
+              </div>
+              <span className="inline-flex items-center rounded-full bg-zinc-800 border border-zinc-700 px-3 py-1 text-sm font-semibold text-gray-300">
+                {pendingInvites.length} {t("friendSession.pendingCountSuffix")}
+              </span>
             </div>
 
-            {/* Info box */}
-            <div className="mt-6 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-              <p className="text-sm text-blue-200">
-                {t("friendSession.redeemInfo") ||
-                  "Enter the session code shared by your friend to train together in real time"}
-              </p>
-            </div>
+            {pendingLoading ? (
+              <div className="rounded-lg border border-zinc-700 bg-zinc-800 p-8 text-center text-gray-400">
+                {t("friendSession.loadingPending")}
+              </div>
+            ) : pendingInvites.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-zinc-700 bg-zinc-950 p-10 text-center">
+                <p className="text-lg font-medium text-white">
+                  {t("friendSession.noPendingTitle")}
+                </p>
+                <p className="mt-3 text-sm text-gray-400">
+                  {t("friendSession.noPendingSubtitle")}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {pendingInvites.map((invite) => (
+                  <PendingInvitationCard
+                    key={invite.id}
+                    invitation={invite}
+                    onAccept={() => handleAccept(invite.id)}
+                    onReject={() => handleReject(invite.id)}
+                    loadingAccept={activeInviteId === invite.id}
+                    loadingReject={rejectingInviteId === invite.id}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Footer Info */}
-        <div className="mt-12 max-w-5xl mx-auto">
-          <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-6 text-center">
-            <p className="text-sm text-gray-400">
-              {t("friendSession.footerInfo") ||
-                "Session codes let you train live with a friend in the virtual gym. Share them only with people you trust."}
-            </p>
-          </div>
-        </div>
+        <UserSearchModal
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          onSearch={handleSearchUsers}
+          searchResults={searchResults}
+          isLoading={searchLoading}
+          error={searchError}
+          onInvite={handleSendInvitation}
+          invitedIds={invitedIds}
+          pendingFromIds={pendingInvites.map((inv) => inv.inviter.id)}
+        />
       </div>
     </Layout>
   );
