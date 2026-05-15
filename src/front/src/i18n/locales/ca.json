@@ -394,6 +394,26 @@
     "noSessions": "Encara no has completat cap sessió d'entrenament.",
     "colRoutine": "Rutina",
     "colDate": "Data",
-    "colCompletion": "% Completat"
+    "colCompletion": "% Completat",
+    "colPartner": "Company",
+    "colYourSets": "Les teves",
+    "colPartnerSets": "Company",
+    "tabs": {
+      "all": "Totes",
+      "solo": "Solo",
+      "friend": "Amics"
+    },
+    "friendStats": {
+      "title": "Estadístiques d'Amics",
+      "totalCoopSessions": "Sessions amb amics",
+      "totalCoopSets": "Sèries amb amics",
+      "totalCoopExercises": "Exercicis amb amics",
+      "sessionsWith": "sessions",
+      "noPartners": "Encara no has fet cap sessió amb amics"
+    },
+    "sessionType": {
+      "solo": "Solitari",
+      "friend": "Amics"
+    }
   }
 }

@@ -7,11 +7,19 @@ Proporciona una pàgina web (React SPA) on un CLIENT autenticat pot consultar l'
 ## Requisits
 
 ### Requisit: El client pot navegar a la pàgina d'Historial i Estadístiques
-El sistema HA DE proporcionar una entrada de navegació al dashboard del client que enruti a `/client/history`, accessible únicament per a usuaris autenticats amb rol CLIENT.
+El sistema HA DE proporcionar una entrada de navegació a la barra lateral del client (secció "Gestió") que enruti a `/client/history`, accessible únicament per a usuaris autenticats amb rol CLIENT. El botó d'Historial ha de ser eliminat del dashboard del client.
 
-#### Escenari: El client fa clic a l'enllaç d'Historial al dashboard
-- **QUAN** un CLIENT autenticat és a `/client-home` i fa clic a l'enllaç de navegació "Historial i Estadístiques"
+#### Escenari: El client veu l'entrada d'Historial a la barra lateral
+- **QUAN** un CLIENT autenticat és a qualsevol pàgina del dashboard del client (ex. `/client-home`)
+- **ALESHORES** la barra lateral mostra un element de menú "Historial i Estadístiques" sota "Gestió" que enllaça a `/client/history`
+
+#### Escenari: El client fa clic a l'enllaç d'Historial a la barra lateral
+- **QUAN** un CLIENT autenticat fa clic a l'entrada de navegació "Historial i Estadístiques" a la barra lateral
 - **ALESHORES** el navegador navega a `/client/history` i es renderitza la pàgina d'Historial i Estadístiques
+
+#### Escenari: Eliminar el botó del dashboard
+- **QUAN** el client és a `/client-home`
+- **ALESHORES** no existeix cap botó "Historial i Estadístiques" a la pàgina
 
 #### Escenari: L'usuari no autenticat és redirigit
 - **QUAN** un usuari anònim navega directament a `/client/history`
@@ -86,3 +94,53 @@ El sistema HA DE mostrar els totals agregats del client autenticat: total de ses
 #### Escenari: Verificabilitat — QA manual
 - **QUAN** un client de prova ha completat 3 sessions i visita `/client/history`
 - **ALESHORES** el comptador "Sessions completades" mostra `3`
+
+---
+
+### Requisit: El client pot filtrar l'historial per tipus de sessió
+El sistema HA DE proporcionar tres pestanyes (All / Solo / Friend) a la pàgina d'historial que filtrin la taula de sessions.
+
+#### Escenari: Pestanya All mostra totes les sessions
+- **QUAN** el client selecciona la pestanya "All"
+- **ALESHORES** la taula mostra totes les sessions (tant Solo com Friend) ordenades per data descendent
+
+#### Escenari: Pestanya Solo filtra només sessions individuals
+- **QUAN** el client selecciona la pestanya "Solo"
+- **ALESHORES** la taula mostra només les sessions on el client NO és un `LiveParticipant` (routines assignades, sessions en solitari)
+
+#### Escenari: Pestanya Friend filtra només sessions cooperatives
+- **QUAN** el client selecciona la pestanya "Friend"
+- **ALESHORES** la taula mostra només les sessions on el client apareix com a `LiveParticipant` en aquella `LiveSession`
+
+#### Escenari: La pestanya activa roman seleccionada durant la navegació
+- **QUAN** el client canvia de pestanya i després torna a la pàgina
+- **ALESHORES** la pestanya "All" és la selecció per defecte (l'estat de pestanya NO es persisteix en URL)
+
+#### Escenari: La taula mostra badges de tipus de sessió
+- **QUAN** la taula d'historial es renderitza
+- **ALESHORES** cada fila mostra un badge "Solitari" (blau) o "Amics" (taronja) segons el tipus de sessió
+
+#### Escenari: Les sessions cooperatives mostren el nom del company
+- **QUAN** una fila de sessió cooperativa es renderitza
+- **ALESHORES** la columna de Company mostra el username del company de training
+
+---
+
+### Requisit: El client pot consultar estadístiques cooperatives (Friend Sessions)
+El sistema HA DE mostrar una targeta d'estadístiques cooperatives ("Friend Stats") a la pàgina d'historial amb els totals cooperatius i el desglossament per company.
+
+#### Escenari: Friend Stats visible a la pàgina
+- **QUAN** la pàgina `/client/history` es carrega
+- **ALESHORES** una targeta "Friend Stats" és visible a la secció d'estadístiques, mostrant `totalCoopSessions`, `totalCoopSets`, `totalCoopExercises` i la llista de `partners`
+
+#### Escenari: Partner mostra username i nombre de sessions
+- **QUAN** `partners` conté `{ username: "pep", sessionCount: 3 }`
+- **ALESHORES** la UI mostra "pep" juntament amb "3 sessions" usant la clau i18n `history.friendStats.sessionsWith`
+
+#### Escenari: Tots dos usuaris d'una sessió cooperativa veuen les estadístiques cooperatives
+- **QUAN** dos usuaris completen una sessió cooperativa junts
+- **ALESHORES** quan cadascun d'ells visita `/client/history`, la targeta Friend Stats mostra aquella sessió i el company com a partner
+
+#### Escenari: El client sense estadístiques cooperatives veu zeros i llista buida
+- **QUAN** `GET /progress/client/friend-stats` retorna `{ totalCoopSessions: 0, ... }`
+- **ALESHORES** la targeta mostra `0` en tots els comptadors i "Encara no has fet cap sessió amb amics" en companys

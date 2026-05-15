@@ -47,4 +47,11 @@ export class ProgressController {
   async getClientStats(@Request() req: any) {
     return this.progressService.getClientStats(req.user.userId);
   }
+
+  // Client: co-op (friend session) stats
+  @Get('client/friend-stats')
+  @UseGuards(ClientGuard)
+  async getClientFriendStats(@Request() req: any) {
+    return this.progressService.getClientFriendStats(req.user.userId);
+  }
 }

@@ -145,7 +145,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('joinRoom')
-  handleJoinRoom(
+  async handleJoinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody()
     payload: {
@@ -174,6 +174,19 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
           username: username || `User-${userId}`,
           isHost,
         });
+
+        const session = await this.prisma.liveSession.findUnique({
+          where: { invitationCode: roomId },
+        });
+        if (session) {
+          await this.prisma.liveParticipant.create({
+            data: {
+              sessionId: session.id,
+              participantId: userId,
+              role: isHost ? 'CLIENT' : 'CLIENT',
+            },
+          });
+        }
       } else {
         // Actualizar el estado de host si el usuario ya existía pero cambió su rol
         userExists.isHost = isHost;
@@ -231,6 +244,19 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
           status: 'ACTIVE',
         },
       });
+
+      const usersInRoom = this.roomUsers.get(roomId) ?? [];
+      await Promise.all(
+        usersInRoom.map((u) =>
+          this.prisma.liveParticipant.create({
+            data: {
+              sessionId: session.id,
+              participantId: u.id,
+              role: 'CLIENT',
+            },
+          }),
+        ),
+      );
 
       console.log(
         `[Room] Created LiveSession ${session.id} for invitationCode ${roomId}`,
@@ -360,8 +386,8 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.to(roomId).emit('partnerFinished', { userId, finalStats });
 
     const completedExercises = finalStats?.exercises ?? 0;
-    const completedSets = Math.round((finalStats?.volume ?? 0) / 10);
-    const completionPercentage = finalStats?.exercises > 0 ? 100 : 0;
+    const completedSets = finalStats?.completedSets ?? 0;
+    const completionPercentage = finalStats?.completionPercentage ?? 0;
 
     console.log('[DEBUG] Parsed values:', {
       completedExercises,
@@ -370,59 +396,96 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     try {
-      console.log('[DEBUG] Looking for session with invitationCode:', roomId);
+      const userIdInt = parseInt(userId, 10);
+
       const session = await this.prisma.liveSession.findUnique({
         where: { invitationCode: roomId },
+        include: { participants: true },
       });
 
-      console.log('[DEBUG] Session lookup result:', session);
-
       if (!session) {
-        console.warn(
-          `[Room] sessionFinished: Session not found for roomId ${roomId}`,
-        );
+        console.warn(`[Room] sessionFinished: Session not found for roomId ${roomId}`);
         return { success: false, error: 'Session not found' };
       }
 
-      const userIdInt = parseInt(userId, 10);
-      console.log(
-        '[DEBUG] Parsed userId:',
-        userIdInt,
-        'sessionId:',
-        session.id,
-      );
-
-      console.log('[DEBUG] Attempting upsert with data:', {
-        sessionId: session.id,
-        userId: userIdInt,
-        completedExercises,
-        completedSets,
-        completionPercentage,
-        isPartial: false,
-      });
-
-      await this.prisma.sessionProgress.upsert({
+      const existingProgress = await this.prisma.sessionProgress.findUnique({
         where: {
           sessionId_userId: {
             sessionId: session.id,
             userId: userIdInt,
           },
         },
-        create: {
-          sessionId: session.id,
-          userId: userIdInt,
-          completedExercises,
-          completedSets,
-          completionPercentage,
+      });
+
+      if (!existingProgress) {
+        await this.prisma.sessionProgress.upsert({
+          where: {
+            sessionId_userId: {
+              sessionId: session.id,
+              userId: userIdInt,
+            },
+          },
+          create: {
+            sessionId: session.id,
+            userId: userIdInt,
+            completedExercises,
+            completedSets,
+            completionPercentage,
+            completedAt: new Date(),
+            isPartial: false,
+          },
+          update: {
+            completedExercises,
+            completedSets,
+            completionPercentage,
+            completedAt: new Date(),
+            isPartial: false,
+          },
+        });
+      }
+
+      const participantExists = session.participants.some(
+        (p) => parseInt(p.participantId, 10) === userIdInt,
+      );
+      if (!participantExists) {
+        await this.prisma.liveParticipant.create({
+          data: {
+            sessionId: session.id,
+            participantId: userId,
+            role: 'CLIENT',
+          },
+        });
+      }
+
+      const updatedProgress = await this.prisma.sessionProgress.findMany({
+        where: { sessionId: session.id },
+      });
+      const totalCompletedSets = updatedProgress.reduce(
+        (sum, p) => Math.max(sum, p.completedSets),
+        0,
+      );
+      const totalCompletedExercises = updatedProgress.reduce(
+        (sum, p) => Math.max(sum, p.completedExercises),
+        0,
+      );
+      const avgCompletion =
+        updatedProgress.length > 0
+          ? Math.round(
+              updatedProgress.reduce(
+                (sum, p) => sum + p.completionPercentage,
+                0,
+              ) / updatedProgress.length,
+            )
+          : 0;
+
+      await this.prisma.liveSession.update({
+        where: { id: session.id },
+        data: {
+          status: 'COMPLETED',
           completedAt: new Date(),
-          isPartial: false,
-        },
-        update: {
-          completedExercises,
-          completedSets,
-          completionPercentage,
-          completedAt: new Date(),
-          isPartial: false,
+          completedSets: totalCompletedSets,
+          completedExercises: totalCompletedExercises,
+          completionPercentage: avgCompletion,
         },
       });
 

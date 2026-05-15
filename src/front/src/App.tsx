@@ -229,9 +229,6 @@ const AppContent = () => {
         });
     }
 
-    // Escuchar invitaciones de coach en tiempo real (solo para CLIENTs)
-    // Las invitaciones ahora se gestionan directamente en /clients/invitations
-
     return () => {
       socket.off("connect");
       socket.off("disconnect");
