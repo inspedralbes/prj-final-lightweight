@@ -58,13 +58,17 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleDisconnect(client: Socket) {
     console.log(`❌ [Room] Cliente desconectado: ${client.id}`);
+    console.log(`[DEBUG-disconnect] socketToUser entries before delete:`, [...this.socketToUser.entries()].map(([sid, info]) => `${sid}->${JSON.stringify(info)}`));
     const userInfo = this.socketToUser.get(client.id);
+    console.log(`[DEBUG-disconnect] userInfo for ${client.id}:`, userInfo);
     if (userInfo) {
       const { userId, roomId } = userInfo;
       // determinar si era host antes de quitarlo
       const users = this.roomUsers.get(roomId) || [];
+      console.log(`[DEBUG-disconnect] roomUsers for ${roomId} before removal:`, JSON.stringify(users));
       const leaving = users.find((u) => u.id === userId);
       const wasHost = leaving?.isHost;
+      console.log(`[DEBUG-disconnect] leaving userId=${userId}, wasHost=${wasHost}`);
 
       // removemos al usuario
       this.removeUserFromRoom(roomId, userId, client.id);
@@ -151,7 +155,9 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     payload: { roomId: string; userId: string; username?: string; isHost?: boolean },
   ) {
     console.log('📥 [Room] joinRoom recibido:', payload);
-    console.log(`[DEBUG-joinRoom] userId=${payload.userId}, type=${typeof payload.userId}`);
+    console.log(`[DEBUG-joinRoom] userId=${payload.userId}, type=${typeof payload.userId}, socketId=${client.id}`);
+    console.log(`[DEBUG-joinRoom] socketToUser.size before:`, this.socketToUser.size);
+    console.log(`[DEBUG-joinRoom] socket already mapped to user:`, this.socketToUser.get(client.id));
     const { roomId, userId, username, isHost: requestedIsHost } = payload;
 
     try {
@@ -161,6 +167,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const users = this.roomUsers.get(roomId)!;
       const userExists = users.find((u) => u.id === userId);
+      console.log(`[DEBUG-joinRoom] userExists=${!!userExists}, usersInRoom=${users.length}, roomIds=${this.roomUsers.keys()}`);
 
       const isHost = requestedIsHost ?? false;
 
@@ -190,9 +197,11 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       this.socketToUser.set(client.id, { userId, roomId });
       client.join(roomId);
+      console.log(`[DEBUG-joinRoom] client.join(${roomId}) done. socket.id=${client.id}, rooms:`, client.rooms);
 
       // Notificar al usuario su rol y lista actualizada
       client.emit('joinedRoom', { isHost, usersInRoom: users });
+      console.log(`[DEBUG-joinRoom] emitted joinedRoom to client ${client.id}: isHost=${isHost}, users=${users.length}`);
 
       // si el usuario que entra no es host y existen progresos guardados,
       // reenviárselos inmediatamente para sincronización
@@ -211,6 +220,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
         usersInRoom: users,
       });
 
+      console.log(`[DEBUG-joinRoom] socketToUser.size after:`, this.socketToUser.size);
       return { success: true, isHost };
     } catch (error) {
       console.error('Error en joinRoom:', error);

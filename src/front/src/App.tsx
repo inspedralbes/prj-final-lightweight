@@ -43,11 +43,13 @@ const AppRoutes = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Socket event listener that needs navigation
+    // Socket: invitation was accepted by the invitee — host navigates to the room
     socket.on("friend-invite:accepted", (payload: any) => {
-      console.log("[Friend Invite Accepted]", payload);
-      // Navigate to the room when invitation is accepted
-      if (payload.roomId) {
+      console.log("[Friend Invite Accepted] RECEIVED via socket:", payload);
+      window.dispatchEvent(
+        new CustomEvent("friend-invite:accepted", { detail: payload }),
+      );
+      if (payload?.roomId) {
         navigate(`/room/${payload.roomId}`, {
           state: { isHost: payload.isHost ?? true },
         });
@@ -169,10 +171,8 @@ const AppRoutes = () => {
 // Componente wrapper que escucha las notificaciones del socket
 const AppContent = () => {
   const { addNotification, addFriendInviteNotification, clearAll } = useNotification();
-  const { user } = useAuth();
-  const [isConnected, setIsConnected] = useState(socket.connected);
-  const { addNotification, clearAll } = useNotification();
   const { user, logout } = useAuth();
+  const [isConnected, setIsConnected] = useState(socket.connected);
   const { t } = useTranslation();
   const ringtone = useRingtone();
 
@@ -427,131 +427,8 @@ const AppContent = () => {
 
   return (
     <>
-      <BrowserRouter>
-        <Routes>
-          {/* Ruta raíz con redirección inteligente por rol */}
-          <Route path="/" element={<RootRedirect />} />
-
-          {/* Rutas públicas */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-
-          {/* Rutas protegidas para COACH */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <CoachDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <CoachClientList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients/progress"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <ClientsProgressPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients/progress/:clientId"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <ClientProgressDetailPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/routine/:id/edit"
-            element={
-              <ProtectedRoute>
-                <RoutineExercisesEdit />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Rutas protegidas para CLIENT */}
-          <Route
-            path="/client-home"
-            element={
-              <ProtectedRoute requiredRole="CLIENT">
-                <ClientDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients/invitations"
-            element={
-              <ProtectedRoute requiredRole="CLIENT">
-                <ClientMyCoach />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/client/history"
-            element={
-              <ProtectedRoute requiredRole="CLIENT">
-                <ClientHistoryStats />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/friend-session"
-            element={
-              <ProtectedRoute>
-                <CoopSessionLobby />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/room/:roomId"
-            element={
-              <ProtectedRoute>
-                <WorkoutRoom />
-              </ProtectedRoute>
-            }
-          />
-          {/* /programs removed — unused placeholder page deleted */}
-
-          {/* Ruta de debug WebSocket */}
-          <Route
-            path="/ws"
-            element={
-              <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white">
-                <h1 className="text-4xl font-bold mb-8">
-                  Test de WebSockets 🔌
-                </h1>
-                <div
-                  className={`p-6 rounded-xl text-2xl font-semibold ${isConnected ? "bg-green-600" : "bg-red-600"}`}
-                >
-                  {isConnected
-                    ? "ESTADO: CONECTADO 🟢"
-                    : "ESTADO: DESCONECTADO 🔴"}
-                </div>
-              </div>
-            }
-          />
-          <Route
-            path="/workout/:id"
-            element={
-              <ProtectedRoute>
-                <SoloWorkoutSession />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-        <ClientSideNotificationCenter />
-      </BrowserRouter>
+      <AppRoutes />
+      <ClientSideNotificationCenter />
 
       {/* ── Global incoming video call popup ──────────────────────────────── */}
       {incomingCall && (
