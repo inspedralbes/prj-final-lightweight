@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Login from "@/features/auth/pages/Login";
 import Register from "@/features/auth/pages/Register";
@@ -170,7 +176,8 @@ const AppRoutes = () => {
 
 // Componente wrapper que escucha las notificaciones del socket
 const AppContent = () => {
-  const { addNotification, addFriendInviteNotification, clearAll } = useNotification();
+  const { addNotification, addFriendInviteNotification, clearAll } =
+    useNotification();
   const { user, logout } = useAuth();
   const [isConnected, setIsConnected] = useState(socket.connected);
   const { t } = useTranslation();
@@ -317,23 +324,28 @@ const AppContent = () => {
     );
 
     // Escuchar notificaciones de chat P2P con preview de mensaje
-    socket.on("p2p-message-notification", (data: { text: string; fromUsername?: string; from?: string }) => {
-      console.log("[P2P Message Notification]", data);
-      const preview =
-        data.text.length > 50 ? data.text.substring(0, 50) + "..." : data.text;
-      const senderName = data.fromUsername || data.from || "Alguien";
-      const roomId =
-        user?.role === "CLIENT"
-          ? `chat_client_${user.id}`
-          : `chat_client_${data.from}`;
-      // isLive=true: real-time message — un-dismiss if room was previously dismissed
-      addNotification(
-        roomId,
-        `${senderName} te ha enviado: ${preview}`,
-        senderName,
-        true,
-      );
-    });
+    socket.on(
+      "p2p-message-notification",
+      (data: { text: string; fromUsername?: string; from?: string }) => {
+        console.log("[P2P Message Notification]", data);
+        const preview =
+          data.text.length > 50
+            ? data.text.substring(0, 50) + "..."
+            : data.text;
+        const senderName = data.fromUsername || data.from || "Alguien";
+        const roomId =
+          user?.role === "CLIENT"
+            ? `chat_client_${user.id}`
+            : `chat_client_${data.from}`;
+        // isLive=true: real-time message — un-dismiss if room was previously dismissed
+        addNotification(
+          roomId,
+          `${senderName} te ha enviado: ${preview}`,
+          senderName,
+          true,
+        );
+      },
+    );
 
     socket.on("friend-invite:notify", (payload: any) => {
       console.log("[Friend Invite Notify] Received payload:", payload);
