@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   ClipboardList,
+  BarChart2,
 } from "lucide-react";
 import { socket } from "@/features/workout/services/socket";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -14,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useNotification } from "@/features/notifications/context/NotificationContext";
 import { invitationsService } from "@/shared/services/invitationsService";
+import { friendInvitationService } from "@/features/workout/services/friendInvitationService";
 
 export interface LayoutProps {
   children: React.ReactNode;
@@ -28,6 +30,7 @@ const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [username, setUsername] = useState<string>("");
   const [pendingInvitesCount, setPendingInvitesCount] = useState(0);
+  const [friendInvitesCount, setFriendInvitesCount] = useState(0);
 
   // Cargar invitaciones pendientes para clientes sin coach
   useEffect(() => {
@@ -54,6 +57,28 @@ const Layout = ({ children }: LayoutProps) => {
     return () => {
       socket.off("coach-invitation", handleNewInvite);
       window.removeEventListener("coach-invitation-accepted", handleAccepted);
+    };
+  }, [user]);
+
+  // Cargar invitaciones pendientes de friend sessions
+  useEffect(() => {
+    if (user?.role !== "CLIENT") return;
+    friendInvitationService
+      .getPendingInvitations()
+      .then((list) => setFriendInvitesCount(list.length))
+      .catch(() => setFriendInvitesCount(0));
+
+    // Nueva invitación de friend en tiempo real → recargar
+    const handleFriendInvite = () => {
+      friendInvitationService
+        .getPendingInvitations()
+        .then((list) => setFriendInvitesCount(list.length))
+        .catch(() => setFriendInvitesCount(0));
+    };
+
+    window.addEventListener("friend-invite:notify", handleFriendInvite);
+    return () => {
+      window.removeEventListener("friend-invite:notify", handleFriendInvite);
     };
   }, [user]);
 
@@ -87,6 +112,12 @@ const Layout = ({ children }: LayoutProps) => {
       icon: Users,
       badge: unreadCount,
     },
+    {
+      path: "/clients/progress",
+      label: t("progress.title") || "Progrés",
+      icon: BarChart2,
+      badge: 0,
+    },
   ];
 
   // MENÚ PARA CLIENTES
@@ -95,7 +126,7 @@ const Layout = ({ children }: LayoutProps) => {
       path: "/client-home",
       label: t("routines.title") || "Mis rutinas",
       icon: ClipboardList,
-      badge: unreadCount,
+      badge: 0,
     },
     {
       path: "/clients/invitations",
@@ -107,6 +138,12 @@ const Layout = ({ children }: LayoutProps) => {
       path: "/friend-session",
       label: t("sidebar.friendSession") || "Entrenar con amigo",
       icon: Swords,
+      badge: friendInvitesCount,
+    },
+    {
+      path: "/client/history",
+      label: t("history.navLabel"),
+      icon: BarChart2,
       badge: 0,
     },
   ];
@@ -124,9 +161,8 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Sidebar */}
       <aside
-        className={`${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 transform transition-transform duration-300 ease-in-out fixed md:static inset-y-0 left-0 w-64 bg-[#0a0a0a] border-r border-[#1a1a1a] flex flex-col z-40`}
+        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0 transform transition-transform duration-300 ease-in-out fixed md:static inset-y-0 left-0 w-64 bg-[#0a0a0a] border-r border-[#1a1a1a] flex flex-col z-40`}
       >
         {/* Header */}
         <div className="p-6 flex items-center justify-between">
@@ -163,25 +199,26 @@ const Layout = ({ children }: LayoutProps) => {
                   navigate(path);
                   setSidebarOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${
-                  isActive(path)
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${isActive(path)
                     ? "bg-[#1a1a1a] text-orange-500"
                     : "text-gray-400 hover:bg-[#1a1a1a] hover:text-white"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon
-                    className={`w-5 h-5 ${
-                      isActive(path)
+                    className={`w-5 h-5 ${isActive(path)
                         ? "text-orange-500"
                         : "text-gray-500 group-hover:text-white"
-                    }`}
+                      }`}
                   />
                   {label}
                 </div>
                 <div className="flex items-center gap-2">
                   {badge != null && badge > 0 && (
-                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    <span
+                      data-testid="pending-invites-badge"
+                      className="min-w-[20px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center"
+                    >
                       {badge}
                     </span>
                   )}
@@ -217,6 +254,7 @@ const Layout = ({ children }: LayoutProps) => {
                 onClick={handleLogout}
                 className="text-gray-400 hover:text-orange-500 hover:bg-[#1a1a1a] p-2 rounded-lg transition-all"
                 title={t("common.logout") || "Cerrar sesión"}
+                data-testid="logout-button"
               >
                 <LogOut className="w-5 h-5" />
               </button>

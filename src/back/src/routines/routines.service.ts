@@ -240,7 +240,7 @@ export class RoutinesService {
       let exerciseId: number;
 
       if (ex.exerciseId && typeof ex.exerciseId === 'number') {
-        exerciseId = ex.exerciseId as number;
+        exerciseId = ex.exerciseId;
       } else {
         let exercise = await this.prisma.exerciseCatalog.findFirst({
           where: { name: ex.name },

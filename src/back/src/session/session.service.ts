@@ -1,5 +1,10 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CompleteSessionDto } from './dto/complete-session.dto';
 
 @Injectable()
 export class SessionService {
@@ -26,24 +31,36 @@ export class SessionService {
     return session;
   }
 
-  // Crear sesión — acepta coaches Y clientes en modo solitario
+  // Crear sesión — acepta coaches Y clientes (modo solitario o con amigos)
   async createSession(userId: number, role: string, routineId: number) {
+    const routine = await this.prisma.routine.findUnique({
+      where: { id: routineId },
+    });
+
+    if (!routine) {
+      throw new NotFoundException('Rutina no encontrada');
+    }
+
     if (role === 'CLIENT') {
-      // Verificar que la rutina es de modo solitario y pertenece a este cliente
-      const routine = await this.prisma.routine.findUnique({ where: { id: routineId } });
-      if (!routine || routine.coachId !== null) {
-        throw new ForbiddenException('Esta rutina no pertenece al modo solitario');
-      }
-      const assignment = await this.prisma.routineAssignment.findFirst({
+      // El cliente puede crear sesiones con:
+      // 1. Rutinas asignadas por un coach (con asignación)
+      // 2. Rutinas públicas
+      const hasAssignment = await this.prisma.routineAssignment.findFirst({
         where: { routineId, clientId: userId },
       });
-      if (!assignment) {
-        throw new ForbiddenException('No tienes permiso para iniciar una sesión con esta rutina');
+
+      if (!hasAssignment && !routine.isPublic) {
+        throw new ForbiddenException(
+          'No tienes permiso para iniciar una sesión con esta rutina',
+        );
       }
     }
 
     const coachId = role === 'COACH' ? userId : null;
-    const sessionCode = Math.random().toString(36).substring(2, 11).toUpperCase();
+    const sessionCode = Math.random()
+      .toString(36)
+      .substring(2, 11)
+      .toUpperCase();
 
     const session = await this.prisma.liveSession.create({
       data: { coachId, routineId, sessionCode },
@@ -60,28 +77,51 @@ export class SessionService {
     return session;
   }
 
-  // Actualizar estado — soporta coach y cliente solitario
+  // Actualizar estado — soporta coach y cliente (modo solitario o con amigos)
   async updateSessionStatus(
     sessionCode: string,
     status: 'PENDING' | 'ACTIVE' | 'COMPLETED',
     userId: number,
     role: string,
+    completionStats?: CompleteSessionDto,
   ) {
-    const session = await this.prisma.liveSession.findUnique({ where: { sessionCode } });
+    const session = await this.prisma.liveSession.findUnique({
+      where: { sessionCode },
+    });
     if (!session) throw new NotFoundException('Sesión no encontrada');
 
     if (role === 'COACH') {
-      if (session.coachId !== userId) throw new ForbiddenException('No tienes permiso');
+      if (session.coachId !== userId)
+        throw new ForbiddenException('No tienes permiso');
     } else {
-      // CLIENT solo mode: la sesión no tiene coach y el cliente es el propietario
-      if (session.coachId !== null) throw new ForbiddenException('No tienes permiso');
-      const assignment = await this.prisma.routineAssignment.findFirst({
-        where: { routineId: session.routineId, clientId: userId },
-      });
-      if (!assignment) throw new ForbiddenException('No tienes permiso');
+      // CLIENT: Puede actualizar si:
+      // 1. La sesión tiene coach y tiene asignación (sesión del coach)
+      // 2. La sesión NO tiene coach (sesión entre amigos que el cliente creó)
+      if (session.coachId !== null) {
+        // Sesión del coach: verificar que el cliente tiene asignación
+        const assignment = await this.prisma.routineAssignment.findFirst({
+          where: { routineId: session.routineId, clientId: userId },
+        });
+        if (!assignment) throw new ForbiddenException('No tienes permiso');
+      }
+      // Si coachId es null, es una sesión entre amigos y el cliente puede actualizarla
     }
 
-    return this.prisma.liveSession.update({ where: { sessionCode }, data: { status } });
+    const data: Record<string, unknown> = { status };
+    if (status === 'COMPLETED') {
+      data.completedAt = new Date();
+      if (completionStats) {
+        data.completionPercentage =
+          completionStats.completionPercentage ?? null;
+        data.completedSets = completionStats.completedSets ?? null;
+        data.completedExercises = completionStats.completedExercises ?? null;
+      }
+    }
+
+    return this.prisma.liveSession.update({
+      where: { sessionCode },
+      data,
+    });
   }
 
   // Listar sesiones del coach

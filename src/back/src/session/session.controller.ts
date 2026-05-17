@@ -12,6 +12,7 @@ import {
 import { SessionService } from './session.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CoachGuard } from '../auth/guards/coach.guard';
+import { CompleteSessionDto } from './dto/complete-session.dto';
 
 @Controller('session')
 export class SessionController {
@@ -62,14 +63,17 @@ export class SessionController {
   @UseGuards(JwtAuthGuard)
   async updateSessionStatus(
     @Param('code') code: string,
-    @Body() { status }: { status: 'PENDING' | 'ACTIVE' | 'COMPLETED' },
+    @Body()
+    body: { status: 'PENDING' | 'ACTIVE' | 'COMPLETED' } & CompleteSessionDto,
     @Request() req: any,
   ) {
+    const { status, ...completionStats } = body;
     return this.sessionService.updateSessionStatus(
       code,
       status,
       req.user.userId,
       req.user.role,
+      completionStats,
     );
   }
 }

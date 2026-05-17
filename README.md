@@ -16,6 +16,7 @@
 | [Estructura de carpetes](#estructura-de-carpetes)                     | Organització del codi front-end           |
 | [Funcionalitats detallades](#funcionalitats-detallades)               | Descripció funcional completa             |
 | [Quick Start (dev)](#quick-start-dev)                                 | Posar el projecte en marxa pas a pas      |
+| [Testing E2E](#testing-e2e)                                           | Tests end-to-end amb Playwright           |
 | [Variables d'entorn](#variables-dentorn)                              | Què cal configurar al `.env`              |
 | [Comandaments útils](#comandaments-útils)                             | Referència ràpida de comandes             |
 | [URLs i ports](#urls-i-ports)                                         | On s'accedeix a cada servei               |
@@ -396,6 +397,27 @@ exit
 
 ---
 
+## Testing E2E
+
+El projecte inclou una suite completa de tests end-to-end amb Playwright. Consulta la [guia completa de testing E2E](doc/guia-testing-e2e.md) per a:
+
+- Instal·lació i configuració
+- Execució de tests
+- Convencions i organització
+- Ús de fixtures (incloent `twoUsers` per tests multi-usuari)
+- Depuració local i en CI
+- Integració amb GitHub Actions
+
+**Començament ràpid:**
+
+```bash
+cd e2e
+npm install
+npm run test:e2e:browser
+```
+
+---
+
 ## Variables d'entorn
 
 ```env
@@ -679,3 +701,33 @@ NODE_ENV=production
 | Sessió individual | Fa una rutina en solitari amb comptador de sèries i resum final  |
 | Xat P2P           | Missatgeria en temps real amb el coach                           |
 | **Videollamada**  | Inicia/rep trucades de vídeo WebRTC directament des del xat      |
+
+---
+
+## OpenSpec — workflow de canvis
+
+Les especificacions tècniques del projecte es gestionen amb el workflow **OpenSpec** a `openspec/`.
+
+### Estructura
+
+```
+openspec/
+├── config.yaml          ← configuració global
+├── specs/               ← especificacions principals (fonts de veritat)
+└── changes/             ← canvis actius i arxivats
+    ├── <change-name>/
+    │   ├── proposal.md  ← proposta inicial
+    │   ├── design.md    ← disseny tècnic detallat
+    │   ├── specs/       ← specs delta (divergències respecte a specs/)
+    │   └── tasks.md     ← tasques d'implementació
+    └── archive/         ← canvis completats i arxivats
+```
+
+### Slash-commands (GitHub Copilot)
+
+| Comanda         | Descripció                                                  |
+| --------------- | ----------------------------------------------------------- |
+| `/opsx:propose` | Proposa un nou canvi (genera tots els artefactes d'un cop)  |
+| `/opsx:apply`   | Implementa les tasques d'un canvi actiu                     |
+| `/opsx:verify`  | Verifica que la implementació coincideix amb els artefactes |
+| `/opsx:archive` | Arxiva un canvi completat a `changes/archive/`              |

@@ -50,10 +50,19 @@
     "forgotPasswordHint": "Enter your username and we will send you a recovery email.",
     "resetPassword": "Reset Password",
     "sendReset": "Send Request",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "resetPasswordButton": "Reset Password",
+    "resetTokenInvalid": "This link is invalid or has expired.",
+    "requestNewReset": "Request a new reset link",
     "invalidCredentials": "Invalid username or password",
     "acceptTerms": "I accept the",
     "termsLink": "Terms and Conditions",
-    "passwordMinLength": "Password must be at least {{count}} characters"
+    "passwordMinLength": "Password must be at least {{count}} characters",
+    "emailNotRegistered": "This email is not registered.",
+    "errors": {
+      "sessionAlreadyActive": "You already have an active session on another device"
+    }
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -109,6 +118,7 @@
     "moreExercises": "+{{count}} more",
     "viewAll": "View all exercises",
     "noExercises": "No exercises added yet",
+    "clickToAddExercises": "Tap here to add exercises",
     "series": "Sets",
     "reps": "Reps",
     "weight": "Weight (kg)",
@@ -150,7 +160,8 @@
     "passwordMismatch": "Passwords do not match",
     "acceptTermsRequired": "You must accept the terms to continue",
     "userAlreadyExists": "This user already exists",
-    "resetEmailSent": "Recovery email sent",
+    "resetEmailSent": "If this email exists, check your inbox.",
+    "passwordResetSuccess": "Password reset. You can now log in.",
     "routineNotFound": "Routine not found",
     "clientUpdated": "Client updated successfully",
     "noPermission": "You don't have permission to edit this routine"
@@ -218,7 +229,48 @@
     "selfUseError": "You cannot use your own invitation code",
     "invalidCode": "The session code is invalid or does not exist",
     "enterCode": "Please enter a code",
-    "footerInfo": "Session codes let you train live with a friend in the virtual gym. Share them only with people you trust."
+    "footerInfo": "Session codes let you train live with a friend in the virtual gym. Share them only with people you trust.",
+    "sectionLabel": "Friend Training",
+    "openSearchButton": "Search friends to invite",
+    "pendingTitle": "Pending invitations",
+    "pendingSubtitle": "Review invitations sent by friends and accept or reject them.",
+    "pendingCountSuffix": "pending",
+    "loadingPending": "Loading your invitations...",
+    "noPendingTitle": "No pending invitations",
+    "noPendingSubtitle": "When a friend invites you, the invitation will appear here.",
+    "notificationReceived": "You received a new friend invitation.",
+    "searchError": "Could not search for users.",
+    "inviteSentToast": "Invitation sent to {{username}}.",
+    "inviteAlreadySent": "Invitation already sent to {{username}}.",
+    "acceptSuccess": "Invitation accepted.",
+    "acceptError": "Unable to accept invitation.",
+    "rejectSuccess": "Invitation rejected.",
+    "rejectError": "Unable to reject invitation.",
+    "howItWorksTitle": "How it works",
+    "howItWorksStep1": "Search online users by username.",
+    "howItWorksStep2": "Send a friend invitation to someone online.",
+    "howItWorksStep3": "Accept invitations to start a shared session.",
+    "backToRoutines": "Back to routines",
+    "backToInvitations": "Back to coach",
+    "tipLabel": "Tip",
+    "tipText": "If a friend is online, they will receive your invitation instantly.",
+    "sentTitle": "Sent invitations",
+    "sentWaiting": "Waiting for response...",
+    "sentPending": "Pending",
+    "inviteRejectedByUser": "{{username}} declined your invitation.",
+    "hasInvitedYou": "Invited you",
+    "searchLabel": "Search friends",
+    "searchPlaceholder": "Type a username",
+    "inviteButton": "Invite",
+    "invitedButton": "Invited",
+    "rejectButton": "Reject",
+    "acceptButton": "Accept",
+    "pendingInvite": "Pending invitation",
+    "inviteFrom": "Invited you to join a session",
+    "searchTitle": "Search online friends",
+    "searchHint": "Type at least 2 characters to find online users.",
+    "loadingResults": "Searching online users...",
+    "noResults": "No users found online."
   },
   "coachInvite": {
     "mainTitle": "Invite a Client",
@@ -319,6 +371,8 @@
     "statVolume": "Volume",
     "statExercises": "Exercises",
     "getReady": "Get ready...",
+    "getReadySolo": "Get ready...",
+    "endSession": "End Session",
     "myTraining": "My training",
     "activeSession": "ACTIVE SESSION",
     "stopwatch": "Stopwatch",
@@ -357,5 +411,53 @@
     "unmute": "Unmute",
     "userOffline": "{{name}} is not connected",
     "callMissed": "{{name}} did not answer"
+  },
+  "progress": {
+    "title": "Client progress",
+    "lastSession": "Last session",
+    "totalSessions": "Total sessions",
+    "noSessions": "No completed sessions",
+    "sessionHistory": "Session history",
+    "completionChart": "Completion trend",
+    "routine": "Routine",
+    "date": "Date",
+    "completion": "% completed",
+    "sets": "Sets",
+    "backToList": "Back to list",
+    "stats": {
+      "totalSets": "Total sets",
+      "totalExercises": "Total exercises"
+    }
+  },
+  "history": {
+    "navLabel": "History & Stats",
+    "title": "My Progress",
+    "totalSessions": "Completed sessions",
+    "totalSets": "Completed sets",
+    "totalExercises": "Completed exercises",
+    "noSessions": "You haven't completed any training sessions yet.",
+    "colRoutine": "Routine",
+    "colDate": "Date",
+    "colCompletion": "% Complete",
+    "colPartner": "Partner",
+    "colYourSets": "Your Sets",
+    "colPartnerSets": "Partner",
+    "tabs": {
+      "all": "All",
+      "solo": "Solo",
+      "friend": "Friends"
+    },
+    "friendStats": {
+      "title": "Friend Stats",
+      "totalCoopSessions": "Friend sessions",
+      "totalCoopSets": "Friend sets",
+      "totalCoopExercises": "Friend exercises",
+      "sessionsWith": "sessions",
+      "noPartners": "You haven't done any sessions with friends yet"
+    },
+    "sessionType": {
+      "solo": "Solo",
+      "friend": "Friends"
+    }
   }
 }
