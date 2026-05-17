@@ -1,50 +1,50 @@
-# Tareas — Sistema de invitaciones coach → cliente
+# Tasques — Sistema d'invitacions coach → client
 
-**Épica**: Gestión de relaciones coach-cliente
-**Actualizado**: 2026-02-24
-
----
-
-## TASK-01 — BBDD: schema y migración
-
-**Tipo**: Base de datos
-**Dependencias**: —
-
-Actualizar `prisma/schema.prisma`:
-
-- Eliminar el campo `invitationCode` del modelo `User`
-- Añadir el enum `InvitationStatus` (`PENDING`, `ACCEPTED`, `EXPIRED`, `REVOKED`)
-- Añadir el modelo `Invitation`: `id`, `coachId` (FK), `clientId` (FK nullable), `code` (unique), `status`, `expiresAt` (nullable), `createdAt`, `acceptedAt` (nullable)
-
-Ejecutar `prisma migrate dev` para generar y aplicar la migración.
+**Èpica**: Gestió de relacions coach-client
+**Actualitzat**: 2026-02-24
 
 ---
 
-## TASK-02 — Backend: módulo de invitaciones
+## TASK-01 — BBDD: schema i migració
 
-**Tipo**: Backend
-**Dependencias**: TASK-01
+**Tipus**: Base de dades
+**Dependències**: —
 
-Crear `src/invitations/` con:
+Actualitzar `prisma/schema.prisma`:
 
-- **DTOs** — `create-invitation.dto.ts` (`expiresAt` opcional) y `accept-invitation.dto.ts` (`code` requerido)
-- **Servicio** — `invitations.service.ts`
+- Eliminar el camp `invitationCode` del model `User`
+- Afegir l'enum `InvitationStatus` (`PENDING`, `ACCEPTED`, `EXPIRED`, `REVOKED`)
+- Afegir el model `Invitation`: `id`, `coachId` (FK), `clientId` (FK nullable), `code` (unique), `status`, `expiresAt` (nullable), `createdAt`, `acceptedAt` (nullable)
 
-  | Método                    | Descripción                                                 |
-  | ------------------------- | ----------------------------------------------------------- |
-  | `create(coachId, dto)`    | Genera UUID v4 como código, persiste con estado `PENDING`   |
-  | `accept(clientId, code)`  | Valida estado, establece `users.coachId`, marca `ACCEPTED`  |
-  | `revoke(coachId, id)`     | Verifica autoría, marca `REVOKED`                           |
-  | `checkExpiry(invitation)` | Si `expiresAt` ha pasado, marca `EXPIRED` y lanza excepción |
+Executar `prisma migrate dev` per generar i aplicar la migració.
+
+---
+
+## TASK-02 — Backend: mòdul d'invitacions
+
+**Tipus**: Backend
+**Dependències**: TASK-01
+
+Crear `src/invitations/` amb:
+
+- **DTOs** — `create-invitation.dto.ts` (`expiresAt` opcional) i `accept-invitation.dto.ts` (`code` requerit)
+- **Servei** — `invitations.service.ts`
+
+  | Mètode                    | Descripció                                                        |
+  | ------------------------- | ----------------------------------------------------------------- |
+  | `create(coachId, dto)`    | Genera UUID v4 com a codi, persisteix amb estat `PENDING`         |
+  | `accept(clientId, code)`  | Valida estat, estableix `users.coachId`, marca `ACCEPTED`         |
+  | `revoke(coachId, id)`     | Verifica autoria, marca `REVOKED`                                 |
+  | `checkExpiry(invitation)` | Si `expiresAt` ha passat, marca `EXPIRED` i llança excepció       |
 
 - **Controlador** — `invitations.controller.ts`
 
-  | Método  | Ruta                        | Guard                         |
+  | Mètode  | Ruta                        | Guard                         |
   | ------- | --------------------------- | ----------------------------- |
   | `POST`  | `/invitations`              | `JwtAuthGuard` + `CoachGuard` |
   | `POST`  | `/invitations/:code/accept` | `JwtAuthGuard`                |
   | `PATCH` | `/invitations/:id/revoke`   | `JwtAuthGuard` + `CoachGuard` |
 
-- **Módulo** — `invitations.module.ts` registrando servicio, controlador y `PrismaModule`. Importar en `AppModule`.
+- **Mòdul** — `invitations.module.ts` registrant servei, controlador i `PrismaModule`. Importar a `AppModule`.
 
 ---

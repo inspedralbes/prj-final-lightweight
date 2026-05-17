@@ -1,0 +1,65 @@
+name: Unit Tests (Vitest)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache node_modules (backend)
+        uses: actions/cache@v4
+        with:
+          path: src/back/node_modules
+          key: back-node-modules-${{ hashFiles('src/back/package-lock.json') }}
+          restore-keys: back-node-modules-
+
+      - name: Install dependencies (backend)
+        run: npm ci --prefix src/back
+
+      - name: Generate Prisma client
+        working-directory: src/back
+        env:
+          DATABASE_URL: postgresql://localhost/dummy
+        run: npx prisma generate
+
+      - name: Run unit tests (backend)
+        run: npm run test --prefix src/back
+
+  frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache node_modules (frontend)
+        uses: actions/cache@v4
+        with:
+          path: src/front/node_modules
+          key: front-node-modules-${{ hashFiles('src/front/package-lock.json') }}
+          restore-keys: front-node-modules-
+
+      - name: Install dependencies (frontend)
+        run: npm ci --prefix src/front
+
+      - name: Run unit tests (frontend)
+        run: npm run test --prefix src/front

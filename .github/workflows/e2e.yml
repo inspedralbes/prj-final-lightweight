@@ -1,0 +1,145 @@
+name: E2E Tests (Playwright)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Variables de CI — solo para tests, NUNCA usar en producción
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lw_e2e # CI only — never use in production
+  JWT_SECRET: e2e-ci-test-secret-not-for-production                  # CI only — never use in production
+  FRONTEND_URL: http://localhost:5173                                 # CI only — never use in production
+  VITE_BACK_URL: http://localhost:3000                                # CI only — never use in production
+  E2E_TESTING: "true"
+  NODE_ENV: test
+
+jobs:
+  playwright:
+    name: playwright
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lw_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # ── Caché de node_modules ──────────────────────────────────────────────
+      - name: Cache node_modules (back)
+        uses: actions/cache@v4
+        with:
+          path: src/back/node_modules
+          key: back-node-modules-${{ hashFiles('src/back/package-lock.json') }}
+          restore-keys: back-node-modules-
+
+      - name: Cache node_modules (front)
+        uses: actions/cache@v4
+        with:
+          path: src/front/node_modules
+          key: front-node-modules-${{ hashFiles('src/front/package-lock.json') }}
+          restore-keys: front-node-modules-
+
+      - name: Cache node_modules (e2e)
+        uses: actions/cache@v4
+        with:
+          path: e2e/node_modules
+          key: e2e-node-modules-${{ hashFiles('e2e/package-lock.json') }}
+          restore-keys: e2e-node-modules-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ hashFiles('e2e/package-lock.json') }}
+          restore-keys: playwright-browsers-
+
+      # ── Instalación de dependencias ────────────────────────────────────────
+      - name: Install dependencies (back + front + e2e)
+        run: |
+          npm ci --prefix src/back &
+          npm ci --prefix src/front &
+          npm ci --prefix e2e &
+          wait
+
+      - name: Install Playwright browsers
+        run: npx --prefix e2e playwright install chromium --with-deps
+
+      # ── Build ──────────────────────────────────────────────────────────────
+      - name: Generate Prisma client
+        working-directory: src/back
+        run: npx prisma generate
+
+      - name: Build backend
+        run: npm run build --prefix src/back
+
+      - name: Build frontend
+        run: npm run build --prefix src/front
+
+      # ── Base de datos ──────────────────────────────────────────────────────
+      - name: Run Prisma migrations
+        working-directory: src/back
+        run: npx prisma migrate deploy
+
+      - name: Seed database
+        working-directory: src/back
+        run: npx prisma db seed
+
+      # ── Arranque de servicios en segundo plano ─────────────────────────────
+      - name: Start backend
+        working-directory: src/back
+        run: npm run start:prod &
+
+      - name: Start frontend
+        working-directory: src/front
+        run: npm run preview -- --host 0.0.0.0 --port 5173 &
+
+      # ── Readiness checks ───────────────────────────────────────────────────
+      - name: Wait for backend (port 3000)
+        run: |
+          echo "Waiting for backend on port 3000..."
+          timeout 60 bash -c 'until curl -sf http://localhost:3000/exercises > /dev/null 2>&1; do sleep 2; done' \
+            || (echo "Backend did not become ready on port 3000 within 60s" && exit 1)
+
+      - name: Wait for frontend (port 5173)
+        run: |
+          echo "Waiting for frontend on port 5173..."
+          timeout 60 bash -c 'until curl -sf http://localhost:5173 > /dev/null 2>&1; do sleep 2; done' \
+            || (echo "Frontend did not become ready on port 5173 within 60s" && exit 1)
+
+      # ── Tests E2E ──────────────────────────────────────────────────────────
+      - name: Run Playwright tests
+        working-directory: e2e
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:5173
+          PLAYWRIGHT_API_URL: http://localhost:3000
+        run: npx playwright test
+
+      # ── Artefactos en caso de fallo ────────────────────────────────────────
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report-${{ github.run_id }}
+          path: |
+            e2e/test-results/
+            e2e/playwright-report/
+          retention-days: 7

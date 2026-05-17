@@ -1,4 +1,3 @@
-// 1. Configuración del generador y la fuente de datos
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,13 +7,229 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --------------------------------------
-// ENUMS
-// --------------------------------------
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole
+  coachId              Int?     @map("coach_id")
+  activeSessionToken   String?  @map("active_session_token")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  coach                  User?        @relation("CoachClients", fields: [coachId], references: [id])
+  clients                User[]       @relation("CoachClients")
+  routinesCreated        Routine[]    @relation("CoachRoutines")
+  routineAssignments     RoutineAssignment[]
+  liveSessions           LiveSession[]
+  invitationsAsCoach     Invitation[] @relation("CoachInvitations")
+  invitationsAsClient    Invitation[] @relation("ClientInvitations")
+  invitationsAsTargetClient Invitation[] @relation("TargetClientInvitations")
+  clientProfile          ClientProfile?
+  sentMessages           P2PChatMessage[] @relation("SentMessages")
+  receivedMessages       P2PChatMessage[] @relation("ReceivedMessages")
+  sessionProgress        SessionProgress[]
+  passwordResetTokens       PasswordResetToken[]
+  sentFriendInvitations    FriendInvitation[] @relation("FriendInvitations_inviter")
+  receivedFriendInvitations FriendInvitation[] @relation("FriendInvitations_invitee")
+
+  @@map("users")
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int      @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model ClientProfile {
+  id                 Int      @id @default(autoincrement())
+  clientId           Int      @unique @map("client_id")
+  goals              String?
+  privateNotes       String?  @map("private_notes")
+  personalDataShared Boolean  @default(false) @map("personal_data_shared")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  client             User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_profiles")
+}
+
+model ExerciseCatalog {
+  id               Int               @id @default(autoincrement())
+  name             String            @unique
+  description      String?
+  category         String?
+  createdAt        DateTime          @default(now()) @map("created_at")
+  equipment        String?
+  forceType        String?
+  level            String?
+  mechanic         String?
+  primaryMuscle    String[]
+  secondaryMuscle  String[]
+  images           String[]          @default([])
+  routineExercises RoutineExercise[]
+
+  @@map("exercise_catalog")
+}
+
+model Routine {
+  id           Int                 @id @default(autoincrement())
+  coachId      Int?                @map("coach_id")
+  name         String
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+  isPublic     Boolean             @default(false) @map("is_public")
+  liveSessions LiveSession[]
+  assignments  RoutineAssignment[]
+  exercises    RoutineExercise[]
+  coach        User?               @relation("CoachRoutines", fields: [coachId], references: [id])
+
+  @@map("routines")
+}
+
+model RoutineAssignment {
+  id        Int      @id @default(autoincrement())
+  routineId Int      @map("routine_id")
+  clientId  Int      @map("client_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  client    User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  routine   Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  @@unique([routineId, clientId])
+  @@map("routine_assignments")
+}
+
+model RoutineExercise {
+  id         Int             @id @default(autoincrement())
+  routineId  Int             @map("routine_id")
+  exerciseId Int             @map("exercise_id")
+  sets       Int
+  reps       Int
+  rest       Int
+  notes      String?
+  order      Int
+  exercise   ExerciseCatalog @relation(fields: [exerciseId], references: [id])
+  routine    Routine         @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  @@map("routine_exercises")
+}
+
+model Invitation {
+  id             Int              @id @default(autoincrement())
+  coachId        Int              @map("coach_id")
+  clientId       Int?             @map("client_id")
+  code           String           @unique
+  status         InvitationStatus @default(PENDING)
+  expiresAt      DateTime?        @map("expires_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  acceptedAt     DateTime?        @map("accepted_at")
+  targetClientId Int?             @map("target_client_id")
+  client         User?            @relation("ClientInvitations", fields: [clientId], references: [id])
+  coach          User             @relation("CoachInvitations", fields: [coachId], references: [id])
+  targetClient   User?            @relation("TargetClientInvitations", fields: [targetClientId], references: [id])
+
+  @@map("invitations")
+}
+
+model LiveSession {
+  id                   Int           @id @default(autoincrement())
+  coachId              Int?          @map("coach_id")
+  routineId            Int           @map("routine_id")
+  sessionCode          String        @unique @map("session_code")
+  invitationCode       String?       @unique @map("invitation_code")
+  status               SessionStatus @default(PENDING)
+  createdAt            DateTime      @default(now()) @map("created_at")
+  completedAt          DateTime?     @map("completed_at")
+  completionPercentage Int?          @map("completion_percentage")
+  completedSets        Int?          @map("completed_sets")
+  completedExercises   Int?          @map("completed_exercises")
+
+  // Relaciones
+  coach          User?             @relation(fields: [coachId], references: [id])
+  routine        Routine           @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  participants   LiveParticipant[]
+  events         WorkoutEvent[]
+  messages       ChatMessage[]
+  sessionProgress SessionProgress[]
+
+  @@map("live_sessions")
+}
+
+model LiveParticipant {
+  id            Int             @id @default(autoincrement())
+  sessionId     Int             @map("session_id")
+  participantId String          @map("participant_id")
+  role          ParticipantRole
+  joinedAt      DateTime        @default(now()) @map("joined_at")
+  leftAt        DateTime?       @map("left_at")
+  session       LiveSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("live_participants")
+}
+
+model WorkoutEvent {
+  id        Int         @id @default(autoincrement())
+  sessionId Int         @map("session_id")
+  eventType String      @map("event_type")
+  data      Json
+  timestamp DateTime    @default(now())
+  session   LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("workout_events")
+}
+
+model ChatMessage {
+  id        Int         @id @default(autoincrement())
+  sessionId Int         @map("session_id")
+  sender    String
+  message   String
+  timestamp DateTime    @default(now())
+  session   LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model SessionProgress {
+  id                 Int       @id @default(autoincrement())
+  sessionId          Int       @map("session_id")
+  userId             Int       @map("user_id")
+  completedExercises Int       @default(0) @map("completed_exercises")
+  completedSets      Int       @default(0) @map("completed_sets")
+  completionPercentage Float   @default(0) @map("completion_percentage")
+  completedAt        DateTime? @map("completed_at")
+  isPartial          Boolean   @default(false) @map("is_partial")
+
+  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id])
+
+  @@unique([sessionId, userId])
+  @@map("session_progress")
+}
+
+model P2PChatMessage {
+  id         Int      @id @default(autoincrement())
+  senderId   Int      @map("sender_id")
+  receiverId Int      @map("receiver_id")
+  text       String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("p2p_chat_messages")
+}
+
 
 enum UserRole {
   COACH
-  CLIENT // Para uso futuro o participantes sin cuenta completa
+  CLIENT
 }
 
 enum SessionStatus {
@@ -35,267 +250,26 @@ enum InvitationStatus {
   REVOKED
 }
 
-// --------------------------------------
-// MODELOS CORE (MVP)
-// --------------------------------------
-
-model User {
-  id           Int      @id @default(autoincrement())
-  username     String   @unique
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  role         UserRole
-  coachId      Int?     @map("coach_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  // Relaciones
-  coach            User?        @relation("CoachClients", fields: [coachId], references: [id])
-  clients          User[]       @relation("CoachClients")
-  routinesCreated  Routine[]    @relation("CoachRoutines")
-  routineAssignments RoutineAssignment[]
-  liveSessions     LiveSession[]
-  dietPlans        DietPlan[]
-  invitationsAsCoach         Invitation[] @relation("CoachInvitations")
-  invitationsAsClient        Invitation[] @relation("ClientInvitations")
-  invitationsAsTargetClient  Invitation[] @relation("TargetClientInvitations")
-  clientProfile    ClientProfile?
-  sentMessages     P2PChatMessage[] @relation("SentMessages")
-  receivedMessages P2PChatMessage[] @relation("ReceivedMessages")
-
-  @@map("users")
+enum FriendInvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
 }
 
-model ClientProfile {
-  id                  Int      @id @default(autoincrement())
-  clientId            Int      @unique @map("client_id")
-  goals               String?  // JSON con objetivos del cliente
-  privateNotes        String?  @map("private_notes")  // Notas privadas del coach
-  personalDataShared  Boolean  @default(false) @map("personal_data_shared")
-  updatedAt           DateTime @updatedAt @map("updated_at")
-
-  // Relaciones
-  client User @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@map("client_profiles")
-}
-
-model ExerciseCatalog {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  description String?
-  category    String?
-  primaryMuscle String[]
-  secondaryMuscle String[]
-  forceType   String?
-  level       String?
-  mechanic    String?
-  equipment   String?
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  // Relaciones
-  routineExercises RoutineExercise[]
-
-  @@map("exercise_catalog")
-}
-
-model Routine {
+model FriendInvitation {
   id        Int      @id @default(autoincrement())
-  coachId   Int?     @map("coach_id")
-  name      String
-  isPublic  Boolean  @default(false) @map("is_public")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  inviterId Int
+  inviteeId Int
+  status    FriendInvitationStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
 
-  // Relaciones
-  coach        User?               @relation("CoachRoutines", fields: [coachId], references: [id])
-  exercises    RoutineExercise[]
-  liveSessions LiveSession[]
-  assignments  RoutineAssignment[]
+  inviter   User @relation("FriendInvitations_inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee   User @relation("FriendInvitations_invitee", fields: [inviteeId], references: [id], onDelete: Cascade)
 
-  @@map("routines")
-}
-
-model RoutineAssignment {
-  id        Int      @id @default(autoincrement())
-  routineId Int      @map("routine_id")
-  clientId  Int      @map("client_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
-  client  User    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@unique([routineId, clientId])
-  @@map("routine_assignments")
-}
-
-model RoutineExercise {
-  id         Int     @id @default(autoincrement())
-  routineId  Int     @map("routine_id")
-  exerciseId Int     @map("exercise_id")
-  sets       Int
-  reps       Int
-  rest       Int // en segundos
-  notes      String?
-  order      Int // para ordenar dentro de la rutina
-
-  // Relaciones
-  routine  Routine         @relation(fields: [routineId], references: [id], onDelete: Cascade)
-  exercise ExerciseCatalog @relation(fields: [exerciseId], references: [id])
-
-  @@map("routine_exercises")
-}
-
-model Invitation {
-  id              Int              @id @default(autoincrement())
-  coachId         Int              @map("coach_id")
-  clientId        Int?             @map("client_id")
-  targetClientId  Int?             @map("target_client_id")
-  code            String           @unique
-  status          InvitationStatus @default(PENDING)
-  expiresAt       DateTime?        @map("expires_at")
-  createdAt       DateTime         @default(now()) @map("created_at")
-  acceptedAt      DateTime?        @map("accepted_at")
-
-  // Relaciones
-  coach        User  @relation("CoachInvitations", fields: [coachId], references: [id])
-  client       User? @relation("ClientInvitations", fields: [clientId], references: [id])
-  targetClient User? @relation("TargetClientInvitations", fields: [targetClientId], references: [id])
-
-  @@map("invitations")
-}
-
-model LiveSession {
-  id          Int           @id @default(autoincrement())
-  coachId     Int?          @map("coach_id")
-  routineId   Int           @map("routine_id")
-  sessionCode String        @unique @map("session_code")
-  status      SessionStatus @default(PENDING)
-  createdAt   DateTime      @default(now()) @map("created_at")
-  completedAt DateTime?     @map("completed_at")
-
-  // Relaciones
-  coach        User?             @relation(fields: [coachId], references: [id])
-  routine      Routine           @relation(fields: [routineId], references: [id], onDelete: Cascade)
-  participants LiveParticipant[]
-  events       WorkoutEvent[]
-  messages     ChatMessage[]
-
-  @@map("live_sessions")
-}
-
-model LiveParticipant {
-  id            Int             @id @default(autoincrement())
-  sessionId     Int             @map("session_id")
-  participantId String          @map("participant_id") // UUID temporal o ID de usuario
-  role          ParticipantRole
-  joinedAt      DateTime        @default(now()) @map("joined_at")
-  leftAt        DateTime?       @map("left_at")
-
-  // Relaciones
-  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@map("live_participants")
-}
-
-model WorkoutEvent {
-  id        Int      @id @default(autoincrement())
-  sessionId Int      @map("session_id")
-  eventType String   @map("event_type") // Ej: "exercise:start"
-  data      Json // Detalles del evento
-  timestamp DateTime @default(now())
-
-  // Relaciones
-  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@map("workout_events")
-}
-
-model ChatMessage {
-  id        Int      @id @default(autoincrement())
-  sessionId Int      @map("session_id")
-  sender    String // "COACH" o Identificador del cliente
-  message   String
-  timestamp DateTime @default(now())
-
-  // Relaciones
-  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@map("chat_messages")
-}
-
-model P2PChatMessage {
-  id        Int      @id @default(autoincrement())
-  senderId  Int      @map("sender_id")
-  receiverId Int     @map("receiver_id")
-  text      String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relaciones
-  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  @@map("p2p_chat_messages")
-}
-
-// --------------------------------------
-// MODELOS EXPANSIÓN (Post-MVP)
-// --------------------------------------
-// Incluidos para cumplir con el diagrama completo
-
-model FoodCatalog {
-  id        Int      @id @default(autoincrement())
-  name      String
-  calories  Float
-  protein   Float
-  carbs     Float
-  fat       Float
-  unit      String // Ej: "g", "ml"
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relaciones
-  dietMealItems DietMealItem[]
-
-  @@map("food_catalog")
-}
-
-model DietPlan {
-  id        Int      @id @default(autoincrement())
-  coachId   Int      @map("coach_id")
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relaciones
-  coach User       @relation(fields: [coachId], references: [id])
-  meals DietMeal[]
-
-  @@map("diet_plans")
-}
-
-model DietMeal {
-  id         Int    @id @default(autoincrement())
-  dietPlanId Int    @map("diet_plan_id")
-  name       String
-  mealType   String @map("meal_type") // Ej: "breakfast"
-  order      Int
-
-  // Relaciones
-  dietPlan  DietPlan       @relation(fields: [dietPlanId], references: [id], onDelete: Cascade)
-  mealItems DietMealItem[]
-
-  @@map("diet_meals")
-}
-
-model DietMealItem {
-  id         Int    @id @default(autoincrement())
-  dietMealId Int    @map("diet_meal_id")
-  foodId     Int    @map("food_id")
-  quantity   Float
-  unit       String
-
-  // Relaciones
-  dietMeal DietMeal    @relation(fields: [dietMealId], references: [id], onDelete: Cascade)
-  food     FoodCatalog @relation(fields: [foodId], references: [id])
-
-  @@map("diet_meal_items")
+  @@unique([inviterId, inviteeId, status]) // Prevent multiple pending invitations between same pair
+  @@index([inviteeId, status])
 }

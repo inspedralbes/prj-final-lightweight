@@ -2,9 +2,9 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   type ReactNode,
 } from "react";
+import api from "@/shared/utils/api";
 
 interface AuthUser {
   id: number;
@@ -17,36 +17,36 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   login: (userData: AuthUser) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
   updateCoachId: (coachId: number | null) => void;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // true mientras leemos localStorage
+  const getInitialUser = (): AuthUser | null => {
+    if (typeof window === "undefined") return null;
 
-  // Al montar, restaurar sesión guardada en localStorage
-  useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("userRole") as "COACH" | "CLIENT" | null;
     const username = localStorage.getItem("username");
     const userId = localStorage.getItem("userId");
     const coachId = localStorage.getItem("coachId");
 
-    if (token && role && username && userId) {
-      setUser({
-        id: Number(userId),
-        username,
-        role,
-        token,
-        coachId: coachId ? Number(coachId) : undefined,
-      });
-    }
-    setIsLoading(false);
-  }, []);
+    if (!token || !role || !username || !userId) return null;
+
+    return {
+      id: Number(userId),
+      username,
+      role,
+      token,
+      coachId: coachId ? Number(coachId) : undefined,
+    };
+  };
+
+  const [user, setUser] = useState<AuthUser | null>(() => getInitialUser());
+  const [isLoading] = useState(false);
 
   const login = (userData: AuthUser) => {
     localStorage.setItem("token", userData.token);
@@ -59,7 +59,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // network failure or already logged out — still clear local state
+    }
     localStorage.removeItem("token");
     localStorage.removeItem("userRole");
     localStorage.removeItem("username");

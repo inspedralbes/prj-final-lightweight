@@ -49,11 +49,20 @@
     "forgotPasswordSubtitle": "Recupera l'accés al teu compte i continua el teu entrenament.",
     "forgotPasswordHint": "Introdueix el teu usuari i t'enviarem un correu de recuperació.",
     "resetPassword": "Restablir contrasenya",
-    "sendReset": "Enviar sol\u00b7licitud",
+    "sendReset": "Enviar sol·licitud",
     "invalidCredentials": "Usuari o contrasenya invàlids",
     "acceptTerms": "Accepto els",
     "termsLink": "Termes i Condicions",
-    "passwordMinLength": "La contrasenya ha de tenir com a mínim {{count}} caràcters"
+    "passwordMinLength": "La contrasenya ha de tenir com a mínim {{count}} caràcters",
+    "newPassword": "Nova contrasenya",
+    "confirmPassword": "Confirmar contrasenya",
+    "resetPasswordButton": "Restablir contrasenya",
+    "resetTokenInvalid": "Aquest enllaç no és vàlid o ha expirat.",
+    "requestNewReset": "Sol·licitar un nou enllaç",
+    "emailNotRegistered": "Aquest correu no està registrat.",
+    "errors": {
+      "sessionAlreadyActive": "Ja tens una sessió activa en un altre dispositiu"
+    }
   },
   "sidebar": {
     "dashboard": "Panell de control",
@@ -109,6 +118,7 @@
     "moreExercises": "+{{count}} més",
     "viewAll": "Veure tots els exercicis",
     "noExercises": "Sense exercicis afegits",
+    "clickToAddExercises": "Clica aquí per afegir exercicis",
     "series": "Sèries",
     "reps": "Repeticions",
     "weight": "Pes (kg)",
@@ -150,10 +160,11 @@
     "passwordMismatch": "Les contrasenyes no coincideixen",
     "acceptTermsRequired": "Has d'acceptar els termes per continuar",
     "userAlreadyExists": "Aquest usuari ja existeix",
-    "resetEmailSent": "Correu de recuperació enviat",
+    "resetEmailSent": "Si aquest email existeix, revisa la safata.",
     "routineNotFound": "Rutina no trobada",
     "clientUpdated": "Client actualitzat correctament",
-    "noPermission": "No tens permís per editar aquesta rutina"
+    "noPermission": "No tens permís per editar aquesta rutina",
+    "passwordResetSuccess": "Contrasenya restablerta. Ja pots iniciar sessió."
   },
   "clients": {
     "title": "Els meus clients",
@@ -218,7 +229,48 @@
     "selfUseError": "No pots utilitzar el teu propi codi",
     "invalidCode": "El codi de sessió no és vàlid o no existeix",
     "enterCode": "Si us plau introdueix un codi",
-    "footerInfo": "Els codis de sessió et permeten entrenar en directe amb un amic al gimnàs virtual. Comparteix-los només amb persones de confiança."
+    "footerInfo": "Els codis de sessió et permeten entrenar en directe amb un amic al gimnàs virtual. Comparteix-los només amb persones de confiança.",
+    "sectionLabel": "Entrenament amb amic",
+    "openSearchButton": "Cerca amics per convidar",
+    "pendingTitle": "Invitacions pendents",
+    "pendingSubtitle": "Revisa les invitacions d'amics i accepta o rebutja-les.",
+    "pendingCountSuffix": "pendents",
+    "loadingPending": "Carregant les teves invitacions...",
+    "noPendingTitle": "No hi ha invitacions pendents",
+    "noPendingSubtitle": "Quan un amic t'inviti, la invitació apareixerà aquí.",
+    "notificationReceived": "Has rebut una nova invitació d'amic.",
+    "searchError": "No s'ha pogut cercar usuaris.",
+    "inviteSentToast": "Invitació enviada a {{username}}.",
+    "inviteAlreadySent": "Ja has enviat una invitació a {{username}}.",
+    "acceptSuccess": "Invitació acceptada.",
+    "acceptError": "No s'ha pogut acceptar la invitació.",
+    "rejectSuccess": "Invitació rebutjada.",
+    "rejectError": "No s'ha pogut rebutjar la invitació.",
+    "howItWorksTitle": "Com funciona",
+    "howItWorksStep1": "Cerca usuaris en línia per nom d'usuari.",
+    "howItWorksStep2": "Envia una invitació d'amic a algú en línia.",
+    "howItWorksStep3": "Accepta les invitacions per començar una sessió compartida.",
+    "backToRoutines": "Tornar a les rutines",
+    "backToInvitations": "Tornar al coach",
+    "tipLabel": "Consell",
+    "tipText": "Si un amic està en línia, rebrà la teva invitació al moment.",
+    "sentTitle": "Invitacions enviades",
+    "sentWaiting": "Esperant resposta...",
+    "sentPending": "Pendent",
+    "inviteRejectedByUser": "{{username}} ha rebutjat la teva invitació.",
+    "hasInvitedYou": "T'ha convidat",
+    "searchLabel": "Cerca amics",
+    "searchPlaceholder": "Escriu el nom d'usuari",
+    "inviteButton": "Convidar",
+    "invitedButton": "Convidat",
+    "rejectButton": "Rebutjar",
+    "acceptButton": "Acceptar",
+    "pendingInvite": "Invitació pendent",
+    "inviteFrom": "T'ha convidat a unir-te a una sessió",
+    "searchTitle": "Cercar amics en línia",
+    "searchHint": "Escriu almenys 2 caràcters per trobar usuaris en línia.",
+    "loadingResults": "Cercant usuaris en línia...",
+    "noResults": "No s'han trobat usuaris en línia."
   },
   "coachInvite": {
     "mainTitle": "Convidar un client",
@@ -319,6 +371,8 @@
     "statVolume": "Volum",
     "statExercises": "Exercicis",
     "getReady": "Prepareu-vos...",
+    "getReadySolo": "Prepara't...",
+    "endSession": "Finalitzar Sessió",
     "myTraining": "El meu entrenament",
     "activeSession": "SESSIÓ ACTIVA",
     "stopwatch": "Cronòmetre",
@@ -357,5 +411,53 @@
     "unmute": "Activar micròfon",
     "userOffline": "{{name}} no està connectat/ada",
     "callMissed": "{{name}} no ha respost"
+  },
+  "progress": {
+    "title": "Progrés de clients",
+    "lastSession": "Última sessió",
+    "totalSessions": "Sessions totals",
+    "noSessions": "Cap sessió completada",
+    "sessionHistory": "Historial de sessions",
+    "completionChart": "Evolució del % completat",
+    "routine": "Rutina",
+    "date": "Data",
+    "completion": "% completat",
+    "sets": "Sèries",
+    "backToList": "Tornar a la llista",
+    "stats": {
+      "totalSets": "Sèries totals",
+      "totalExercises": "Exercicis totals"
+    }
+  },
+  "history": {
+    "navLabel": "Historial i Estadístiques",
+    "title": "El meu progrés",
+    "totalSessions": "Sessions completades",
+    "totalSets": "Sèries completades",
+    "totalExercises": "Exercicis completats",
+    "noSessions": "Encara no has completat cap sessió d'entrenament.",
+    "colRoutine": "Rutina",
+    "colDate": "Data",
+    "colCompletion": "% Completat",
+    "colPartner": "Company",
+    "colYourSets": "Les teves",
+    "colPartnerSets": "Company",
+    "tabs": {
+      "all": "Totes",
+      "solo": "Solo",
+      "friend": "Amics"
+    },
+    "friendStats": {
+      "title": "Estadístiques d'Amics",
+      "totalCoopSessions": "Sessions amb amics",
+      "totalCoopSets": "Sèries amb amics",
+      "totalCoopExercises": "Exercicis amb amics",
+      "sessionsWith": "sessions",
+      "noPartners": "Encara no has fet cap sessió amb amics"
+    },
+    "sessionType": {
+      "solo": "Solitari",
+      "friend": "Amics"
+    }
   }
 }

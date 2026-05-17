@@ -1,17 +1,26 @@
-import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Login from "@/features/auth/pages/Login";
 import Register from "@/features/auth/pages/Register";
 import ForgotPassword from "@/features/auth/pages/ForgotPassword";
+import ResetPassword from "@/features/auth/pages/ResetPassword";
 import CoachDashboard from "@/features/coach/pages/CoachDashboard";
 import ClientDashboard from "@/features/client/pages/ClientDashboard";
 import CoachClientList from "@/features/coach/pages/CoachClientList";
+import ClientsProgressPage from "@/features/coach/pages/ClientsProgressPage";
+import ClientProgressDetailPage from "@/features/coach/pages/ClientProgressDetailPage";
 import RoutineExercisesEdit from "@/features/routines/pages/RoutineExercisesEdit";
 import CoopSessionLobby from "@/features/workout/pages/CoopSessionLobby";
-import ClientMyCoach from "@/features/client/pages/ClientMyCoach";
-import WorkoutRoom from "@/features/workout/pages/WorkoutRoom";
 import SoloWorkoutSession from "@/features/workout/pages/SoloWorkoutSession";
+import ClientMyCoach from "@/features/client/pages/ClientMyCoach";
+import ClientHistoryStats from "@/features/client/pages/ClientHistoryStats";
+import WorkoutRoom from "@/features/workout/pages/WorkoutRoom";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useNotification } from "@/features/notifications/context/NotificationContext";
@@ -33,11 +42,141 @@ const RootRedirect = () => {
   return <Navigate to="/client-home" replace />;
 };
 
+// Componente que contiene las rutas y puede usar useNavigate
+const AppRoutes = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Socket: invitation was accepted by the invitee — host navigates to the room
+    socket.on("friend-invite:accepted", (payload: any) => {
+      console.log("[Friend Invite Accepted] RECEIVED via socket:", payload);
+      window.dispatchEvent(
+        new CustomEvent("friend-invite:accepted", { detail: payload }),
+      );
+      if (payload?.roomId) {
+        navigate(`/room/${payload.roomId}`, {
+          state: { isHost: payload.isHost ?? true },
+        });
+      }
+    });
+
+    return () => {
+      socket.off("friend-invite:accepted");
+    };
+  }, [navigate]);
+
+  return (
+    <Routes>
+      {/* Ruta raíz con redirección inteligente por rol */}
+      <Route path="/" element={<RootRedirect />} />
+
+      {/* Rutas públicas */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* Rutas protegidas para COACH */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute requiredRole="COACH">
+            <CoachDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clients"
+        element={
+          <ProtectedRoute requiredRole="COACH">
+            <CoachClientList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clients/progress"
+        element={
+          <ProtectedRoute requiredRole="COACH">
+            <ClientsProgressPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clients/progress/:clientId"
+        element={
+          <ProtectedRoute requiredRole="COACH">
+            <ClientProgressDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/routine/:id/edit"
+        element={
+          <ProtectedRoute>
+            <RoutineExercisesEdit />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Rutas protegidas para CLIENT */}
+      <Route
+        path="/client-home"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <ClientDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clients/invitations"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <ClientMyCoach />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/client/history"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <ClientHistoryStats />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/workout/:id"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <SoloWorkoutSession />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/friend-session"
+        element={
+          <ProtectedRoute requiredRole="CLIENT">
+            <CoopSessionLobby />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/room/:roomId"
+        element={
+          <ProtectedRoute>
+            <WorkoutRoom />
+          </ProtectedRoute>
+        }
+      />
+      {/* /programs removed — unused placeholder page deleted */}
+    </Routes>
+  );
+};
+
 // Componente wrapper que escucha las notificaciones del socket
 const AppContent = () => {
-  const [isConnected, setIsConnected] = useState(socket.connected);
-  const { addNotification, clearAll } = useNotification();
-  const { user } = useAuth();
+  const { addNotification, addFriendInviteNotification, clearAll } =
+    useNotification();
+  const { user, logout } = useAuth();
   const { t } = useTranslation();
   const ringtone = useRingtone();
 
@@ -84,11 +223,34 @@ const AppContent = () => {
 
   const handleCalleeCallEnd = () => setCalleeActiveCall(null);
 
-  const handleNotificationChatClick = (roomId: string) => {
-    console.log("[Notification] Opening chat for room:", roomId);
-    // El evento será manejado por las páginas que tengan el chat abierto
-    // Se puede expandir para abrir el chat automáticamente usando un evento global
-    window.dispatchEvent(new CustomEvent("openChat", { detail: { roomId } }));
+  const ClientSideNotificationCenter = () => {
+    const navigate = useNavigate();
+
+    const handleNotificationChatClick = useCallback(
+      (roomId: string) => {
+        console.log("[Notification] Opening chat for room:", roomId);
+
+        if (user?.role === "CLIENT") {
+          navigate("/client-home");
+        } else if (user?.role === "COACH") {
+          navigate("/clients");
+        }
+
+        window.setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent("openChat", { detail: { roomId } }),
+          );
+        }, 0);
+      },
+      [navigate, user],
+    );
+
+    return (
+      <NotificationCenter
+        onChatClick={handleNotificationChatClick}
+        position={user?.role === "CLIENT" ? "top-right" : "bottom-right"}
+      />
+    );
   };
 
   useEffect(() => {
@@ -101,13 +263,23 @@ const AppContent = () => {
 
   useEffect(() => {
     socket.on("connect", () => {
-      setIsConnected(true);
       if (user) {
         console.log("[Socket] connected - emitting register-user for", user.id);
         socket.emit("register-user", user.id);
       }
     });
-    socket.on("disconnect", () => setIsConnected(false));
+
+    // Session expired on another device: backend cleared activeSessionToken
+    // after the grace period. Clear local state and redirect to /login.
+    socket.on("session-invalidated", () => {
+      console.log("[Auth] session-invalidated received — logging out");
+      localStorage.removeItem("token");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("username");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("coachId");
+      void logout();
+    });
 
     // ── Global video-call-invite listener (always alive) ─────────────────
     socket.on(
@@ -149,22 +321,52 @@ const AppContent = () => {
     );
 
     // Escuchar notificaciones de chat P2P con preview de mensaje
-    socket.on("p2p-message-notification", (data: any) => {
-      console.log("[P2P Message Notification]", data);
-      const preview =
-        data.text.length > 50 ? data.text.substring(0, 50) + "..." : data.text;
-      const senderName = data.fromUsername || data.from || "Alguien";
-      const roomId =
-        user?.role === "CLIENT"
-          ? `chat_client_${user.id}`
-          : `chat_client_${data.from}`;
-      // isLive=true: real-time message — un-dismiss if room was previously dismissed
-      addNotification(
-        roomId,
-        `${senderName} te ha enviado: ${preview}`,
-        senderName,
-        true,
+    socket.on(
+      "p2p-message-notification",
+      (data: { text: string; fromUsername?: string; from?: string }) => {
+        console.log("[P2P Message Notification]", data);
+        const preview =
+          data.text.length > 50
+            ? data.text.substring(0, 50) + "..."
+            : data.text;
+        const senderName = data.fromUsername || data.from || "Alguien";
+        const roomId =
+          user?.role === "CLIENT"
+            ? `chat_client_${user.id}`
+            : `chat_client_${data.from}`;
+        // isLive=true: real-time message — un-dismiss if room was previously dismissed
+        addNotification(
+          roomId,
+          `${senderName} te ha enviado: ${preview}`,
+          senderName,
+          true,
+        );
+      },
+    );
+
+    socket.on("friend-invite:notify", (payload: any) => {
+      console.log("[Friend Invite Notify] Received payload:", payload);
+      window.dispatchEvent(
+        new CustomEvent("friend-invite:notify", { detail: payload }),
       );
+      if (payload.invitation?.inviter?.username && payload.invitation?.id) {
+        const inviterName = payload.invitation.inviter.username;
+        const inviterId = payload.invitation.inviter.id;
+        const friendInvitationId = payload.invitation.id;
+        addFriendInviteNotification(inviterId, inviterName, friendInvitationId);
+      }
+    });
+
+    socket.on("friend-invite:rejected", (payload: any) => {
+      console.log("[Friend Invite Rejected] Received payload:", payload);
+      const inviteeName = payload?.invitation?.invitee?.username;
+      window.dispatchEvent(
+        new CustomEvent("friend-invite:rejected", { detail: payload }),
+      );
+      if (inviteeName) {
+        // Toast shown globally (visible even outside /friend-session)
+        // The CoopSessionLobby also handles this to update its local state
+      }
     });
 
     // Registrar el usuario con su ID (también emitir cuando cambie user)
@@ -213,17 +415,17 @@ const AppContent = () => {
         });
     }
 
-    // Escuchar invitaciones de coach en tiempo real (solo para CLIENTs)
-    // Las invitaciones ahora se gestionan directamente en /clients/invitations
-
     return () => {
       socket.off("connect");
       socket.off("disconnect");
+      socket.off("session-invalidated");
       socket.off("p2p-message-notification");
+      socket.off("friend-invite:notify");
+      socket.off("friend-invite:rejected");
       socket.off("video-call-invite");
       socket.off("video-call-end");
     };
-  }, [addNotification, user]);
+  }, [addNotification, user, logout]);
 
   // Limpiar notificaciones al cerrar sesión
   useEffect(() => {
@@ -234,111 +436,8 @@ const AppContent = () => {
 
   return (
     <>
-      <BrowserRouter>
-        <Routes>
-          {/* Ruta raíz con redirección inteligente por rol */}
-          <Route path="/" element={<RootRedirect />} />
-
-          {/* Rutas públicas */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-
-          {/* Rutas protegidas para COACH */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <CoachDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients"
-            element={
-              <ProtectedRoute requiredRole="COACH">
-                <CoachClientList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/routine/:id/edit"
-            element={
-              <ProtectedRoute>
-                <RoutineExercisesEdit />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Rutas protegidas para CLIENT */}
-          <Route
-            path="/client-home"
-            element={
-              <ProtectedRoute requiredRole="CLIENT">
-                <ClientDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients/invitations"
-            element={
-              <ProtectedRoute requiredRole="CLIENT">
-                <ClientMyCoach />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/friend-session"
-            element={
-              <ProtectedRoute requiredRole="CLIENT">
-                <CoopSessionLobby />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/room/:roomId"
-            element={
-              <ProtectedRoute requiredRole="CLIENT">
-                <WorkoutRoom />
-              </ProtectedRoute>
-            }
-          />
-          {/* /programs removed — unused placeholder page deleted */}
-
-          {/* Ruta de debug WebSocket */}
-          <Route
-            path="/ws"
-            element={
-              <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white">
-                <h1 className="text-4xl font-bold mb-8">
-                  Test de WebSockets 🔌
-                </h1>
-                <div
-                  className={`p-6 rounded-xl text-2xl font-semibold ${isConnected ? "bg-green-600" : "bg-red-600"}`}
-                >
-                  {isConnected
-                    ? "ESTADO: CONECTADO 🟢"
-                    : "ESTADO: DESCONECTADO 🔴"}
-                </div>
-              </div>
-            }
-          />
-          <Route
-            path="/workout/:id"
-            element={
-              <ProtectedRoute>
-                <SoloWorkoutSession />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-
-      {/* Notification Center */}
-      <NotificationCenter
-        onChatClick={handleNotificationChatClick}
-        position={user?.role === "CLIENT" ? "top-right" : "bottom-right"}
-      />
+      <AppRoutes />
+      <ClientSideNotificationCenter />
 
       {/* ── Global incoming video call popup ──────────────────────────────── */}
       {incomingCall && (

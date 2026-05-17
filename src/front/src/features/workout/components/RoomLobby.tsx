@@ -4,6 +4,7 @@ import { Socket } from "socket.io-client";
 import type { Routine } from "@/features/routines/services/routineService";
 import { routineService } from "@/features/routines/services/routineService";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import {
   Users,
   Wifi,
@@ -38,6 +39,7 @@ const RoomLobby: FC<RoomLobbyProps> = ({
 }) => {
   const { t } = useTranslation();
   const toast = useToast();
+  const { user } = useAuth();
 
   const [isRoutineModalOpen, setIsRoutineModalOpen] = useState(false);
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -47,7 +49,9 @@ const RoomLobby: FC<RoomLobbyProps> = ({
   const fetchRoutines = async () => {
     setIsLoadingRoutines(true);
     try {
-      const data = await routineService.getMyRoutines();
+      const data = user?.role === "COACH"
+        ? await routineService.getAll()
+        : await routineService.getMyRoutines();
       setRoutines(data);
     } catch (error) {
       toast.error(t("virtualRoom.connectionError"));
