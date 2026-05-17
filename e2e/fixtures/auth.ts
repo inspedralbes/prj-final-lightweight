@@ -27,6 +27,7 @@ export async function loginViaApi(page: Page, user: E2eUser): Promise<void> {
 
   // Visit the front origin first so localStorage maps to the right origin.
   await page.goto(baseUrl());
+  await page.waitForLoadState('networkidle');
   await page.evaluate(
     ({ access_token, u }) => {
       localStorage.setItem('token', access_token);
