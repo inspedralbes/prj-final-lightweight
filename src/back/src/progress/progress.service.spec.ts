@@ -10,8 +10,12 @@ describe('ProgressService', () => {
   const prismaMock = {
     user: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
     liveSession: {
+      findMany: vi.fn(),
+    },
+    sessionProgress: {
       findMany: vi.fn(),
     },
   };
@@ -143,11 +147,13 @@ describe('ProgressService', () => {
         completedAt: new Date('2026-04-10'),
         completionPercentage: 75,
         completedSets: 6,
+        participants: [],
       };
 
       prismaMock.liveSession.findMany
         .mockResolvedValueOnce([soloSession])
         .mockResolvedValueOnce([coopSession]);
+      prismaMock.sessionProgress.findMany.mockResolvedValue([]);
 
       const result = await service.getClientOwnSessionHistory(42);
 
