@@ -58,4 +58,4 @@ jobs:
           ssh -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
               "${SSH_USER}@${SSH_HOST}" \
-              "set -e && cd /opt/lw-app && docker compose -f docker-compose.prod.yml up -d --build && docker image prune -f"
+              "set -e && cd /opt/lw-app && docker compose -f docker-compose.prod.yml up -d --build --remove-orphans && docker image prune -f"
