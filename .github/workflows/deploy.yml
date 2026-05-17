@@ -28,8 +28,8 @@ jobs:
         run: |
           rsync -avzr --delete \
             --exclude ".git" --exclude ".github" \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -6" \
-            ./ "${SSH_USER}@[${SSH_HOST}]:/opt/lw-app/"
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            ./ "${SSH_USER}@${SSH_HOST}:/opt/lw-app/"
 
       # Escribir .env localmente y subirlo al servidor
       - name: Upload .env to server
@@ -42,12 +42,10 @@ jobs:
           sed -i 's/^[[:space:]]*//' /tmp/deploy.env
           scp -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
-              -6 \
               /tmp/deploy.env \
-              "${SSH_USER}@[${SSH_HOST}]:/opt/lw-app/.env"
+              "${SSH_USER}@${SSH_HOST}:/opt/lw-app/.env"
           ssh -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
-              -6 \
               "${SSH_USER}@${SSH_HOST}" \
               "chmod 600 /opt/lw-app/.env"
 
@@ -59,6 +57,5 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
-              -6 \
               "${SSH_USER}@${SSH_HOST}" \
               "set -e && cd /opt/lw-app && docker compose -f docker-compose.prod.yml up -d --build && docker image prune -f"
