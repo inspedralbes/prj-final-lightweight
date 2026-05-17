@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies (backend)
         run: npm ci --prefix src/back
 
+      - name: Generate Prisma client
+        run: npx prisma generate --schema src/back/prisma/schema.prisma
+
       - name: Run unit tests (backend)
         run: npm run test --prefix src/back
 
