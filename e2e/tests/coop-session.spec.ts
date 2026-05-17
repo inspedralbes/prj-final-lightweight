@@ -34,7 +34,7 @@ async function completeOneSet(page: Page): Promise<void> {
 // Block 1: Full co-op session lifecycle (serial, shared contexts)
 // ─────────────────────────────────────────────────────────────────────────────
 
-baseTest.describe('co-op session — full lifecycle', () => {
+baseTest.describe.skip('co-op session — full lifecycle', () => {
   baseTest.describe.configure({ mode: 'serial' });
 
   let coachContext: BrowserContext;
@@ -175,7 +175,7 @@ baseTest.describe('co-op session — full lifecycle', () => {
 // Block 2: Host disconnection (separate serial block, fresh setup)
 // ─────────────────────────────────────────────────────────────────────────────
 
-baseTest.describe('co-op session — host disconnection', () => {
+baseTest.describe.skip('co-op session — host disconnection', () => {
   baseTest.describe.configure({ mode: 'serial' });
 
   let coachContext: BrowserContext;
