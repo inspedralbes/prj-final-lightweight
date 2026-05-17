@@ -1,6 +1,11 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { AuthProvider, useAuth } from "@/features/auth/context/AuthContext";
+import { vi } from "vitest";
+
+vi.mock("@/shared/utils/api", () => ({
+  default: { post: vi.fn().mockResolvedValue({}) },
+}));
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AuthProvider>{children}</AuthProvider>
@@ -48,8 +53,8 @@ describe("AuthContext", () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    act(() => {
-      result.current.logout();
+    await act(async () => {
+      await result.current.logout();
     });
 
     expect(result.current.user).toBeNull();
