@@ -30,7 +30,8 @@ jobs:
         run: npm ci --prefix src/back
 
       - name: Generate Prisma client
-        run: npx prisma generate --schema src/back/prisma/schema.prisma
+        working-directory: src/back
+        run: npx prisma generate
 
       - name: Run unit tests (backend)
         run: npm run test --prefix src/back
