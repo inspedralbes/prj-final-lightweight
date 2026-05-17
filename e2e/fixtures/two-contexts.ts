@@ -12,11 +12,11 @@ export interface TwoContexts {
 export async function buildTwoContexts(browser: Browser): Promise<TwoContexts> {
   const coachContext = await browser.newContext();
   const coachPage = await coachContext.newPage();
-  await loginViaApi(coachPage, e2eUsers.coach);
+  await loginViaApi(coachPage, e2eUsers.clientLinked);
 
   const clientContext = await browser.newContext();
   const clientPage = await clientContext.newPage();
-  await loginViaApi(clientPage, e2eUsers.clientLinked);
+  await loginViaApi(clientPage, e2eUsers.clientUnlinked);
 
   return { coachContext, coachPage, clientContext, clientPage };
 }
