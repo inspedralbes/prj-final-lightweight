@@ -1,0 +1,21 @@
+import { defineConfig, devices } from "@playwright/test";
+
+export default defineConfig({
+  testDir: "./tests",
+  // 1 worker perquè tots els tests comparteixen la mateixa BD de testing:
+  // execucions paral·leles provocarien race conditions en POST /testing/reset.
+  workers: 1,
+  timeout: 30_000,
+  retries: process.env.CI ? 2 : 0,
+  reporter: process.env.CI ? [["list"], ["html"]] : "list",
+  globalSetup: require.resolve("./global-setup"),
+  use: {
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173",
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
+  },
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // webServer no se usa: en local el dev arranca front+back manualmente;
+  // en CI el orquestado lo gestiona .github/workflows/e2e.yml.
+});

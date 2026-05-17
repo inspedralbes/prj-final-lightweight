@@ -4,10 +4,12 @@ import { User, ArrowRight } from "@/shared/components/Icons";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/hooks/useToast";
 import { AuthPageHeader } from "@/shared/layout/AuthPageHeader";
+import api from "@/shared/utils/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -15,16 +17,15 @@ export default function ForgotPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError("");
     setIsLoading(true);
 
     try {
-      // Simular envío de email
+      await api.post("/auth/forgot-password", { email });
       toast.success(t("messages.success"), t("messages.resetEmailSent"));
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
-    } catch (error) {
-      toast.error(t("messages.errorOccurred"));
+      setTimeout(() => navigate("/login"), 2000);
+    } catch {
+      setEmailError(t("auth.emailNotRegistered"));
     } finally {
       setIsLoading(false);
     }
@@ -83,16 +84,22 @@ export default function ForgotPassword() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={t("auth.email")}
+                    data-testid="forgot-password-email"
                     className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                     required
                   />
                 </div>
               </div>
 
+              {emailError && (
+                <p data-testid="forgot-password-error" className="text-red-400 text-sm">{emailError}</p>
+              )}
+
               {/* Botón Principal */}
               <button
                 type="submit"
                 disabled={isLoading}
+                data-testid="forgot-password-submit"
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-700 text-black font-bold rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
               >
                 {isLoading ? t("common.loading") : t("auth.sendReset")}

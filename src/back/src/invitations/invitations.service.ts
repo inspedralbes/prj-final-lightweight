@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -50,13 +51,19 @@ export class InvitationsService {
 
     // Si está pendiente, el comportamiento normal es aceptarla.
     if (invitation.status === InvitationStatus.PENDING) {
-      // continue to transaction below
+      // Verificar que el cliente no tenga ya un coach asignado
+      const clientUser = await this.prisma.user.findUnique({
+        where: { id: clientId },
+        select: { coachId: true },
+      });
+      if (clientUser?.coachId != null) {
+        throw new ConflictException('Client already has an assigned coach');
+      }
     } else if (
       invitation.status === InvitationStatus.ACCEPTED &&
       invitation.clientId === clientId
     ) {
-      // el invitado ya se había unido anteriormente; permitimos reingresar
-      return invitation;
+      throw new ConflictException('Invitation already accepted');
     } else {
       // cualquier otro estado (REVOKED/EXPIRED/…)
       throw new BadRequestException(

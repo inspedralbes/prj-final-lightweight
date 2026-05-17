@@ -14,20 +14,21 @@ import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CoachGuard } from '../auth/guards/coach.guard';
+import { ClientGuard } from '../auth/guards/client.guard';
 
 @Controller('invitations')
 export class InvitationsController {
   constructor(private readonly invitationsService: InvitationsService) {}
 
-  // POST /invitations — Genera una nueva invitación (permitir usuarios autenticados)
+  // POST /invitations — Genera una nueva invitación (COACH o CLIENT)
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Req() req, @Body() dto: CreateInvitationDto) {
     return this.invitationsService.create(req.user.userId, dto);
   }
 
-  // POST /invitations/:code/accept — Cliente acepta la invitación
-  @UseGuards(JwtAuthGuard)
+  // POST /invitations/:code/accept — Cliente acepta la invitación (solo CLIENT)
+  @UseGuards(ClientGuard)
   @Post(':code/accept')
   accept(@Req() req, @Param('code') code: string) {
     return this.invitationsService.accept(req.user.userId, code);
@@ -40,8 +41,8 @@ export class InvitationsController {
     return this.invitationsService.revoke(req.user.userId, id);
   }
 
-  // PATCH /invitations/:id/reject — Cliente rechaza una invitación PENDING
-  @UseGuards(JwtAuthGuard)
+  // PATCH /invitations/:id/reject — Cliente rechaza una invitación PENDING (solo CLIENT)
+  @UseGuards(ClientGuard)
   @Patch(':id/reject')
   reject(@Req() req, @Param('id', ParseIntPipe) id: number) {
     return this.invitationsService.reject(req.user.userId, id);

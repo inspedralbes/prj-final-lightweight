@@ -50,6 +50,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       PORT: 3000
       FRONTEND_URL: ${FRONTEND_URL}
+      # E2E testing flag: when "true" the back exposes /testing/* (reset/seed/login).
+      # NEVER set to true in production — the back also fails-closed on NODE_ENV=production.
+      E2E_TESTING: ${E2E_TESTING:-false}
     volumes:
       # Solo montamos el código fuente y las migraciones
       # node_modules queda dentro del contenedor, evitando conflictos con el cliente Prisma

@@ -18,33 +18,25 @@ import { useAuth } from "@/features/auth/context/AuthContext";
 import { ConfirmModal } from "@/shared/components/ConfirmModal";
 import { useNotification } from "@/features/notifications/context/NotificationContext";
 
-const POLL_INTERVAL_MS = 10_000;
+const POLL_INTERVAL_MS = 30_000;
 
 const ClientHome = () => {
   const { user, updateCoachId } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // avoid running component logic when there is no authenticated user
-  if (!user) {
-    return (
-      <Layout>
-        <LoadingScreen isVisible={true} message={t("common.loading")} />
-      </Layout>
-    );
-  }
-
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
   const [isChatOpen, setIsChatOpen] = useState(false);
   // null = todavía verificando; true/false = confirmado por backend
   const [hasCoach, setHasCoach] = useState<boolean | null>(null);
   const toast = useToast();
   const { notifications, markAsRead } = useNotification();
 
-  const myRoomId = `chat_client_${user.id}`;
+  const myRoomId = user ? `chat_client_${user.id}` : null;
   const unreadFromCoach = (() => {
+    if (!myRoomId) return 0;
     const n = notifications.find(
       (
         n,
@@ -53,13 +45,16 @@ const ClientHome = () => {
     );
     return n ? n.count : 0;
   })();
-  const markCoachChatRead = () =>
+
+  const markCoachChatRead = () => {
+    if (!myRoomId) return;
     notifications
       .filter((n) => n.type === "chat" && n.roomId === myRoomId && !n.read)
       .forEach((n) => markAsRead(n.id));
+  };
 
   // Solo mode: modal & confirm state
-  const isSoloMode = !user.coachId && hasCoach === false;
+  const isSoloMode = !user?.coachId && hasCoach === false;
 
   // Routine filter — only relevant when client has both self-created and coach-assigned
   const soloRoutines = routines.filter((r) => r.coachId === null);
@@ -97,7 +92,6 @@ const ClientHome = () => {
       try {
         const data = await routineService.getMyRoutines();
         setRoutines(data);
-        setLastUpdated(new Date());
       } catch (error) {
         console.error("Error fetching routines:", error);
         toast.error(t("messages.errorOccurred"));
@@ -180,6 +174,14 @@ const ClientHome = () => {
     };
   }, [fetchClientRoutines, user]);
 
+  if (!user) {
+    return (
+      <Layout>
+        <LoadingScreen isVisible={true} message={t("common.loading")} />
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <LoadingScreen isVisible={loading} message={t("common.loading")} />
@@ -189,26 +191,15 @@ const ClientHome = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 tracking-tight">
             {t("routines.title") || "Mis rutinas"}
           </h1>
-          <div className="flex items-center gap-3">
-            <p className="text-gray-500 max-w-2xl text-sm md:text-base">
-              {t("home.startTraining") || "Comenzar entrenamiento"}
-            </p>
-            {lastUpdated && (
-              <span className="text-xs text-gray-700 bg-[#1a1a1a] px-2 py-1 rounded-full border border-[#2a2a2a]">
-                Actualizado:{" "}
-                {lastUpdated.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            )}
-          </div>
+          <p className="text-gray-500 max-w-2xl text-sm md:text-base">
+            {t("home.startTraining") || "Comenzar entrenamiento"}
+          </p>
         </div>
         {/* Solo mode: create button */}
         {isSoloMode && (
           <button
             onClick={handleOpenCreate}
-            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-orange-500/20 shrink-0"
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-orange-500/20"
           >
             <Plus className="w-4 h-4" />
             {t("routines.createNew")}
@@ -228,9 +219,9 @@ const ClientHome = () => {
           <p className="text-gray-500 text-sm md:text-base max-w-sm">
             {isSoloMode
               ? t("routines.soloHint") ||
-                "Crea tu primera rutina para empezar a entrenar."
+              "Crea tu primera rutina para empezar a entrenar."
               : t("sessions.noSessions") ||
-                "Tu entrenador todavía no te ha asignado ninguna tabla de ejercicios."}
+              "Tu entrenador todavía no te ha asignado ninguna tabla de ejercicios."}
           </p>
           {isSoloMode && (
             <button
@@ -282,9 +273,8 @@ const ClientHome = () => {
                   <button
                     key={f.key}
                     onClick={() => setRoutineFilter(f.key)}
-                    className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
-                      activeClass
-                    }`}
+                    className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${activeClass
+                      }`}
                   >
                     {f.key !== "all" && (
                       <span className={`w-1.5 h-1.5 rounded-full ${f.dot}`} />

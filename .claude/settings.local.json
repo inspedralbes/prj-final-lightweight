@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__*",
+      "Bash(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Read(*)",
+      "mcp__plugin_atlassian_atlassian__createJiraIssue",
+      "mcp__plugin_atlassian_atlassian__editJiraIssue",
+      "mcp__atlassian__getVisibleJiraProjects",
+      "mcp__atlassian__getJiraIssue",
+      "PowerShell(Set-Location \"c:\\\\Users\\\\HP\\\\prj-final-lightweight\\\\e2e\"; $env:PLAYWRIGHT_API_URL=\"http://localhost:3000\"; $env:PLAYWRIGHT_BASE_URL=\"http://localhost:5173\"; npx playwright test --reporter=list 2>&1)",
+      "mcp__atlassian__getAccessibleAtlassianResources"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "atlassian"
+  ]
+}

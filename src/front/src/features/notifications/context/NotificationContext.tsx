@@ -23,7 +23,17 @@ export interface InviteNotification {
   read: boolean;
 }
 
-export type AppNotification = ChatNotification | InviteNotification;
+export interface FriendInviteNotification {
+  type: "friend-invite";
+  id: string;
+  inviterId: number;
+  inviterUsername: string;
+  friendInvitationId: number;
+  timestamp: Date;
+  read: boolean;
+}
+
+export type AppNotification = ChatNotification | InviteNotification | FriendInviteNotification;
 
 interface NotificationContextType {
   notifications: AppNotification[];
@@ -39,6 +49,11 @@ interface NotificationContextType {
     coachName: string,
     invitationCode: string,
     invitationId: number,
+  ) => void;
+  addFriendInviteNotification: (
+    inviterId: number,
+    inviterUsername: string,
+    friendInvitationId: number,
   ) => void;
   markAsRead: (id: string) => void;
   removeNotification: (id: string) => void;
@@ -161,6 +176,34 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     [],
   );
 
+  const addFriendInviteNotification = useCallback(
+    (
+      inviterId: number,
+      inviterUsername: string,
+      friendInvitationId: number,
+    ) => {
+      setNotifications((prev) => {
+        // Deduplicar: no añadir si ya existe una notificación para esta invitación
+        const alreadyExists = prev.some(
+          (n) => n.type === "friend-invite" && n.friendInvitationId === friendInvitationId,
+        );
+        if (alreadyExists) return prev;
+        const id = `friend-invite-${friendInvitationId}`;
+        const notification: FriendInviteNotification = {
+          type: "friend-invite",
+          id,
+          inviterId,
+          inviterUsername,
+          friendInvitationId,
+          timestamp: new Date(),
+          read: false,
+        };
+        return [notification, ...prev];
+      });
+    },
+    [],
+  );
+
   const markAsRead = useCallback((id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true, count: 0 } : n)),
@@ -193,6 +236,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
         notifications,
         addNotification,
         addInviteNotification,
+        addFriendInviteNotification,
         markAsRead,
         removeNotification,
         clearAll,

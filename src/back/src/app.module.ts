@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EventsModule } from './events/events.module';
@@ -13,13 +16,21 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { RoomModule } from './room/room.module';
 import { ClientsModule } from './clients/clients.module';
 import { ChatModule } from './chat/chat.module';
+import { ProgressModule } from './progress/progress.module';
+import { TestingModule } from './testing/testing.module';
+import { FriendInvitationsModule } from './friend-invitations/friend-invitations.module';
+import { UsersModule } from './users/users.module';
+
+const e2eTestingEnabled =
+  process.env.E2E_TESTING === 'true' && process.env.NODE_ENV !== 'production';
 
 @Module({
   imports: [
-    // Carga las variables del archivo .env de forma global
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60, limit: 60 }] }),
     PrismaModule,
     AuthModule,
     RoutinesModule,
@@ -29,7 +40,11 @@ import { ChatModule } from './chat/chat.module';
     RoomModule,
     ClientsModule,
     ChatModule,
+    ProgressModule,
+    FriendInvitationsModule,
+    UsersModule,
     EventsModule,
+    ...(e2eTestingEnabled ? [TestingModule] : []),
   ],
   controllers: [AppController, EventsDebugController],
   providers: [AppService],

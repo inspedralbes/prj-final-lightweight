@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
@@ -22,6 +22,18 @@ export default defineConfig({
     host: true,
     watch: {
       usePolling: true,
+    },
+  },
+
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
+    environmentOptions: {
+      jsdom: {
+        // Necessari perquè jsdom inicialitzi localStorage amb un origen vàlid
+        url: "http://localhost",
+      },
     },
   },
 });

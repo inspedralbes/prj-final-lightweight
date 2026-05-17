@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/shared/hooks/useToast";
 import type { Routine } from "@/features/routines/services/routineService";
+import ExerciseImage from "@/features/exercises/components/ExerciseImage";
 import { Socket } from "socket.io-client";
 
 export interface PartnerProgress {
@@ -43,6 +44,8 @@ interface ActiveSessionProps {
     time: number;
     volume: number;
     exercises: number;
+    completedSets: number;
+    completionPercentage: number;
   }) => void;
   onLeave: () => void;
   isSoloMode?: boolean;
@@ -75,6 +78,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
   const [progress, setProgress] = useState(0);
   const [completedExercises, setCompletedExercises] = useState<number[]>([]);
   const [volumeTotal, setVolumeTotal] = useState(0);
+  const [setsCompleted, setSetsCompleted] = useState(0);
 
   // Timer
   const [time, setTime] = useState(0);
@@ -161,6 +165,8 @@ const ActiveSession: FC<ActiveSessionProps> = ({
     let updatedSet = currentSet;
     let justFinishedExercise = false;
 
+    setSetsCompleted((prev) => prev + 1);
+
     if (currentSet < currentEx.sets) {
       updatedSet = currentSet + 1;
       toast.success(t("virtualRoom.setCompleted"));
@@ -193,6 +199,8 @@ const ActiveSession: FC<ActiveSessionProps> = ({
           time,
           volume: volumeTotal + k * r,
           exercises: completedExercises.length + 1,
+          completedSets: setsCompleted + 1,
+          completionPercentage: 100,
         });
         return;
       }
@@ -248,7 +256,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
     return (
       <div className="w-full h-full flex flex-col items-center justify-center p-4">
         <h2 className="text-zinc-500 font-black uppercase tracking-widest text-lg mb-6">
-          {t("virtualRoom.getReady")}
+          {isSoloMode ? (t("virtualRoom.getReadySolo") || "Prepárate...") : t("virtualRoom.getReady")}
         </h2>
         <div className="text-[8rem] md:text-[10rem] font-black text-orange-500 animate-pulse leading-none">
           {countdown}
@@ -335,6 +343,11 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                     </div>
                   </div>
 
+                  {/* Exercise image during workout */}
+                  <ExerciseImage key={currentExerciseIdx}
+                    images={selectedRoutine.exercises[currentExerciseIdx].exercise?.images || []}
+                  />
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-zinc-500 uppercase">
@@ -376,6 +389,8 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                           time,
                           volume: volumeTotal,
                           exercises: completedExercises.length,
+                          completedSets: setsCompleted,
+                          completionPercentage: progress,
                         });
                       } else {
                         completeSet();
@@ -387,10 +402,10 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                     {progress === 100
                       ? t("virtualRoom.finishSessionButton")
                       : currentExerciseIdx ===
-                            (selectedRoutine.exercises?.length || 0) - 1 &&
-                          currentSet ===
-                            selectedRoutine.exercises?.[currentExerciseIdx]
-                              ?.sets
+                        (selectedRoutine.exercises?.length || 0) - 1 &&
+                        currentSet ===
+                        selectedRoutine.exercises?.[currentExerciseIdx]
+                          ?.sets
                         ? t("virtualRoom.finishRoutine")
                         : t("virtualRoom.completeSet")}
                     <ChevronRight size={24} />
@@ -479,7 +494,7 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                             364.4 -
                             (364.4 *
                               (partnerProgress?.progressPercentage || 0)) /
-                              100
+                            100
                           }
                           className="text-blue-500 transition-all duration-500"
                         />
@@ -520,50 +535,45 @@ const ActiveSession: FC<ActiveSessionProps> = ({
                   {selectedRoutine.exercises?.map((ex, i) => (
                     <div
                       key={i}
-                      className={`flex items-center justify-between p-4 rounded-xl border ${
-                        i === currentExerciseIdx
-                          ? "bg-orange-500/5 border-orange-500/20"
-                          : "bg-zinc-900/50 border-zinc-700"
-                      }`}
+                      className={`flex items-center justify-between p-4 rounded-xl border ${i === currentExerciseIdx
+                        ? "bg-orange-500/5 border-orange-500/20"
+                        : "bg-zinc-900/50 border-zinc-700"
+                        }`}
                     >
                       <div className="flex items-center gap-4">
                         <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                            i <= currentExerciseIdx
-                              ? "bg-orange-500 text-white"
-                              : "bg-zinc-800 text-zinc-500"
-                          }`}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${i <= currentExerciseIdx
+                            ? "bg-orange-500 text-white"
+                            : "bg-zinc-800 text-zinc-500"
+                            }`}
                         >
                           {i + 1}
                         </div>
                         <span
-                          className={`font-bold ${
-                            i === currentExerciseIdx
-                              ? "text-white"
-                              : "text-zinc-500"
-                          }`}
+                          className={`font-bold ${i === currentExerciseIdx
+                            ? "text-white"
+                            : "text-zinc-500"
+                            }`}
                         >
                           {ex.exercise.name}
                         </span>
                       </div>
                       <div className="flex gap-2">
                         <div
-                          className={`p-1 rounded ${
-                            completedExercises.includes(ex.exerciseId)
-                              ? "text-orange-500"
-                              : "text-zinc-800"
-                          }`}
+                          className={`p-1 rounded ${completedExercises.includes(ex.exerciseId)
+                            ? "text-orange-500"
+                            : "text-zinc-800"
+                            }`}
                         >
                           <Check size={20} strokeWidth={3} />
                         </div>
                         <div
-                          className={`p-1 rounded ${
-                            partnerProgress?.completedExercises.includes(
-                              ex.exerciseId,
-                            )
-                              ? "text-blue-500"
-                              : "text-zinc-800"
-                          }`}
+                          className={`p-1 rounded ${partnerProgress?.completedExercises.includes(
+                            ex.exerciseId,
+                          )
+                            ? "text-blue-500"
+                            : "text-zinc-800"
+                            }`}
                         >
                           <Check size={20} strokeWidth={3} />
                         </div>
@@ -577,13 +587,13 @@ const ActiveSession: FC<ActiveSessionProps> = ({
         </div>
 
         {/* Leave button */}
-        <div className="fixed bottom-8 left-0 right-0 flex justify-center z-50">
+        <div className="fixed bottom-8 left-0 md:left-64 right-0 flex justify-center z-50">
           <button
             onClick={onLeave}
             className="py-3 px-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-bold rounded-full transition-all flex items-center gap-2 shadow-2xl"
           >
             <LogOut className="w-5 h-5" />
-            <span>{t("virtualRoom.abandonRoom")}</span>
+            <span>{isSoloMode ? (t("virtualRoom.endSession") || "Finalizar Sesión") : t("virtualRoom.abandonRoom")}</span>
           </button>
         </div>
       </div>

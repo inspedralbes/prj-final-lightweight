@@ -12,8 +12,11 @@ async function bootstrap() {
     }),
   );
   // Habilitar CORS para permitir llamadas desde el frontend en desarrollo
-  const frontendUrl = process.env.FRONTEND_URL ?? '*';
-  app.enableCors({ origin: frontendUrl, credentials: true });
+  const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173';
+  app.enableCors({
+    origin: frontendUrl === '*' ? true : frontendUrl,
+    credentials: true,
+  });
   const port = Number(process.env.PORT) || 3000;
   await app.listen(port);
 }
