@@ -147,6 +147,20 @@ export default function CoopSessionLobby() {
     return () => { window.removeEventListener("friend-invite:rejected", handleRejected); };
   }, [t, toast]);
 
+  // Socket: invitation accepted → host navigates to the room
+  useEffect(() => {
+    const handleAccepted = (event: Event) => {
+      const payload = (event as CustomEvent).detail;
+      console.log("[DEBUG-CSL] friend-invite:accepted window event FIRED", payload);
+      if (payload?.roomId) {
+        console.log(`[DEBUG-CSL] Navigating to /room/${payload.roomId} with isHost=true`);
+        navigate(`/room/${payload.roomId}`, { state: { isHost: true } });
+      }
+    };
+    window.addEventListener("friend-invite:accepted", handleAccepted);
+    return () => { window.removeEventListener("friend-invite:accepted", handleAccepted); };
+  }, [navigate]);
+
   const handleSendInvitation = async (user: UserSearchResult) => {
     if (invitedIds.includes(user.id)) return;
 

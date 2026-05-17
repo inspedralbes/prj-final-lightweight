@@ -438,6 +438,26 @@
     "noSessions": "Todavía no has completado ninguna sesión de entrenamiento.",
     "colRoutine": "Rutina",
     "colDate": "Fecha",
-    "colCompletion": "% Completado"
+    "colCompletion": "% Completado",
+    "colPartner": "Compañero",
+    "colYourSets": "Tus series",
+    "colPartnerSets": "Compañero",
+    "tabs": {
+      "all": "Todas",
+      "solo": "Solo",
+      "friend": "Amigos"
+    },
+    "friendStats": {
+      "title": "Estadísticas de Amigos",
+      "totalCoopSessions": "Sesiones con amigos",
+      "totalCoopSets": "Series con amigos",
+      "totalCoopExercises": "Ejercicios con amigos",
+      "sessionsWith": "sesiones",
+      "noPartners": "Todavía no has hecho ninguna sesión con amigos"
+    },
+    "sessionType": {
+      "solo": "Solitario",
+      "friend": "Amigos"
+    }
   }
 }

@@ -11,6 +11,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ChatService } from '../chat/chat.service';
 import { AuthService } from '../auth/auth.service';
+import { PresenceService } from '../presence/presence.service';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -42,6 +43,7 @@ export class EventsGateway
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
+    private presenceService: PresenceService,
   ) {}
 
   afterInit(_server: Server) {
@@ -62,6 +64,7 @@ export class EventsGateway
       if (!sockets.has(client.id)) continue;
 
       sockets.delete(client.id);
+      this.presenceService.removeSocket(userId, client.id);
       if (sockets.size === 0) {
         this.userSockets.delete(userId);
       }
@@ -116,6 +119,9 @@ export class EventsGateway
       const existing = this.userSockets.get(id) ?? new Set<string>();
       existing.add(client.id);
       this.userSockets.set(id, existing);
+      this.presenceService.addSocket(id, client.id);
+      // Join the user's personal room so targeted socket events reach them
+      client.join(`user:${id}`);
 
       // Any reconnect from this user cancels the pending logout timer.
       const pending = this.disconnectTimers.get(id);
@@ -315,7 +321,7 @@ export class EventsGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { callerId: number; calleeId: number; callerName: string; roomId: string },
   ) {
-+-    const calleeSocket = this.getAnySocket(Number(payload.calleeId));
+    const calleeSocket = this.getAnySocket(Number(payload.calleeId));
     if (calleeSocket) {
       this.server.to(calleeSocket).emit('video-call-invite', payload);
       client.emit('video-call-delivered', { callerId: payload.callerId, calleeId: payload.calleeId });

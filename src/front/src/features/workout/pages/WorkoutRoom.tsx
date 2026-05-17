@@ -7,7 +7,7 @@ import ActiveSession from "@/features/workout/components/ActiveSession";
 import SessionSummary from "@/features/workout/components/SessionSummary";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import Layout from "@/shared/layout/Layout";
-import io, { Socket } from "socket.io-client";
+import { roomSocket } from "@/features/workout/services/socket";
 import { useToast } from "@/shared/hooks/useToast";
 import { useTranslation } from "react-i18next";
 import type { Routine } from "@/features/routines/services/routineService";
@@ -38,7 +38,6 @@ export default function VirtualGymRoom() {
   const toast = useToast();
 
   // Socket & Connection
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [usersInRoom, setUsersInRoom] = useState<RoomUser[]>([]);
   const [isConnecting, setIsConnecting] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
@@ -73,61 +72,46 @@ export default function VirtualGymRoom() {
     exercises: number;
   } | null>(null);
 
-  const goBackOrFriendSession = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate("/friend-session");
-    }
-  };
-
   // Socket Effect
   useEffect(() => {
     if (!roomId || !user) return;
 
-    const backUrl = (import.meta.env.VITE_BACK_URL as string) || "";
-    const socketBaseUrl = backUrl.startsWith("http")
-      ? backUrl
-      : window.location.origin;
-    const newSocket = io(`${socketBaseUrl}/room`, {
-      path: "/socket.io/",
-      transports: ["websocket", "polling"],
-      auth: { token: localStorage.getItem("token") },
-      query: { roomId },
-    });
+    console.log(`[DEBUG-WR] useEffect RUNNING. roomId=${roomId}, user.id=${user.id}, initialIsHost=${initialIsHost}`);
+    console.log(`[DEBUG-WR] roomSocket.connected=${roomSocket.connected}, roomSocket.id=${roomSocket.id}`);
 
-    newSocket.on("connect", () => {
+    setIsConnecting(true);
+
+    const handleConnect = () => {
+      console.log(`[DEBUG-WR] handleConnect FIRED. roomSocket.connected=${roomSocket.connected}, roomSocket.id=${roomSocket.id}`);
       setIsConnected(true);
       setIsConnecting(false);
-      newSocket.emit("joinRoom", {
+      console.log(`[DEBUG-WR] Emitting joinRoom: roomId=${roomId}, userId=${user.id}, isHost=${initialIsHost}`);
+      roomSocket.emit("joinRoom", {
         roomId,
         userId: user.id,
         username: user.username,
         isHost: initialIsHost,
       });
-    });
+    };
 
-    newSocket.on(
-      "joinedRoom",
-      (data: { isHost: boolean; usersInRoom: RoomUser[] }) => {
-        setIsHost(data.isHost);
-        setUsersInRoom(data.usersInRoom);
-        // Reset disconnection state if someone joins
-        if (data.usersInRoom.length >= 2) {
-          setPartnerDisconnected(false);
-        }
-      },
-    );
-
-    newSocket.on("roomUsersUpdate", (data: { usersInRoom: RoomUser[] }) => {
+    const handleJoinedRoom = (data: { isHost: boolean; usersInRoom: RoomUser[] }) => {
+      console.log(`[DEBUG-WR] joinedRoom RECEIVED: isHost=${data.isHost}, users=${data.usersInRoom.length}`, JSON.stringify(data.usersInRoom));
+      setIsHost(data.isHost);
       setUsersInRoom(data.usersInRoom);
       if (data.usersInRoom.length >= 2) {
         setPartnerDisconnected(false);
       }
-    });
+    };
 
-    // Sincronización de inicio de sesión
-    newSocket.on("sessionStarting", (data: { routine: Routine }) => {
+    const handleRoomUsersUpdate = (data: { usersInRoom: RoomUser[] }) => {
+      console.log(`[DEBUG-WR] roomUsersUpdate RECEIVED: users=${data.usersInRoom.length}`, JSON.stringify(data.usersInRoom));
+      setUsersInRoom(data.usersInRoom);
+      if (data.usersInRoom.length >= 2) {
+        setPartnerDisconnected(false);
+      }
+    };
+
+    const handleSessionStarting = (data: { routine: Routine }) => {
       setSelectedRoutine(data.routine);
       setIsCountingDown(true);
 
@@ -143,57 +127,91 @@ export default function VirtualGymRoom() {
           setCountdown(count);
         }
       }, 1000);
-    });
+    };
 
-    newSocket.on("opponentProgressUpdate", (data: PartnerProgress) => {
+    const handleOpponentProgressUpdate = (data: PartnerProgress) => {
       if (String(data.userId) !== String(user.id)) {
         setPartnerProgress({ ...data });
       }
-    });
+    };
 
-    // Partner finished event: Silent background update if local user hasn't finished yet
-    newSocket.on(
-      "partnerFinished",
-      (payload: { userId: string; finalStats: any }) => {
-        if (String(payload.userId) !== String(user.id)) {
-          // Always save partner stats
-          setPartnerStats(payload.finalStats);
-          setIsPartnerFinished(true);
-          // NOTE: Do NOT show summary screen if isLocalFinished is false
-          // The component will display waiting message instead
+    const handlePartnerFinished = (payload: { userId: string; finalStats: any }) => {
+      if (String(payload.userId) !== String(user.id)) {
+        setPartnerStats(payload.finalStats);
+        setIsPartnerFinished(true);
+        if (!isHost && localStats && roomId && user?.id) {
+          roomSocket.emit("sessionFinished", {
+            roomId,
+            userId: user.id,
+            finalStats: localStats,
+          });
         }
-      },
-    );
-
-    newSocket.on("hostDisconnected", () => {
-      if (!isHost) {
-        newSocket.disconnect();
-        goBackOrFriendSession();
       }
-    });
+    };
 
-    newSocket.on("guestDisconnected", () => {
+    const handleHostDisconnected = () => {
+      console.log(`[DEBUG-WR] hostDisconnected RECEIVED. isHost(in closure)=${isHost}`);
+      if (!isHost) {
+        console.log(`[DEBUG-WR] -> Host disconnected, navigating away`);
+        roomSocket.disconnect();
+        navigate("/friend-session");
+      }
+    };
+
+    const handleGuestDisconnected = () => {
+      console.log(`[DEBUG-WR] guestDisconnected RECEIVED. isHost(in closure)=${isHost}`);
       if (isHost) {
         toast.info(t("virtualRoom.guestDisconnected"));
         setPartnerDisconnected(true);
       }
-    });
+    };
 
-    setSocket(newSocket);
+    const handleConnectError = () => {
+      console.log(`[DEBUG-WR] connect_error RECEIVED. roomSocket.connected=${roomSocket.connected}`);
+      setIsConnecting(false);
+    };
+
+    roomSocket.on("connect", handleConnect);
+    roomSocket.on("joinedRoom", handleJoinedRoom);
+    roomSocket.on("roomUsersUpdate", handleRoomUsersUpdate);
+    roomSocket.on("sessionStarting", handleSessionStarting);
+    roomSocket.on("opponentProgressUpdate", handleOpponentProgressUpdate);
+    roomSocket.on("partnerFinished", handlePartnerFinished);
+    roomSocket.on("hostDisconnected", handleHostDisconnected);
+    roomSocket.on("guestDisconnected", handleGuestDisconnected);
+    roomSocket.on("connect_error", handleConnectError);
+
+    if (!roomSocket.connected) {
+      console.log(`[DEBUG-WR] roomSocket NOT connected. Calling connect().`);
+      roomSocket.connect();
+    } else {
+      console.log(`[DEBUG-WR] roomSocket already connected. Calling handleConnect() directly.`);
+      handleConnect();
+    }
+
     return () => {
-      newSocket.disconnect();
+      console.log(`[DEBUG-WR] CLEANUP: removing all listeners`);
+      roomSocket.off("connect", handleConnect);
+      roomSocket.off("joinedRoom", handleJoinedRoom);
+      roomSocket.off("roomUsersUpdate", handleRoomUsersUpdate);
+      roomSocket.off("sessionStarting", handleSessionStarting);
+      roomSocket.off("opponentProgressUpdate", handleOpponentProgressUpdate);
+      roomSocket.off("partnerFinished", handlePartnerFinished);
+      roomSocket.off("hostDisconnected", handleHostDisconnected);
+      roomSocket.off("guestDisconnected", handleGuestDisconnected);
+      roomSocket.off("connect_error", handleConnectError);
     };
   }, [roomId, user]);
 
   const handleLeaveRoom = () => {
-    socket?.disconnect();
-    goBackOrFriendSession();
+    roomSocket.disconnect();
+    navigate("/friend-session");
   };
 
   const handleStartSession = (routine: Routine) => {
-    if (!socket || !roomId) return;
+    if (!roomId) return;
     setSelectedRoutine(routine);
-    socket.emit("startSession", { roomId, routine });
+    roomSocket.emit("startSession", { roomId, routine });
   };
 
   const handleSessionFinished = (stats: {
@@ -203,14 +221,12 @@ export default function VirtualGymRoom() {
     completedSets: number;
     completionPercentage: number;
   }) => {
-    // STRICT: Mark this user as locally finished and save their stats
     setIsLocalFinished(true);
     setLocalStats(stats);
     setIsSessionActive(false);
 
-    // Emit to socket so partner knows this user finished
-    if (socket && roomId && user?.id) {
-      socket.emit("sessionFinished", {
+    if (roomId && user?.id) {
+      roomSocket.emit("sessionFinished", {
         roomId,
         userId: user.id,
         finalStats: stats,
@@ -246,8 +262,8 @@ export default function VirtualGymRoom() {
           partnerStats={partnerStats}
           isPartnerFinished={isPartnerFinished}
           partnerUsername={partnerUsername}
-          socket={socket}
           onLeave={handleLeaveRoom}
+          isSoloMode={false}
         />
       );
     }
@@ -255,7 +271,7 @@ export default function VirtualGymRoom() {
     if (isCountingDown || isSessionActive) {
       return (
         <ActiveSession
-          socket={socket}
+          socket={roomSocket}
           roomId={roomId}
           userId={
             typeof user?.id === "string" ? user.id : String(user?.id || "")
@@ -276,7 +292,7 @@ export default function VirtualGymRoom() {
 
     return (
       <RoomLobby
-        socket={socket}
+        socket={roomSocket}
         roomId={roomId}
         isHost={isHost}
         isConnected={isConnected}

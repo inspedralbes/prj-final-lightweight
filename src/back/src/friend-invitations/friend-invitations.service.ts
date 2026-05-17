@@ -131,8 +131,11 @@ export class FriendInvitationsService {
   }
 
   private emitSocketEvent<T>(room: string, event: string, payload: T) {
+    console.log(`[DEBUG-emitSocketEvent] Emitting "${event}" to room "${room}"`);
+    console.log(`[DEBUG-emitSocketEvent] eventsGateway.server exists:`, !!this.eventsGateway.server);
     try {
-      this.eventsGateway.server?.to(room).emit(event, payload);
+      const result = this.eventsGateway.server?.to(room).emit(event, payload);
+      console.log(`[DEBUG-emitSocketEvent] Emit result:`, result);
     } catch (error) {
       console.warn(`Failed to emit socket event ${event} to ${room}:`, error);
     }
@@ -240,6 +243,8 @@ export class FriendInvitationsService {
         roomId,
         isHost: true,
       };
+      console.log(`[DEBUG-accept] Emitting friend-invite:accepted to user:${result.inviter.id}`);
+      console.log(`[DEBUG-accept] inviter.id=${result.inviter.id}, invitee.id=${result.invitee?.id}`);
       this.emitSocketEvent(`user:${result.inviter.id}`, 'friend-invite:accepted', eventPayload);
       return { invitation: result, roomId };
     }

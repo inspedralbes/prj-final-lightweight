@@ -140,6 +140,12 @@ const Layout = ({ children }: LayoutProps) => {
       icon: Swords,
       badge: friendInvitesCount,
     },
+    {
+      path: "/client/history",
+      label: t("history.navLabel"),
+      icon: BarChart2,
+      badge: 0,
+    },
   ];
   const navItems = user?.role === "CLIENT" ? clientNavItems : coachNavItems;
 
