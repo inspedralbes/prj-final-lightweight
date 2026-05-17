@@ -86,6 +86,28 @@ const Layout = ({ children }: LayoutProps) => {
     };
   }, [user]);
 
+  // Cargar invitaciones pendientes de friend sessions
+  useEffect(() => {
+    if (user?.role !== "CLIENT") return;
+    friendInvitationService
+      .getPendingInvitations()
+      .then((list) => setFriendInvitesCount(list.length))
+      .catch(() => setFriendInvitesCount(0));
+
+    // Nueva invitación de friend en tiempo real → recargar
+    const handleFriendInvite = () => {
+      friendInvitationService
+        .getPendingInvitations()
+        .then((list) => setFriendInvitesCount(list.length))
+        .catch(() => setFriendInvitesCount(0));
+    };
+
+    window.addEventListener("friend-invite:notify", handleFriendInvite);
+    return () => {
+      window.removeEventListener("friend-invite:notify", handleFriendInvite);
+    };
+  }, [user]);
+
   useEffect(() => {
     const storedUsername = localStorage.getItem("username");
     if (storedUsername) {

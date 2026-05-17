@@ -8,20 +8,16 @@
  *
  * These tests are serial: each one builds on the state left by the previous.
  */
-import { test as baseTest, expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import { test as baseTest, expect, type BrowserContext, type Page } from '@playwright/test';
 import { resetDatabase, loginViaApi, e2eUsers, baseUrl } from '../fixtures';
+import { buildTwoContexts } from '../fixtures/two-contexts';
 
-async function buildTwoClientContexts(browser: Browser) {
-  const ctx1 = await browser.newContext();
-  const page1 = await ctx1.newPage();
-  await loginViaApi(page1, e2eUsers.clientLinked);
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const ctx2 = await browser.newContext();
-  const page2 = await ctx2.newPage();
-  await loginViaApi(page2, e2eUsers.clientUnlinked);
-
-  return { coachContext: ctx1, coachPage: page1, clientContext: ctx2, clientPage: page2 };
-}
+const apiUrl = (): string =>
+  process.env.PLAYWRIGHT_API_URL ?? 'http://localhost:3000';
 
 /**
  * Complete one set for the current exercise:
@@ -49,7 +45,7 @@ baseTest.describe.skip('co-op session — full lifecycle', () => {
 
   baseTest.beforeAll(async ({ browser }) => {
     await resetDatabase();
-    const ctx = await buildTwoClientContexts(browser);
+    const ctx = await buildTwoContexts(browser);
     coachContext = ctx.coachContext;
     coachPage = ctx.coachPage;
     clientContext = ctx.clientContext;
@@ -189,7 +185,7 @@ baseTest.describe.skip('co-op session — host disconnection', () => {
 
   baseTest.beforeAll(async ({ browser }) => {
     await resetDatabase();
-    const ctx = await buildTwoClientContexts(browser);
+    const ctx = await buildTwoContexts(browser);
     coachContext = ctx.coachContext;
     coachPage = ctx.coachPage;
     clientContext = ctx.clientContext;
