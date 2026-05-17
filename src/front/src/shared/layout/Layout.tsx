@@ -52,11 +52,37 @@ const Layout = ({ children }: LayoutProps) => {
         .catch(() => setPendingInvitesCount(0));
     };
 
+    const handleDecrement = () => setPendingInvitesCount((c) => Math.max(0, c - 1));
+
     socket.on("coach-invitation", handleNewInvite);
     window.addEventListener("coach-invitation-accepted", handleAccepted);
+    window.addEventListener("coach-invitation-badge-decrement", handleDecrement);
     return () => {
       socket.off("coach-invitation", handleNewInvite);
       window.removeEventListener("coach-invitation-accepted", handleAccepted);
+      window.removeEventListener("coach-invitation-badge-decrement", handleDecrement);
+    };
+  }, [user]);
+
+  // Cargar invitaciones pendientes de friend sessions
+  useEffect(() => {
+    if (user?.role !== "CLIENT") return;
+    friendInvitationService
+      .getPendingInvitations()
+      .then((list) => setFriendInvitesCount(list.length))
+      .catch(() => setFriendInvitesCount(0));
+
+    // Nueva invitación de friend en tiempo real → recargar
+    const handleFriendInvite = () => {
+      friendInvitationService
+        .getPendingInvitations()
+        .then((list) => setFriendInvitesCount(list.length))
+        .catch(() => setFriendInvitesCount(0));
+    };
+
+    window.addEventListener("friend-invite:notify", handleFriendInvite);
+    return () => {
+      window.removeEventListener("friend-invite:notify", handleFriendInvite);
     };
   }, [user]);
 
@@ -89,10 +115,10 @@ const Layout = ({ children }: LayoutProps) => {
     }
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     clearAll();
-    socket.disconnect(); // stop receiving messages / notifications after logout
-    logout();
+    socket.disconnect();
+    await logout();
     navigate("/login");
   };
 

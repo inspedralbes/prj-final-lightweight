@@ -120,8 +120,7 @@ export default function CoachClientInvitation() {
     try {
       await invitationsService.rejectInvitation(id);
       setPending((prev) => prev.filter((i) => i.id !== id));
-      // Notificar a Layout para que refresque el badge
-      window.dispatchEvent(new Event("coach-invitation-accepted"));
+      window.dispatchEvent(new CustomEvent("coach-invitation-badge-decrement"));
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to reject invitation";

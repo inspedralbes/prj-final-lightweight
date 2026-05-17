@@ -268,7 +268,7 @@ const sessions = await this.prisma.liveSession.findMany({
     }
 
     const partnerIds = Array.from(partnerMap.keys()).map((id) => Number(id));
-    const users = partnerIds.length > 0
+    const users: { id: number; username: string }[] = partnerIds.length > 0
       ? await this.prisma.user.findMany({
           where: { id: { in: partnerIds } },
           select: { id: true, username: true },

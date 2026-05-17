@@ -29,6 +29,12 @@ jobs:
       - name: Install dependencies (backend)
         run: npm ci --prefix src/back
 
+      - name: Generate Prisma client
+        working-directory: src/back
+        env:
+          DATABASE_URL: postgresql://localhost/dummy
+        run: npx prisma generate
+
       - name: Run unit tests (backend)
         run: npm run test --prefix src/back
 

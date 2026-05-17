@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  BrowserRouter,
   Routes,
   Route,
   Navigate,
@@ -26,7 +25,6 @@ import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useNotification } from "@/features/notifications/context/NotificationContext";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
-import FriendInviteNotificationCenter from "@/features/notifications/components/FriendInviteNotificationCenter";
 import VideoCallModal from "@/features/chat/components/VideoCallModal";
 import { VideoCamera } from "@/shared/components/Icons";
 import { useRingtone } from "@/shared/hooks/useRingtone";
@@ -179,7 +177,6 @@ const AppContent = () => {
   const { addNotification, addFriendInviteNotification, clearAll } =
     useNotification();
   const { user, logout } = useAuth();
-  const [isConnected, setIsConnected] = useState(socket.connected);
   const { t } = useTranslation();
   const ringtone = useRingtone();
 
