@@ -52,11 +52,15 @@ const Layout = ({ children }: LayoutProps) => {
         .catch(() => setPendingInvitesCount(0));
     };
 
+    const handleDecrement = () => setPendingInvitesCount((c) => Math.max(0, c - 1));
+
     socket.on("coach-invitation", handleNewInvite);
     window.addEventListener("coach-invitation-accepted", handleAccepted);
+    window.addEventListener("coach-invitation-badge-decrement", handleDecrement);
     return () => {
       socket.off("coach-invitation", handleNewInvite);
       window.removeEventListener("coach-invitation-accepted", handleAccepted);
+      window.removeEventListener("coach-invitation-badge-decrement", handleDecrement);
     };
   }, [user]);
 
@@ -89,10 +93,10 @@ const Layout = ({ children }: LayoutProps) => {
     }
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     clearAll();
-    socket.disconnect(); // stop receiving messages / notifications after logout
-    logout();
+    socket.disconnect();
+    await logout();
     navigate("/login");
   };
 

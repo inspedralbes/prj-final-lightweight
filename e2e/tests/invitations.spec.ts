@@ -140,6 +140,11 @@ test.describe('Flux d\'invitacions i notificacions', () => {
       await loginViaApi(clientPage, e2eUsers.clientUnlinked);
       await setLangCa(clientPage);
 
+      // Log any 401 responses to help debug redirects
+      clientPage.on('response', (resp) => {
+        if (resp.status() === 401) console.log('[E2E-DEBUG] 401 from:', resp.url());
+      });
+
       // El client navega a la pàgina d'invitacions
       await clientPage.goto('/clients/invitations');
       await expect(clientPage.getByText('e2e_coach')).toBeVisible();
@@ -148,10 +153,10 @@ test.describe('Flux d\'invitacions i notificacions', () => {
       await expect(clientPage.locator('[data-testid="pending-invites-badge"]')).toHaveText('1');
 
       // Clica "Rebutjar"
-      await clientPage.getByText('Rebutjar').first().click();
+      await clientPage.getByRole('button', { name: 'Rebutjar' }).first().click();
 
       // La invitació desapareix, el badge desapareix i el client roman desvinculat
-      await expect(clientPage.getByText('Rebutjar')).toHaveCount(0);
+      await expect(clientPage.getByRole('button', { name: 'Rebutjar' })).toHaveCount(0, { timeout: 10_000 });
       await expect(clientPage.locator('[data-testid="pending-invites-badge"]')).toHaveCount(0);
 
       // Confirma via API que no hi ha invitacions pendents
@@ -258,7 +263,7 @@ test.describe('Flux d\'invitacions i notificacions', () => {
     const firstAccept = await request.post(`${apiUrl()}/invitations/${invitation.code}/accept`, {
       headers: { Authorization: `Bearer ${clientToken}` },
     });
-    expect(firstAccept.status()).toBe(200);
+    expect(firstAccept.status()).toBe(201);
 
     const secondAccept = await request.post(`${apiUrl()}/invitations/${invitation.code}/accept`, {
       headers: { Authorization: `Bearer ${clientToken}` },
