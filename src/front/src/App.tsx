@@ -180,7 +180,7 @@ const AppContent = () => {
   const { t } = useTranslation();
   const ringtone = useRingtone();
 
-  // ── Global incoming-call state ────────────────────────────────────────────
+  // ── Global call state ────────────────────────────────────────────────────
   type IncomingCall = {
     callerId: number;
     callerName: string;
@@ -190,6 +190,11 @@ const AppContent = () => {
   const [calleeActiveCall, setCalleeActiveCall] = useState<{
     callRoomId: string;
     callerId: number;
+  } | null>(null);
+  // Caller side: once callee accepts, enter the call from App-level too
+  const [callerActiveCall, setCallerActiveCall] = useState<{
+    callRoomId: string;
+    calleeId: number;
   } | null>(null);
 
   // Play / stop ringtone based on incoming call state
@@ -303,6 +308,30 @@ const AppContent = () => {
       },
     );
 
+    // ── Caller: callee accepted → enter call ─────────────────────────────
+    socket.on(
+      "video-call-accept",
+      (payload: { callerId: number; calleeId: number; roomId: string }) => {
+        if (!user || Number(payload.callerId) !== Number(user.id)) return;
+        console.log("[VideoCall] Call accepted by callee", payload.calleeId);
+        setCallerActiveCall({
+          callRoomId: payload.roomId,
+          calleeId: payload.calleeId,
+        });
+      },
+    );
+
+    // ── Caller: callee rejected ───────────────────────────────────────────
+    socket.on(
+      "video-call-reject",
+      (payload: { callerId: number; calleeId: number }) => {
+        if (!user || Number(payload.callerId) !== Number(user.id)) return;
+        console.log("[VideoCall] Call rejected by callee", payload.calleeId);
+        // P2PChat listens too but this ensures cleanup even if chat unmounts
+        setCallerActiveCall(null);
+      },
+    );
+
     // Dismiss incoming popup if caller cancelled before we answered
     socket.on(
       "video-call-end",
@@ -313,6 +342,19 @@ const AppContent = () => {
             console.log(
               "[VideoCall] Caller cancelled — dismissing incoming popup",
             );
+            return null;
+          }
+          return prev;
+        });
+        // Also clear active call if the remote peer ended it
+        setCallerActiveCall((prev) => {
+          if (prev && Number(prev.calleeId) === Number(payload.fromUserId)) {
+            return null;
+          }
+          return prev;
+        });
+        setCalleeActiveCall((prev) => {
+          if (prev && Number(prev.callerId) === Number(payload.fromUserId)) {
             return null;
           }
           return prev;
@@ -423,6 +465,8 @@ const AppContent = () => {
       socket.off("friend-invite:notify");
       socket.off("friend-invite:rejected");
       socket.off("video-call-invite");
+      socket.off("video-call-accept");
+      socket.off("video-call-reject");
       socket.off("video-call-end");
     };
   }, [addNotification, user, logout]);
@@ -479,6 +523,16 @@ const AppContent = () => {
           isInitiator={false}
           otherUserId={calleeActiveCall.callerId}
           onEnd={handleCalleeCallEnd}
+        />
+      )}
+
+      {/* ── VideoCallModal for caller once callee accepts ─────────────────── */}
+      {callerActiveCall && (
+        <VideoCallModal
+          roomId={callerActiveCall.callRoomId}
+          isInitiator={true}
+          otherUserId={callerActiveCall.calleeId}
+          onEnd={() => setCallerActiveCall(null)}
         />
       )}
     </>
