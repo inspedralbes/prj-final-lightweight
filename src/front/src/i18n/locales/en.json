@@ -119,6 +119,7 @@
     "viewAll": "View all exercises",
     "noExercises": "No exercises added yet",
     "clickToAddExercises": "Tap here to add exercises",
+    "noExercisesToStart": "No exercises",
     "series": "Sets",
     "reps": "Reps",
     "weight": "Weight (kg)",
@@ -459,5 +460,14 @@
       "solo": "Solo",
       "friend": "Friends"
     }
+  },
+  "chat": {
+    "titleWithCoach": "Chat with {{name}}",
+    "titleDefault": "Chat with my Coach",
+    "connected": "Connected",
+    "connecting": "Connecting...",
+    "offline": "Disconnected",
+    "inputPlaceholder": "Type a message...",
+    "send": "Send"
   }
 }

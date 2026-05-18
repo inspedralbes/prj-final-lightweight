@@ -18,9 +18,14 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     );
   }
 
-  // Sin sesión → login
+  // Sin sesión → login (check localStorage to avoid race condition on first login)
   if (!user) {
-    return <Navigate to="/login" replace />;
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return <Navigate to="/login" replace />;
+    }
+    // Token exists but context hasn't updated yet — wait for next render
+    return null;
   }
 
   // Rol incorrecto → redirigir a su página correcta

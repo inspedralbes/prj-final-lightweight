@@ -31,6 +31,7 @@ const ClientHome = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   // null = todavía verificando; true/false = confirmado por backend
   const [hasCoach, setHasCoach] = useState<boolean | null>(null);
+  const [coachName, setCoachName] = useState<string | null>(null);
   const toast = useToast();
   const { notifications, markAsRead } = useNotification();
 
@@ -82,6 +83,7 @@ const ClientHome = () => {
       .then((info) => {
         setHasCoach(info.hasCoach);
         updateCoachId(info.coachId);
+        if (info.coach?.username) setCoachName(info.coach.username);
       })
       .catch(() => setHasCoach(false));
   }, []);
@@ -336,7 +338,7 @@ const ClientHome = () => {
         <div className="fixed bottom-24 right-6 z-50 w-80 md:w-96 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
           <P2PChat
             roomId={`chat_client_${user.id}`}
-            title="Chat con mi Entrenador"
+            title={coachName ? t("chat.titleWithCoach", { name: coachName }) : t("chat.titleDefault")}
             onClose={() => setIsChatOpen(false)}
             otherUserId={user.coachId}
           />

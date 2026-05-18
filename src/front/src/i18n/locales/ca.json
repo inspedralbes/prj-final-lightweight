@@ -119,6 +119,7 @@
     "viewAll": "Veure tots els exercicis",
     "noExercises": "Sense exercicis afegits",
     "clickToAddExercises": "Clica aquí per afegir exercicis",
+    "noExercisesToStart": "Sense exercicis",
     "series": "Sèries",
     "reps": "Repeticions",
     "weight": "Pes (kg)",
@@ -459,5 +460,14 @@
       "solo": "Solitari",
       "friend": "Amics"
     }
+  },
+  "chat": {
+    "titleWithCoach": "Xat amb {{name}}",
+    "titleDefault": "Xat amb el meu Entrenador",
+    "connected": "Connectat",
+    "connecting": "Connectant...",
+    "offline": "Desconnectat",
+    "inputPlaceholder": "Escriu un missatge...",
+    "send": "Enviar"
   }
 }

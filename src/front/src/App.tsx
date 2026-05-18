@@ -37,7 +37,12 @@ import type { P2PMessage } from "@/features/chat/services/chatService";
 const RootRedirect = () => {
   const { user, isLoading } = useAuth();
   if (isLoading) return null;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) {
+    // Check localStorage to avoid race condition when context hasn't updated yet after login
+    const token = localStorage.getItem("token");
+    if (!token) return <Navigate to="/login" replace />;
+    return null;
+  }
   if (user.role === "COACH") return <Navigate to="/dashboard" replace />;
   return <Navigate to="/client-home" replace />;
 };
@@ -190,6 +195,7 @@ const AppContent = () => {
   const [calleeActiveCall, setCalleeActiveCall] = useState<{
     callRoomId: string;
     callerId: number;
+    stream: MediaStream;
   } | null>(null);
   // Caller side: once callee accepts, enter the call from App-level too
   const [callerActiveCall, setCallerActiveCall] = useState<{
@@ -203,8 +209,16 @@ const AppContent = () => {
     else ringtone.stop();
   }, [incomingCall]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const acceptIncomingCall = () => {
+  const acceptIncomingCall = async () => {
     if (!incomingCall || !user) return;
+    // Safari requires getUserMedia to be called synchronously inside a user gesture.
+    // We call it here, at tap time, before any async work, so the browser grants permission.
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    } catch {
+      return;
+    }
     socket.emit("video-call-accept", {
       callerId: incomingCall.callerId,
       calleeId: user.id,
@@ -213,6 +227,7 @@ const AppContent = () => {
     setCalleeActiveCall({
       callRoomId: incomingCall.callRoomId,
       callerId: incomingCall.callerId,
+      stream,
     });
     setIncomingCall(null);
   };
@@ -226,7 +241,10 @@ const AppContent = () => {
     setIncomingCall(null);
   };
 
-  const handleCalleeCallEnd = () => setCalleeActiveCall(null);
+  const handleCalleeCallEnd = () => {
+    calleeActiveCall?.stream.getTracks().forEach((t) => t.stop());
+    setCalleeActiveCall(null);
+  };
 
   const ClientSideNotificationCenter = () => {
     const navigate = useNavigate();
@@ -259,11 +277,30 @@ const AppContent = () => {
   };
 
   useEffect(() => {
-    // Reconnect socket when a user session is present (e.g. after logout+login).
-    // On first load the socket auto-connects; on subsequent logins it may be disconnected.
-    if (user && !socket.connected) {
+    if (!user) return;
+    // Ensure socket is connected and registered whenever user is present.
+    // This covers: first load, login, and mobile browsers that drop the socket
+    // when the tab is backgrounded and then restored.
+    if (!socket.connected) {
       socket.connect();
+    } else {
+      // Already connected (e.g. page refresh with active session) — register immediately
+      socket.emit("register-user", user.id);
     }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && user) {
+        if (!socket.connected) {
+          socket.connect();
+        } else {
+          socket.emit("register-user", user.id);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [user]);
 
   useEffect(() => {
@@ -523,6 +560,7 @@ const AppContent = () => {
           isInitiator={false}
           otherUserId={calleeActiveCall.callerId}
           onEnd={handleCalleeCallEnd}
+          initialStream={calleeActiveCall.stream}
         />
       )}
 

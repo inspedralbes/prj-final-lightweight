@@ -8,6 +8,7 @@ interface VideoCallModalProps {
   isInitiator: boolean;
   otherUserId: number;
   onEnd: () => void;
+  initialStream?: MediaStream;
 }
 
 const ICE_SERVERS: RTCConfiguration = {
@@ -27,6 +28,7 @@ export default function VideoCallModal({
   isInitiator,
   otherUserId,
   onEnd,
+  initialStream,
 }: VideoCallModalProps) {
   const { t } = useTranslation();
 
@@ -146,19 +148,25 @@ export default function VideoCallModal({
     let cancelled = false;
 
     const start = async () => {
-      // 1. Get local media
+      // 1. Get local media — reuse stream obtained at button-tap time (Safari requires
+      //    getUserMedia to be called synchronously inside a user gesture; if we already
+      //    have a stream from the accept handler, skip the async call entirely).
       let stream: MediaStream;
-      try {
-        if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error("getUserMedia not available");
+      if (initialStream) {
+        stream = initialStream;
+      } else {
+        try {
+          if (!navigator.mediaDevices?.getUserMedia) {
+            throw new Error("getUserMedia not available");
+          }
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+        } catch {
+          if (!cancelled) setError(t("videoCall.cameraError"));
+          return;
         }
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-      } catch {
-        if (!cancelled) setError(t("videoCall.cameraError"));
-        return;
       }
       if (cancelled) {
         stream.getTracks().forEach((t) => t.stop());
