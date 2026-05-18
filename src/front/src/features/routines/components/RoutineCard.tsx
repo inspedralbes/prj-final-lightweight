@@ -305,10 +305,11 @@ const RoutineCard = ({
                 e.stopPropagation();
                 onStart!(id);
               }}
-              className="w-full flex items-center justify-center gap-2 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-orange-500/10 active:scale-[0.98]"
+              disabled={!exercises || exercises.length === 0}
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-orange-500 hover:bg-orange-600 disabled:bg-[#2a2a2a] disabled:text-gray-600 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-orange-500/10 active:scale-[0.98] disabled:shadow-none"
             >
               <Play className="w-4 h-4 fill-current" />
-              {t("routines.startRoutine")}
+              {!exercises || exercises.length === 0 ? t("routines.noExercisesToStart") : t("routines.startRoutine")}
             </button>
           </div>
         )}
