@@ -202,11 +202,6 @@ const AppContent = () => {
     callRoomId: string;
     calleeId: number;
   } | null>(null);
-  // Caller side: once callee accepts, enter the call from App-level too
-  const [callerActiveCall, setCallerActiveCall] = useState<{
-    callRoomId: string;
-    calleeId: number;
-  } | null>(null);
 
   // Play / stop ringtone based on incoming call state
   useEffect(() => {
