@@ -14,7 +14,9 @@ export class MailService {
 
     if (this.config.get<string>('NODE_ENV') === 'production') {
       this.transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
         auth: {
           type: 'OAuth2',
           user: this.config.get<string>('MAIL_USER'),
