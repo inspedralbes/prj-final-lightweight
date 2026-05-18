@@ -10,9 +10,18 @@ RUN npm install
 
 COPY . .
 
-# Vite embeds VITE_* env vars at build time, so we pass it as ARG
+# Vite embeds VITE_* env vars at build time, so we pass them as ARG
 ARG VITE_BACK_URL=/api
 ENV VITE_BACK_URL=$VITE_BACK_URL
+
+ARG VITE_TURN_URL
+ENV VITE_TURN_URL=$VITE_TURN_URL
+
+ARG VITE_TURN_USERNAME
+ENV VITE_TURN_USERNAME=$VITE_TURN_USERNAME
+
+ARG VITE_TURN_CREDENTIAL
+ENV VITE_TURN_CREDENTIAL=$VITE_TURN_CREDENTIAL
 
 RUN npm run build
 

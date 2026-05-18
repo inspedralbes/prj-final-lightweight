@@ -57,6 +57,16 @@ services:
       lw-postgres:
         condition: service_healthy
 
+  # --- TURN server (coturn) for WebRTC behind NAT/CGNAT ---
+  coturn:
+    container_name: lw-coturn
+    image: coturn/coturn:latest
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    command: -c /etc/coturn/turnserver.conf
+
   # --- FRONTEND (React + Vite) ---
   frontend:
     container_name: lw-frontend
@@ -65,6 +75,9 @@ services:
       dockerfile: Dockerfile.prod
       args:
         VITE_BACK_URL: ${VITE_BACK_URL}
+        VITE_TURN_URL: ${VITE_TURN_URL}
+        VITE_TURN_USERNAME: ${VITE_TURN_USERNAME}
+        VITE_TURN_CREDENTIAL: ${VITE_TURN_CREDENTIAL}
     restart: unless-stopped
     # No env_file needed — VITE_ vars are baked in at build time
     expose:

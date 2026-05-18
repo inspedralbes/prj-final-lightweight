@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Routes,
   Route,
@@ -185,6 +185,10 @@ const AppContent = () => {
   const { t } = useTranslation();
   const ringtone = useRingtone();
 
+  // Stable ref so video-call handlers always see the current user without closure staleness
+  const userRef = useRef(user);
+  useEffect(() => { userRef.current = user; }, [user]);
+
   // ── Global call state ────────────────────────────────────────────────────
   type IncomingCall = {
     callerId: number;
@@ -303,210 +307,178 @@ const AppContent = () => {
     };
   }, [user]);
 
+  // ── Video-call listeners: registered ONCE, use userRef to avoid stale closures ──
   useEffect(() => {
-    socket.on("connect", () => {
-      if (user) {
-        console.log("[Socket] connected - emitting register-user for", user.id);
-        socket.emit("register-user", user.id);
-      }
-    });
+    const handleVideoCallInvite = (payload: {
+      callerId: number;
+      calleeId: number;
+      callerName: string;
+      roomId: string;
+    }) => {
+      const u = userRef.current;
+      if (!u || Number(payload.calleeId) !== Number(u.id)) return;
+      console.log("[VideoCall] Global incoming call from", payload.callerName);
+      setIncomingCall({
+        callerId: payload.callerId,
+        callerName: payload.callerName,
+        callRoomId: payload.roomId,
+      });
+    };
 
-    // Session expired on another device: backend cleared activeSessionToken
-    // after the grace period. Clear local state and redirect to /login.
-    socket.on("session-invalidated", () => {
+    const handleVideoCallAcceptGlobal = (payload: {
+      callerId: number;
+      calleeId: number;
+      roomId: string;
+    }) => {
+      const u = userRef.current;
+      if (!u || Number(payload.callerId) !== Number(u.id)) return;
+      console.log("[VideoCall] Call accepted by callee", payload.calleeId);
+      setCallerActiveCall({
+        callRoomId: payload.roomId,
+        calleeId: payload.calleeId,
+      });
+    };
+
+    const handleVideoCallRejectGlobal = (payload: {
+      callerId: number;
+      calleeId: number;
+    }) => {
+      const u = userRef.current;
+      if (!u || Number(payload.callerId) !== Number(u.id)) return;
+      console.log("[VideoCall] Call rejected by callee", payload.calleeId);
+      setCallerActiveCall(null);
+    };
+
+    const handleVideoCallEndGlobal = (payload: {
+      fromUserId: number;
+      toUserId: number;
+    }) => {
+      const u = userRef.current;
+      if (!u || Number(payload.toUserId) !== Number(u.id)) return;
+      setIncomingCall((prev) => {
+        if (prev && Number(prev.callerId) === Number(payload.fromUserId)) {
+          console.log("[VideoCall] Caller cancelled — dismissing incoming popup");
+          return null;
+        }
+        return prev;
+      });
+      setCallerActiveCall((prev) => {
+        if (prev && Number(prev.calleeId) === Number(payload.fromUserId)) return null;
+        return prev;
+      });
+      setCalleeActiveCall((prev) => {
+        if (prev && Number(prev.callerId) === Number(payload.fromUserId)) return null;
+        return prev;
+      });
+    };
+
+    socket.on("video-call-invite", handleVideoCallInvite);
+    socket.on("video-call-accept", handleVideoCallAcceptGlobal);
+    socket.on("video-call-reject", handleVideoCallRejectGlobal);
+    socket.on("video-call-end", handleVideoCallEndGlobal);
+
+    return () => {
+      socket.off("video-call-invite", handleVideoCallInvite);
+      socket.off("video-call-accept", handleVideoCallAcceptGlobal);
+      socket.off("video-call-reject", handleVideoCallRejectGlobal);
+      socket.off("video-call-end", handleVideoCallEndGlobal);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Socket listeners that depend on user/notifications ───────────────────
+  useEffect(() => {
+    const handleConnect = () => {
+      const u = userRef.current;
+      if (u) {
+        console.log("[Socket] connected - emitting register-user for", u.id);
+        socket.emit("register-user", u.id);
+      }
+    };
+
+    const handleSessionInvalidated = () => {
       console.log("[Auth] session-invalidated received — logging out");
-      localStorage.removeItem("token");
-      localStorage.removeItem("userRole");
-      localStorage.removeItem("username");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("coachId");
+      const token = localStorage.getItem("token");
+      if (token) {
+        const beaconUrl = `${import.meta.env.VITE_BACK_URL}/auth/logout-beacon?t=${encodeURIComponent(token)}`;
+        navigator.sendBeacon(beaconUrl);
+      }
       void logout();
-    });
+    };
 
-    // ── Global video-call-invite listener (always alive) ─────────────────
-    socket.on(
-      "video-call-invite",
-      (payload: {
-        callerId: number;
-        calleeId: number;
-        callerName: string;
-        roomId: string;
-      }) => {
-        if (!user || Number(payload.calleeId) !== Number(user.id)) return;
-        console.log(
-          "[VideoCall] Global incoming call from",
-          payload.callerName,
-        );
-        setIncomingCall({
-          callerId: payload.callerId,
-          callerName: payload.callerName,
-          callRoomId: payload.roomId,
-        });
-      },
-    );
+    const handleP2PNotification = (data: {
+      text: string;
+      fromUsername?: string;
+      from?: string;
+    }) => {
+      const u = userRef.current;
+      console.log("[P2P Message Notification]", data);
+      const preview = data.text.length > 50 ? data.text.substring(0, 50) + "..." : data.text;
+      const senderName = data.fromUsername || data.from || "Alguien";
+      const roomId = u?.role === "CLIENT"
+        ? `chat_client_${u.id}`
+        : `chat_client_${data.from}`;
+      addNotification(roomId, `${senderName} te ha enviado: ${preview}`, senderName, true);
+    };
 
-    // ── Caller: callee accepted → enter call ─────────────────────────────
-    socket.on(
-      "video-call-accept",
-      (payload: { callerId: number; calleeId: number; roomId: string }) => {
-        if (!user || Number(payload.callerId) !== Number(user.id)) return;
-        console.log("[VideoCall] Call accepted by callee", payload.calleeId);
-        setCallerActiveCall({
-          callRoomId: payload.roomId,
-          calleeId: payload.calleeId,
-        });
-      },
-    );
-
-    // ── Caller: callee rejected ───────────────────────────────────────────
-    socket.on(
-      "video-call-reject",
-      (payload: { callerId: number; calleeId: number }) => {
-        if (!user || Number(payload.callerId) !== Number(user.id)) return;
-        console.log("[VideoCall] Call rejected by callee", payload.calleeId);
-        // P2PChat listens too but this ensures cleanup even if chat unmounts
-        setCallerActiveCall(null);
-      },
-    );
-
-    // Dismiss incoming popup if caller cancelled before we answered
-    socket.on(
-      "video-call-end",
-      (payload: { fromUserId: number; toUserId: number }) => {
-        if (!user || Number(payload.toUserId) !== Number(user.id)) return;
-        setIncomingCall((prev) => {
-          if (prev && Number(prev.callerId) === Number(payload.fromUserId)) {
-            console.log(
-              "[VideoCall] Caller cancelled — dismissing incoming popup",
-            );
-            return null;
-          }
-          return prev;
-        });
-        // Also clear active call if the remote peer ended it
-        setCallerActiveCall((prev) => {
-          if (prev && Number(prev.calleeId) === Number(payload.fromUserId)) {
-            return null;
-          }
-          return prev;
-        });
-        setCalleeActiveCall((prev) => {
-          if (prev && Number(prev.callerId) === Number(payload.fromUserId)) {
-            return null;
-          }
-          return prev;
-        });
-      },
-    );
-
-    // Escuchar notificaciones de chat P2P con preview de mensaje
-    socket.on(
-      "p2p-message-notification",
-      (data: { text: string; fromUsername?: string; from?: string }) => {
-        console.log("[P2P Message Notification]", data);
-        const preview =
-          data.text.length > 50
-            ? data.text.substring(0, 50) + "..."
-            : data.text;
-        const senderName = data.fromUsername || data.from || "Alguien";
-        const roomId =
-          user?.role === "CLIENT"
-            ? `chat_client_${user.id}`
-            : `chat_client_${data.from}`;
-        // isLive=true: real-time message — un-dismiss if room was previously dismissed
-        addNotification(
-          roomId,
-          `${senderName} te ha enviado: ${preview}`,
-          senderName,
-          true,
-        );
-      },
-    );
-
-    socket.on("friend-invite:notify", (payload: any) => {
+    const handleFriendInviteNotify = (payload: any) => {
       console.log("[Friend Invite Notify] Received payload:", payload);
-      window.dispatchEvent(
-        new CustomEvent("friend-invite:notify", { detail: payload }),
-      );
+      window.dispatchEvent(new CustomEvent("friend-invite:notify", { detail: payload }));
       if (payload.invitation?.inviter?.username && payload.invitation?.id) {
-        const inviterName = payload.invitation.inviter.username;
-        const inviterId = payload.invitation.inviter.id;
-        const friendInvitationId = payload.invitation.id;
-        addFriendInviteNotification(inviterId, inviterName, friendInvitationId);
+        addFriendInviteNotification(
+          payload.invitation.inviter.id,
+          payload.invitation.inviter.username,
+          payload.invitation.id,
+        );
       }
-    });
+    };
 
-    socket.on("friend-invite:rejected", (payload: any) => {
+    const handleFriendInviteRejected = (payload: any) => {
       console.log("[Friend Invite Rejected] Received payload:", payload);
-      const inviteeName = payload?.invitation?.invitee?.username;
-      window.dispatchEvent(
-        new CustomEvent("friend-invite:rejected", { detail: payload }),
-      );
-      if (inviteeName) {
-        // Toast shown globally (visible even outside /friend-session)
-        // The CoopSessionLobby also handles this to update its local state
-      }
-    });
+      window.dispatchEvent(new CustomEvent("friend-invite:rejected", { detail: payload }));
+    };
 
-    // Registrar el usuario con su ID (también emitir cuando cambie user)
+    socket.on("connect", handleConnect);
+    socket.on("session-invalidated", handleSessionInvalidated);
+    socket.on("p2p-message-notification", handleP2PNotification);
+    socket.on("friend-invite:notify", handleFriendInviteNotify);
+    socket.on("friend-invite:rejected", handleFriendInviteRejected);
+
     if (user) {
       console.log("[Socket] emitting register-user for", user.id);
       socket.emit("register-user", user.id);
 
-      // Al conectarse o recargar, pedir mensajes no leídos para generar notificaciones
       chatService
         .getUnreadMessages()
         .then((msgs: P2PMessage[]) => {
-          // Group by room so we call addNotification ONCE per room with the real count.
-          // Calling it once per message would accumulate count on every reconnect/navigation.
           type RoomEntry = { count: number; latestMsg: P2PMessage };
           const byRoom: Record<string, RoomEntry> = {};
           msgs.forEach((m) => {
-            const roomId =
-              user?.role === "CLIENT"
-                ? `chat_client_${user.id}`
-                : `chat_client_${m.senderId}`;
-            if (!byRoom[roomId]) {
-              byRoom[roomId] = { count: 0, latestMsg: m };
-            }
+            const roomId = user.role === "CLIENT"
+              ? `chat_client_${user.id}`
+              : `chat_client_${m.senderId}`;
+            if (!byRoom[roomId]) byRoom[roomId] = { count: 0, latestMsg: m };
             byRoom[roomId].count++;
-            byRoom[roomId].latestMsg = m; // keep the latest preview
+            byRoom[roomId].latestMsg = m;
           });
           Object.entries(byRoom).forEach(([roomId, { count, latestMsg }]) => {
-            const preview =
-              latestMsg.text.length > 50
-                ? latestMsg.text.substring(0, 50) + "..."
-                : latestMsg.text;
-            const senderName =
-              latestMsg.sender?.username || `Usuario ${latestMsg.senderId}`;
-            // isLive=false: don't un-dismiss; initialCount=count: real DB unread total
-            addNotification(
-              roomId,
-              `${senderName} te ha enviado: ${preview}`,
-              senderName,
-              false,
-              count,
-            );
+            const preview = latestMsg.text.length > 50
+              ? latestMsg.text.substring(0, 50) + "..."
+              : latestMsg.text;
+            const senderName = latestMsg.sender?.username || `Usuario ${latestMsg.senderId}`;
+            addNotification(roomId, `${senderName} te ha enviado: ${preview}`, senderName, false, count);
           });
         })
-        .catch((err) => {
-          console.error("Error fetching unread messages:", err);
-        });
+        .catch((err) => console.error("Error fetching unread messages:", err));
     }
 
     return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("session-invalidated");
-      socket.off("p2p-message-notification");
-      socket.off("friend-invite:notify");
-      socket.off("friend-invite:rejected");
-      socket.off("video-call-invite");
-      socket.off("video-call-accept");
-      socket.off("video-call-reject");
-      socket.off("video-call-end");
+      socket.off("connect", handleConnect);
+      socket.off("session-invalidated", handleSessionInvalidated);
+      socket.off("p2p-message-notification", handleP2PNotification);
+      socket.off("friend-invite:notify", handleFriendInviteNotify);
+      socket.off("friend-invite:rejected", handleFriendInviteRejected);
     };
-  }, [addNotification, user, logout]);
+  }, [addNotification, addFriendInviteNotification, user, logout]);
 
   // Limpiar notificaciones al cerrar sesión
   useEffect(() => {
