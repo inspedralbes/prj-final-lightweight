@@ -14,6 +14,11 @@ const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
+    {
+      urls: import.meta.env.VITE_TURN_URL ?? "turn:lightweight.cat:3478",
+      username: import.meta.env.VITE_TURN_USERNAME ?? "lightweight",
+      credential: import.meta.env.VITE_TURN_CREDENTIAL ?? "",
+    },
   ],
 };
 
