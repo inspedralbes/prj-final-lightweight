@@ -6,7 +6,6 @@ import { chatService } from "@/features/chat/services/chatService";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useToast } from "@/shared/hooks/useToast";
 import { useRingtone } from "@/shared/hooks/useRingtone";
-import VideoCallModal from "@/features/chat/components/VideoCallModal";
 
 interface Message {
   text: string;
@@ -22,7 +21,7 @@ interface P2PChatProps {
 }
 
 // "pending": invite sent, waiting for server confirmation (no UI shown — prevents flash)
-type CallState = "idle" | "pending" | "calling" | "in-call";
+type CallState = "idle" | "pending" | "calling";
 
 const P2PChat: React.FC<P2PChatProps> = ({
   roomId,
@@ -46,7 +45,6 @@ const P2PChat: React.FC<P2PChatProps> = ({
 
   // ── Video call state ───────────────────────────────────────────────────────
   const [callState, setCallState] = useState<CallState>("idle");
-  const [callIsInitiator, setCallIsInitiator] = useState(false);
   const callRoomId = user
     ? `video_${Math.min(user.id, otherUserId)}_${Math.max(user.id, otherUserId)}`
     : "";
@@ -172,27 +170,13 @@ const P2PChat: React.FC<P2PChatProps> = ({
       toast.warning(t("videoCall.userOffline", { name: title }));
     };
 
-    // Callee accepted → caller enters call
-    const handleVideoCallAccept = (payload: {
-      callerId: number;
-      calleeId: number;
-      roomId: string;
-    }) => {
-      if (Number(payload.calleeId) !== Number(otherUserId)) return;
-      console.log("[VideoCall] call accepted");
-      if (callTimeoutRef.current) {
-        clearTimeout(callTimeoutRef.current);
-        callTimeoutRef.current = null;
-      }
-      setCallIsInitiator(true);
-      setCallState("in-call");
-    };
-
+    // Callee accepted → App.tsx handles entering the call globally
+    // Callee rejected → reset calling state
     const handleVideoCallReject = (payload: {
       callerId: number;
       calleeId: number;
     }) => {
-      if (Number(payload.calleeId) !== Number(otherUserId)) return;
+      if (!user || Number(payload.callerId) !== Number(user.id)) return;
       console.log("[VideoCall] call rejected");
       if (callTimeoutRef.current) {
         clearTimeout(callTimeoutRef.current);
@@ -200,6 +184,21 @@ const P2PChat: React.FC<P2PChatProps> = ({
       }
       setCallState("idle");
       toast.info(t("videoCall.callMissed", { name: title }));
+    };
+
+    // Callee accepted → reset calling overlay (App.tsx opens the modal)
+    const handleVideoCallAccept = (payload: {
+      callerId: number;
+      calleeId: number;
+      roomId: string;
+    }) => {
+      if (!user || Number(payload.callerId) !== Number(user.id)) return;
+      console.log("[VideoCall] call accepted — App.tsx will open modal");
+      if (callTimeoutRef.current) {
+        clearTimeout(callTimeoutRef.current);
+        callTimeoutRef.current = null;
+      }
+      setCallState("idle");
     };
 
     const handleVideoCallEnd = (payload: {
@@ -310,14 +309,6 @@ const P2PChat: React.FC<P2PChatProps> = ({
     setCallState("idle");
   };
 
-  const handleCallEnd = () => {
-    if (callTimeoutRef.current) {
-      clearTimeout(callTimeoutRef.current);
-      callTimeoutRef.current = null;
-    }
-    setCallState("idle");
-  };
-
   const sendMessage = async () => {
     if (!inputText.trim() || !user) return;
 
@@ -359,16 +350,6 @@ const P2PChat: React.FC<P2PChatProps> = ({
 
   return (
     <>
-      {/* ── Active video call ──────────────────────────────────────────── */}
-      {callState === "in-call" && (
-        <VideoCallModal
-          roomId={callRoomId}
-          isInitiator={callIsInitiator}
-          otherUserId={otherUserId}
-          onEnd={handleCallEnd}
-        />
-      )}
-
       {/* ── Outgoing call overlay (ringing) ───────────────────────────── */}
       {callState === "calling" && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70">
