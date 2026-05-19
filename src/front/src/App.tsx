@@ -545,16 +545,6 @@ const AppContent = () => {
           onEnd={() => setCallerActiveCall(null)}
         />
       )}
-
-      {/* ── VideoCallModal for caller once callee accepts ─────────────────── */}
-      {callerActiveCall && (
-        <VideoCallModal
-          roomId={callerActiveCall.callRoomId}
-          isInitiator={true}
-          otherUserId={callerActiveCall.calleeId}
-          onEnd={() => setCallerActiveCall(null)}
-        />
-      )}
     </>
   );
 };
