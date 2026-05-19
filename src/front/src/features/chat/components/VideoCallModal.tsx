@@ -36,6 +36,8 @@ export default function VideoCallModal({
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const offerCreatedRef = useRef(false);
+  const offerProcessingRef = useRef(false);
 
   const [remoteConnected, setRemoteConnected] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -78,6 +80,8 @@ export default function VideoCallModal({
     // Only the initiator responds to user-joined by creating an offer
     if (!isInitiator) return;
     if (!pcRef.current) return;
+    if (offerCreatedRef.current) return;
+    offerCreatedRef.current = true;
     console.log("[VideoCall] peer joined:", socketId, "— creating offer");
     try {
       const offer = await pcRef.current.createOffer();
@@ -85,11 +89,17 @@ export default function VideoCallModal({
       socket.emit("offer", { roomId, offer });
     } catch (err) {
       console.error("[VideoCall] createOffer error:", err);
+      offerCreatedRef.current = false;
     }
   };
 
   const handleOffer = async (offer: RTCSessionDescriptionInit) => {
     if (!pcRef.current) return;
+    if (offerProcessingRef.current) {
+      console.log("[VideoCall] ignoring duplicate offer");
+      return;
+    }
+    offerProcessingRef.current = true;
     console.log("[VideoCall] received offer");
     try {
       await pcRef.current.setRemoteDescription(
@@ -100,6 +110,7 @@ export default function VideoCallModal({
       socket.emit("answer", { roomId, answer });
     } catch (err) {
       console.error("[VideoCall] handleOffer error:", err);
+      offerProcessingRef.current = false;
     }
   };
 
@@ -231,6 +242,8 @@ export default function VideoCallModal({
         "current-peers",
         async ({ peers }: { roomId: string; peers: string[] }) => {
           if (isInitiator && peers.length > 0 && pcRef.current) {
+            if (offerCreatedRef.current) return;
+            offerCreatedRef.current = true;
             console.log(
               "[VideoCall] initiator: callee already in room, creating offer",
             );
@@ -243,6 +256,7 @@ export default function VideoCallModal({
                 "[VideoCall] createOffer (current-peers) error:",
                 err,
               );
+              offerCreatedRef.current = false;
             }
           }
         },
